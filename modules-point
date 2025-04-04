@@ -1,0 +1,44 @@
+- Web
+	@ : Use a framework to build the backend.
+	. : Use a framework or a toolkit to build the frontend.
+	. : Use a database for the backend.
+	//@ : Store the score of a tournament in the Blockchain.
+
+- User Management
+	@ : Standard user management, authentication, users across tournaments.
+	@ : Implementing a remote authentication.
+
+- Gameplay and user experience
+	@ : Remote players
+	//@ : Multiplayer (more than 2 players in the same game).
+	//@ : Add another game with user history and matchmaking.
+	. : Game customization options.
+	@ : Live chat.
+
+- AI-Algo
+	@ : Introduce an AI opponent.
+	//. : User and game stats dashboards
+
+- Cybersecurity
+	//@ : Implement WAF/ModSecurity with a hardened configuration and HashiCorp Vault for secrets management.
+	//. : GDPR compliance options with user anonymization, local data management, and Account Deletion.
+	//@ : Implement Two-Factor Authentication (2FA) and JWT.
+
+- Devops
+	//@ : Infrastructure setup for log management.
+	//. : Monitoring system.
+	//@ : Designing the backend as microservices.
+
+- Graphics
+	@ : Use advanced 3D techniques.
+
+- Accessibility
+	//. : Support on all devices.
+	//. : Expanding browser compatibility.
+	. : Supports multiple languages.
+	//. : Add accessibility features for visually impaired users.
+	//. : Server-Side Rendering (SSR) integration.
+
+- Server-Side Pong
+	//@ : Replace basic Pong with server-side Pong and implement an API.
+	//@ : Enabling Pong gameplay via CLI against web users with API integration.
