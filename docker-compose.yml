@@ -3,24 +3,16 @@ services:
     build: ./node
     container_name: node
     ports:
-      - "4000:4000"
-    # depends_on:
-    #   - wordpress
+      - "${PORT}:${PORT}"
     env_file:
       - .env
+    volumes:
+      - sqlite_data:$DB_DIR
     networks:
       - transcendance
 
-  # SQLite:
-  #   build: ./requirements/mariadb/
-  #   container_name: mariadb
-  #   restart: always
-  #   volumes:
-  #     - mariadb_volume:/var/lib/mysql
-  #   env_file:
-  #     - .env
-  #   networks:
-  #     - transcendance
+volumes:
+  sqlite_data:
 
 networks:
   transcendance:

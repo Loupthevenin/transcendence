@@ -2,6 +2,7 @@
 const path = require("path");
 const fs = require("fs");
 const fastify = require("fastify");
+const db = require("./db");
 
 // Charger les clés SSL
 const httpsOptions = {
@@ -18,6 +19,21 @@ const app = fastify({
 // Exemple de route
 app.get("/", async (request, reply) => {
   return { hello: "https world" };
+});
+
+// list users
+app.get("/users", async (request, reply) => {
+  const stmt = db.prepare("SELECT * FROM users");
+  const users = stmt.all();
+  return users;
+});
+
+// add users
+app.get("/init", async (request, reply) => {
+  const insert = db.prepare("INSERT INTO users (name) VALUES (?)");
+  const info = insert.run("Loup");
+
+  return { success: true, userId: info.lastInsertRowid };
 });
 
 // Démarrer le serveur

@@ -19,7 +19,7 @@ WORKDIR /var/app
 
 RUN npm install
 
-EXPOSE 4000
+EXPOSE $PORT
 
 ENTRYPOINT ["tini", "--"]
 
