@@ -1,6 +1,7 @@
 FROM node:23-bookworm
 
 RUN apt update -y && apt upgrade -y && apt install -y \
+		tini \
         openssl\
         && apt clean
 
@@ -16,7 +17,10 @@ COPY ./app/ /var/app
 
 WORKDIR /var/app
 
+RUN npm install
+
 EXPOSE 4000
 
-# CMD ["npm", "run", "dev"]
+ENTRYPOINT ["tini", "--"]
+
 CMD ["node", "app.js"]
