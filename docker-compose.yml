@@ -6,6 +6,8 @@ services:
       - "4000:4000"
     # depends_on:
     #   - wordpress
+    env_file:
+      - .env
     networks:
       - transcendance
 
