@@ -1,31 +1,43 @@
-DOCKER_COMPOSE = docker-compose
+DOCKER_COMPOSE = docker compose
 DOCKER_COMPOSE_FILE = ./docker-compose.yml
+DOCKER = $(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE)
+
+all: up
 
 build:
-	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) build
+	@$(DOCKER) build
 
 up: build
-	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) up
+	@$(DOCKER) up
 
 start:
-	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) up -d
+	@$(DOCKER) up -d
 
 stop:
-	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) stop
+	@$(DOCKER) stop
+
+down:
+	@$(DOCKER) down
 
 restart:
-	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) stop
-	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) up
+	@$(DOCKER) stop
+	@$(DOCKER) up
 
 logs:
-	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) logs
+	@$(DOCKER) logs
 
-status:
-	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) ps
-
-ps: status
+ps status:
+	@ docker ps
 
 clean:
-	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) down
+	(docker stop $$(docker ps -qa); \
+	docker rm $$(docker ps -qa); \
+	docker rmi -f $$(docker images -qa); \
+	docker volume rm $$(docker volume ls -q); \
+	docker network rm $$(docker network ls -q)) 2>/dev/null || true
 
-.PHONY: up start stop restart logs status ps clean
+re: clean all
+
+.PHONY: all up start stop restart logs down status ps clean re
+
+#delete all cache : docker system prune -a
