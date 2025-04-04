@@ -23,4 +23,4 @@ EXPOSE $PORT
 
 ENTRYPOINT ["tini", "--"]
 
-CMD ["node", "app.js"]
+CMD ["node", "server/index.js"]
