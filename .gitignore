@@ -1,3 +1,5 @@
 ./node/app/node_modules/
 .env
 .vscode
+logs
+*.log
