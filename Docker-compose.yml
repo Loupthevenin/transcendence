@@ -1,0 +1,26 @@
+services:
+  node:
+    build: ./node
+    container_name: node
+    ports:
+      - "4000:4000"
+    # depends_on:
+    #   - wordpress
+    networks:
+      - transcendance
+
+  # SQLite:
+  #   build: ./requirements/mariadb/
+  #   container_name: mariadb
+  #   restart: always
+  #   volumes:
+  #     - mariadb_volume:/var/lib/mysql
+  #   env_file:
+  #     - .env
+  #   networks:
+  #     - transcendance
+
+networks:
+  transcendance:
+    name: transcendance
+    driver: bridge
