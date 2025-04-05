@@ -2,14 +2,13 @@
   "name": "app",
   "version": "1.0.0",
   "description": "This project was bootstrapped with Fastify-CLI.",
-  "main": "app.js",
-  "directories": {
-    "test": "test"
-  },
+  "main": "dist/server/app.js",
   "scripts": {
-    "test": "node --test test/**/*.test.js",
-    "start": "fastify start -l info app.js",
-    "dev": "fastify start -w -l info -P app.js"
+    "build": "tsc",
+    "postbuild": "mv ./client ./dist",
+    "start": "node dist/server/app.js",
+    "dev": "ts-node-dev --respawn --transpile-only app/server/app.ts",
+    "test": "node --test test/**/*.test.js"
   },
   "keywords": [],
   "author": "",
