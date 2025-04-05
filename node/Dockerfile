@@ -11,20 +11,20 @@ RUN mkdir -p /etc/node/ssl && \
         -out /etc/node/ssl/key.crt \
         -subj "/C=FR/ST=Paris/L=Paris/O=42/OU=ltheveni/CN=ltheveni.42.fr"
 
-COPY ./app-setup.sh /usr/local/bin/app-setup.sh
-RUN chmod +x /usr/local/bin/app-setup.sh
+# COPY ./app-setup.sh /usr/local/bin/app-setup.sh
+# RUN chmod +x /usr/local/bin/app-setup.sh
 
 RUN mkdir -p /var/app
-
 COPY ./app/ /var/app
 
 WORKDIR /var/app
 
 RUN npm install
-RUN npx tsc
+RUN npm run build
 
 EXPOSE $PORT
 
 ENTRYPOINT ["tini", "--"]
 
-CMD [ "bash", "/usr/local/bin/app-setup.sh" ]
+# CMD [ "bash", "/usr/local/bin/app-setup.sh" ]
+CMD ["node", "dist/server/app.js"]
