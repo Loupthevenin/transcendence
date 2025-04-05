@@ -1,7 +1,5 @@
 import fs from "fs";
 import Fastify, { FastifyInstance } from 'fastify';
-import path from 'path';
-import db from "./db/db";
 import { setupWebSocket } from "./ws/setupWebSocket";
 
 const PORT: number = Number(process.env.PORT);
