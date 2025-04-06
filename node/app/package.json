@@ -4,7 +4,8 @@
   "description": "This project was bootstrapped with Fastify-CLI.",
   "main": "dist/server/app.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run build:css",
+    "build:css": "tailwindcss -i ./client/styles.css -o ./dist/client/output.css --minify",
     "postbuild": "./copy-project.sh",
     "start": "node dist/server/app.js",
     "dev": "ts-node-dev --respawn --transpile-only app/server/app.ts",
@@ -29,6 +30,7 @@
     "@types/node": "^22.14.0",
     "@types/sqlite3": "^3.1.11",
     "@types/ws": "^8.18.1",
+    "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3"
   }
 }
