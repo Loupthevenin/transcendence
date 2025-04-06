@@ -1,14 +1,19 @@
 // Babylon.js setup
 const canvas = document.getElementById("renderCanvas"); // Get the canvas element
+
+if (!(canvas instanceof HTMLCanvasElement)) {
+  throw new Error("renderCanvas is not a valid HTMLCanvasElement or is null. Stopping execution.");
+}
+
 canvas.style.width = "100%"; // Full width
 canvas.style.height = "100%"; // Full height
 
-const engine = new BABYLON.Engine(canvas, true); // Initialize the Babylon.js engine
+const engine: BABYLON.Engine = new BABYLON.Engine(canvas, true); // Initialize the Babylon.js engine
 
-const scene = new BABYLON.Scene(engine);
+const scene: BABYLON.Scene = new BABYLON.Scene(engine);
 scene.detachControl();
 
-const camera = new BABYLON.ArcRotateCamera(
+const camera: BABYLON.ArcRotateCamera = new BABYLON.ArcRotateCamera(
   "Camera",
   Math.PI,  // Horizontal rotation
   0,        // Vertical rotation
@@ -17,7 +22,7 @@ const camera = new BABYLON.ArcRotateCamera(
   scene
 );
 
-camera.attachControl(canvas, false); // Attach to the canvas without user controls
+camera.attachControl(canvas as unknown as HTMLElement, false); // Attach to the canvas without user controls
 camera.lowerAlphaLimit = camera.alpha; // Lock horizontal rotation
 camera.upperAlphaLimit = camera.alpha;
 camera.lowerBetaLimit = camera.beta;   // Lock vertical rotation
@@ -26,25 +31,25 @@ camera.lowerRadiusLimit = camera.radius; // Lock zoom
 camera.upperRadiusLimit = camera.radius;
 
 // Game elements: paddles, ball, and ground
-const paddle1 = BABYLON.MeshBuilder.CreateBox("paddle1", { width: 1, height: 0.1, depth: 0.1 }, scene);
+const paddle1: BABYLON.Mesh = BABYLON.MeshBuilder.CreateBox("paddle1", { width: 1, height: 0.1, depth: 0.1 }, scene);
 paddle1.position = new BABYLON.Vector3(0, 0, -4);
 
-const paddle2 = BABYLON.MeshBuilder.CreateBox("paddle2", { width: 1, height: 0.1, depth: 0.1 }, scene);
+const paddle2: BABYLON.Mesh = BABYLON.MeshBuilder.CreateBox("paddle2", { width: 1, height: 0.1, depth: 0.1 }, scene);
 paddle2.position = new BABYLON.Vector3(0, 0, 4);
 
 // Create the paddle material
-const paddleMaterial = new BABYLON.StandardMaterial("paddleMaterial", scene);
+const paddleMaterial: BABYLON.StandardMaterial = new BABYLON.StandardMaterial("paddleMaterial", scene);
 paddleMaterial.emissiveColor = BABYLON.Color3.White();
 
 // Apply the material to the paddles
 paddle1.material = paddleMaterial;
 paddle2.material = paddleMaterial;
 
-const ballRadius = 0.1; // The radius of the ball
-const ball = BABYLON.MeshBuilder.CreateSphere("ball", { diameter: ballRadius*2 }, scene);
+const ballRadius: number = 0.1; // The radius of the ball
+const ball: BABYLON.Mesh = BABYLON.MeshBuilder.CreateSphere("ball", { diameter: ballRadius*2 }, scene);
 
 // Create the ball material
-const ballMaterial = new BABYLON.StandardMaterial("ballMaterial", scene);
+const ballMaterial: BABYLON.StandardMaterial = new BABYLON.StandardMaterial("ballMaterial", scene);
 ballMaterial.emissiveColor = BABYLON.Color3.Gray();
 
 ball.material = ballMaterial;
@@ -52,20 +57,20 @@ ball.material = ballMaterial;
 const ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 6, height: 10 }, scene);
 
 // Create the ground material
-const groundMaterial = new BABYLON.StandardMaterial("groundMaterial", scene);
+const groundMaterial: BABYLON.StandardMaterial = new BABYLON.StandardMaterial("groundMaterial", scene);
 groundMaterial.emissiveColor = BABYLON.Color3.Black();
 
 ground.material = groundMaterial;
 
 // Paddle movement variables
-const paddleSpeed = 0.1; // Speed of paddle movement
-const paddleMaxX = 3; // Maximum x-position for paddles
-const paddleMinX = -3; // Minimum x-position for paddles
-let paddle1Input = 0;
-let paddle2Input = 0;
+const paddleSpeed: number = 0.1; // Speed of paddle movement
+const paddleMaxX: number = 3; // Maximum x-position for paddles
+const paddleMinX: number = -3; // Minimum x-position for paddles
+let paddle1Input: number = 0;
+let paddle2Input: number = 0;
 
 // Add input handling for paddle movement
-window.addEventListener("keydown", (event) => {
+window.addEventListener("keydown", (event: KeyboardEvent) => {
   switch (event.key) {
     case "ArrowUp": // Move Paddle 1 (Player 1) Up
       paddle1Input |= 0b01;
@@ -82,7 +87,7 @@ window.addEventListener("keydown", (event) => {
   }
 });
 
-window.addEventListener("keyup", (event) => {
+window.addEventListener("keyup", (event: KeyboardEvent) => {
   switch (event.key) {
     case "ArrowUp":
       paddle1Input &= ~0b01; // Stop Paddle 1 Up movement
@@ -100,14 +105,14 @@ window.addEventListener("keyup", (event) => {
 });
 
 // Ball movement logic
-const ballSpeed = 0.1; // Speed of ball
-let ballVelocityX = 0;
-let ballVelocityZ = 0;
+const ballSpeed: number = 0.1; // Speed of ball
+let ballVelocityX: number = 0;
+let ballVelocityZ: number = 0;
 
-function updateBallPosition(ball) {
+function updateBallPosition(ball: BABYLON.Mesh) {
   ball.position.x += ballVelocityX * ballSpeed; // Update ball x position
   ball.position.z += ballVelocityZ * ballSpeed; // Update ball z position
-  const ballPosition = ball.position;
+  const ballPosition: BABYLON.Vector3 = ball.position;
 
   // Handle ball collision with walls
   if (ballPosition.x - ballRadius < -3 || ballPosition.x + ballRadius > 3) {
@@ -123,50 +128,52 @@ function updateBallPosition(ball) {
   // Handle ballPosition going out of bounds (score logic)
   if (ballPosition.z - ballRadius < -5) {
     console.log('Player 2 scores!');
-    resetBall();
+    resetBall(ball);
   } else if (ballPosition.z + ballRadius > 5) {
     console.log('Player 1 scores!');
-    resetBall();
+    resetBall(ball);
   }
 }
 
 // Reset ball position and velocity
-function resetBall() {
+function resetBall(ball: BABYLON.Mesh) {
   ball.position.x = 0;
   ball.position.z = 0;
 
-  const angle = Math.random() * Math.PI * 2;
+  const angle: number = Math.random() * Math.PI * 2;
   ballVelocityX = Math.cos(angle);
   ballVelocityZ = Math.sin(angle);
 }
 
 // WebSocket setup for real-time communication
-// fetch('/config')
-// .then((response) => response.json())
-// .then((config) => {
-//   const socket = new WebSocket(`ws://${config.domainName}:${config.port}`);
+fetch('/config')
+  .then((response: Response) => response.json())
+  .then((config: { domainName: string; port: number }) => {
+    const socket: WebSocket = new WebSocket(`ws://${config.domainName}:${config.port}`);
 
-//   socket.onopen = () => {
-//     console.log("Connected to server");
-//   };
+    socket.onopen = () => {
+      console.log("Connected to server");
+    };
 
-//   socket.onmessage = (event) => {
-//     const data = JSON.parse(event.data);
+    socket.onmessage = (event: MessageEvent) => {
+      const data = JSON.parse(event.data) as {
+        ballPosition: { x: number; z: number };
+      };
 
-//     // Example: Update ball position based on server data
-//     ball.position.x = data.ballPosition.x;
-//     ball.position.z = data.ballPosition.z;
+      // Example: Update ball position based on server data
+      ball.position.x = data.ballPosition.x;
+      ball.position.z = data.ballPosition.z;
 
-//     // Handle other game updates
-//   };
+      // Handle other game updates
+    };
 
-//   socket.onclose = () => {
-//     console.log("Disconnected from server");
-//   };
-// })
-// .catch((error) => console.error('Error fetching config:', error));
+    socket.onclose = () => {
+      console.log("Disconnected from server");
+    };
+  })
+  .catch((error: any) => console.error('Error fetching config:', error));
 
-resetBall();
+resetBall(ball);
 
 // Game render loop
 engine.runRenderLoop(() => {
