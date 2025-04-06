@@ -1,8 +1,13 @@
 services:
   node:
-    build: ./node
     container_name: node
     image: node
+    build:
+      context: ./node
+      args:
+        SSL_KEY_PATH: ${SSL_KEY_PATH}
+        SSL_CERT_PATH: ${SSL_CERT_PATH}
+        DOMAIN_NAME: ${DOMAIN_NAME}
     ports:
       - "${PORT}:${PORT}"
     env_file:
@@ -11,6 +16,7 @@ services:
       - sqlite_data:$DB_DIR
     networks:
       - transcendance
+    restart: always
 
 volumes:
   sqlite_data:

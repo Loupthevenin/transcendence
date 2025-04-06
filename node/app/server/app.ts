@@ -7,8 +7,8 @@ const DOMAIN_NAME: string = process.env.DOMAIN_NAME as string;
 
 // Load SSL keys
 const httpsOptions = {
-  key: fs.readFileSync("/etc/node/ssl/key.key"),
-  cert: fs.readFileSync("/etc/node/ssl/key.crt"),
+  key: fs.readFileSync(process.env.SSL_KEY_PATH || ""),
+  cert: fs.readFileSync(process.env.SSL_CERT_PATH || ""),
 };
 
 // Create an HTTPS Fastify serveur
