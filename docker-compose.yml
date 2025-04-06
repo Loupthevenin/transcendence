@@ -14,6 +14,7 @@ services:
       - .env
     volumes:
       - sqlite_data:$DB_DIR
+      - ./node/app:/var/app
     networks:
       - transcendance
     restart: always
