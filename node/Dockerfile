@@ -15,16 +15,12 @@ RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
         -out ${SSL_CERT_PATH} \
         -subj "/C=FR/ST=Paris/L=Paris/O=42/OU=student/CN=${DOMAIN_NAME}"
 
-RUN mkdir -p /var/app
-COPY ./app/ /var/app
+COPY ./node.sh /var
 
 WORKDIR /var/app
-
-RUN npm install
-RUN npm run build
 
 EXPOSE $PORT
 
 ENTRYPOINT ["tini", "--"]
 
-CMD ["node", "dist/server/app.js"]
+CMD ["../node.sh"]

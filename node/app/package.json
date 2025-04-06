@@ -8,7 +8,7 @@
     "build:css": "tailwindcss -i ./client/styles.css -o ./dist/client/output.css --minify",
     "postbuild": "./copy-project.sh",
     "start": "node dist/server/app.js",
-    "dev": "ts-node-dev --respawn --transpile-only app/server/app.ts",
+    "dev": "ts-node-dev --respawn --transpile-only server/app.ts",
     "test": "node --test test/**/*.test.js"
   },
   "keywords": [],
@@ -22,6 +22,7 @@
     "fastify-cli": "^7.4.0",
     "fastify-plugin": "^5.0.0",
     "sqlite3": "^5.1.7",
+    "ts-node-dev": "^2.0.0",
     "ws": "^8.18.1"
   },
   "devDependencies": {
