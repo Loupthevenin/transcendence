@@ -1,17 +1,16 @@
 import WebSocket, { WebSocketServer } from 'ws';
-import { Vector2 } from '../../utils/vector2';
 
 // Game state
 interface GameState {
-  ballPosition: Vector2;
-  paddle1Position: Vector2;
-  paddle2Position: Vector2;
+  ballPosition: BABYLON.Vector2;
+  paddle1Position: BABYLON.Vector2;
+  paddle2Position: BABYLON.Vector2;
 }
 
 const gameState: GameState = {
-  ballPosition: Vector2.zero(),
-  paddle1Position: Vector2.zero(),
-  paddle2Position: Vector2.zero(),
+  ballPosition: new BABYLON.Vector2(0, 0),
+  paddle1Position: new BABYLON.Vector2(0, 0),
+  paddle2Position: new BABYLON.Vector2(0, 0)
 };
 
 // WebSocket setup
@@ -21,7 +20,7 @@ export function setupWebSocket(): WebSocketServer {
   // WebSocket connection
   wss.on("connection", (ws: WebSocket) => {
     ws.on("message", (message: string) => {
-      const data: { type: string; player: number; position: Vector2 } = JSON.parse(message);
+      const data: { type: string; player: number; position: BABYLON.Vector2 } = JSON.parse(message);
       // Update paddle positions
       if (data.type === "movePaddle") {
         if (data.player === 1) {
