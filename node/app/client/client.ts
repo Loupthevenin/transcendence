@@ -30,11 +30,17 @@ camera.upperBetaLimit = camera.beta;
 camera.lowerRadiusLimit = camera.radius; // Lock zoom
 camera.upperRadiusLimit = camera.radius;
 
+// Game settings
+const paddleWidth: number = 1; // Width of the paddles
+const paddleDepth: number = 0.1; // Depth of the paddles
+const paddleSpeed: number = 0.1; // Speed of paddle movement
+const ballRadius: number = 0.1; // The radius of the ball
+
 // Game elements: paddles, ball, and ground
-const paddle1: BABYLON.Mesh = BABYLON.MeshBuilder.CreateBox("paddle1", { width: 1, height: 0.1, depth: 0.1 }, scene);
+const paddle1: BABYLON.Mesh = BABYLON.MeshBuilder.CreateBox("paddle1", { width: paddleWidth, height: paddleDepth, depth: paddleDepth }, scene);
 paddle1.position = new BABYLON.Vector3(0, 0, -4);
 
-const paddle2: BABYLON.Mesh = BABYLON.MeshBuilder.CreateBox("paddle2", { width: 1, height: 0.1, depth: 0.1 }, scene);
+const paddle2: BABYLON.Mesh = BABYLON.MeshBuilder.CreateBox("paddle2", { width: paddleWidth, height: paddleDepth, depth: paddleDepth }, scene);
 paddle2.position = new BABYLON.Vector3(0, 0, 4);
 
 // Create the paddle material
@@ -45,7 +51,6 @@ paddleMaterial.emissiveColor = BABYLON.Color3.White();
 paddle1.material = paddleMaterial;
 paddle2.material = paddleMaterial;
 
-const ballRadius: number = 0.1; // The radius of the ball
 const ball: BABYLON.Mesh = BABYLON.MeshBuilder.CreateSphere("ball", { diameter: ballRadius*2 }, scene);
 
 // Create the ball material
@@ -63,7 +68,6 @@ groundMaterial.emissiveColor = BABYLON.Color3.Black();
 ground.material = groundMaterial;
 
 // Paddle movement variables
-const paddleSpeed: number = 0.1; // Speed of paddle movement
 const paddleMaxX: number = 3; // Maximum x-position for paddles
 const paddleMinX: number = -3; // Minimum x-position for paddles
 let paddle1Input: number = 0;
@@ -105,24 +109,23 @@ window.addEventListener("keyup", (event: KeyboardEvent) => {
 });
 
 // Ball movement logic
-const ballSpeed: number = 0.1; // Speed of ball
-let ballVelocityX: number = 0;
-let ballVelocityZ: number = 0;
+const ballSpeed: number = 0.1;
+let ballVelocity: BABYLON.Vector2 = new BABYLON.Vector2(0, 0);
 
 function updateBallPosition(ball: BABYLON.Mesh) {
-  ball.position.x += ballVelocityX * ballSpeed; // Update ball x position
-  ball.position.z += ballVelocityZ * ballSpeed; // Update ball z position
+  ball.position.x += ballVelocity.x * ballSpeed; // Update ball x position
+  ball.position.z += ballVelocity.y * ballSpeed; // Update ball z position
   const ballPosition: BABYLON.Vector3 = ball.position;
 
   // Handle ball collision with walls
   if (ballPosition.x - ballRadius < -3 || ballPosition.x + ballRadius > 3) {
-    ballVelocityX *= -1; // Reverse direction
+    ballVelocity.x *= -1; // Reverse direction
   }
 
   // Handle ball collision with paddles
   if ((Math.abs(ballPosition.z - paddle1.position.z) < 0.2 && Math.abs(ballPosition.x - paddle1.position.x) < 0.5)
     || (Math.abs(ballPosition.z - paddle2.position.z) < 0.2 && Math.abs(ballPosition.x - paddle2.position.x) < 0.5)) {
-    ballVelocityZ *= -1; // Reverse direction
+    ballVelocity.y *= -1; // Reverse direction
   }
 
   // Handle ballPosition going out of bounds (score logic)
@@ -141,8 +144,8 @@ function resetBall(ball: BABYLON.Mesh) {
   ball.position.z = 0;
 
   const angle: number = Math.random() * Math.PI * 2;
-  ballVelocityX = Math.cos(angle);
-  ballVelocityZ = Math.sin(angle);
+  ballVelocity.x = Math.cos(angle);
+  ballVelocity.y = Math.sin(angle);
 }
 
 // WebSocket setup for real-time communication
@@ -157,12 +160,12 @@ fetch('/config')
 
     socket.onmessage = (event: MessageEvent) => {
       const data = JSON.parse(event.data) as {
-        ballPosition: { x: number; z: number };
+        ballPosition: BABYLON.Vector2;
       };
 
-      // Example: Update ball position based on server data
+      // Update ball position based on server data
       ball.position.x = data.ballPosition.x;
-      ball.position.z = data.ballPosition.z;
+      ball.position.z = data.ballPosition.y;
 
       // Handle other game updates
     };

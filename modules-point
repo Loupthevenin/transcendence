@@ -27,7 +27,7 @@
 - Devops
 	//@ : Infrastructure setup for log management.
 	//. : Monitoring system.
-	//@ : Designing the backend as microservices.
+	@ : Designing the backend as microservices.
 
 - Graphics
 	@ : Use advanced 3D techniques.
@@ -40,5 +40,5 @@
 	//. : Server-Side Rendering (SSR) integration.
 
 - Server-Side Pong
-	//@ : Replace basic Pong with server-side Pong and implement an API.
+	@ : Replace basic Pong with server-side Pong and implement an API.
 	//@ : Enabling Pong gameplay via CLI against web users with API integration.
