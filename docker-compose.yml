@@ -1,22 +1,37 @@
 services:
-  node:
-    container_name: node
-    image: node
+  nginx:
+    container_name: nginx
+    image: nginx
     build:
-      context: ./node
+      context: ./nginx
       args:
+        DOMAIN_NAME: ${DOMAIN_NAME}
         SSL_KEY_PATH: ${SSL_KEY_PATH}
         SSL_CERT_PATH: ${SSL_CERT_PATH}
-        DOMAIN_NAME: ${DOMAIN_NAME}
     ports:
-      - "${PORT}:${PORT}"
-    env_file:
-      - .env
+      - "${PORT}:443"
     volumes:
-      - sqlite_data:$DB_DIR
-      - ./node/app:/var/app
+      - ./frontend:/var/www/html:ro
     networks:
       - transcendance
+    env_file:
+      - .env
+    depends_on:
+      - backend
+    restart: always
+
+  backend:
+    container_name: backend
+    image: backend
+    build: ./backend
+    volumes:
+      - sqlite_data:$DB_DIR
+      - ./backend/app:/var/app
+      - ./frontend:/var/www/html
+    networks:
+      - transcendance
+    env_file:
+      - .env
     restart: always
 
 volumes:
