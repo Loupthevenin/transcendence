@@ -1,7 +1,7 @@
 {
-  "name": "app",
+  "name": "transcendance",
   "version": "1.0.0",
-  "description": "This project was bootstrapped with Fastify-CLI.",
+  "description": "This project is a pong game.",
   "main": "dist/server/app.js",
   "scripts": {
     "build": "tsc && npm run build:css",
@@ -12,7 +12,7 @@
     "test": "node --test test/**/*.test.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "llebioda,ltheveni,opdi-bia",
   "license": "ISC",
   "dependencies": {
     "@fastify/autoload": "^6.0.0",
@@ -32,7 +32,9 @@
     "@types/node": "^22.14.0",
     "@types/sqlite3": "^3.1.11",
     "@types/ws": "^8.18.1",
+    "autoprefixer": "^10.4.21",
     "babylonjs": "^8.1.1",
+    "postcss": "^8.5.3",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3"
   }

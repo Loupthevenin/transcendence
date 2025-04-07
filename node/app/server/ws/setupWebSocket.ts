@@ -1,4 +1,5 @@
 import WebSocket, { WebSocketServer } from 'ws';
+import * as BABYLON from 'babylonjs';
 
 // Game state
 interface GameState {
