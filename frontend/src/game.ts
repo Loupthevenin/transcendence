@@ -1,3 +1,5 @@
+import * as BABYLON from 'babylonjs';
+
 // Babylon.js setup
 const canvas = document.getElementById("renderCanvas"); // Get the canvas element
 

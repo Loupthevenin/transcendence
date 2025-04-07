@@ -1,26 +1,17 @@
-import fs from "fs";
 import Fastify, { FastifyInstance } from "fastify";
 import { setupWebSocket } from "./ws/setupWebSocket";
 
 const PORT: number = Number(process.env.PORT);
 const DOMAIN_NAME: string = process.env.DOMAIN_NAME as string;
 
-// Load SSL keys
-const httpsOptions = {
-  key: fs.readFileSync(process.env.SSL_KEY_PATH || ""),
-  cert: fs.readFileSync(process.env.SSL_CERT_PATH || ""),
-};
-
 // Create an HTTPS Fastify serveur
 const app: FastifyInstance = Fastify({
-  //logger: true,
-  https: httpsOptions,
+  //logger: true
 });
 
 // Routes
-app.register(require("./routes/index"), { prefix: "/" });
-app.register(require("./routes/users"), { prefix: "/users" });
-app.register(require("./routes/config"), { prefix: "/config" });
+app.register(require("./routes/users"), { prefix: "/api/users" });
+app.register(require("./routes/config"), { prefix: "/api/config" });
 
 // Error handling
 app.setErrorHandler((error, request, reply) => {
@@ -29,7 +20,7 @@ app.setErrorHandler((error, request, reply) => {
 });
 
 // Start the server
-app.listen({ host: "0.0.0.0", port: PORT }, (err, address) => {
+app.listen({ host: "0.0.0.0", port: 8080 }, (err, address) => {
   if (err) throw err;
   console.log(`Server running at ${DOMAIN_NAME}:${PORT}`);
 
