@@ -1,8 +1,13 @@
 node_modules
 **/node_modules
-**/dist
+package-lock.json
 **/package-lock.json
+
+dist
+**/dist
+
 .env
 .vscode
-logs
-*.log
+
+frontend/public/output.css
+frontend/public/**/*.js
