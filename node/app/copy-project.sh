@@ -25,7 +25,7 @@ copy_files() {
     if [[ "$entry_name" == "node_modules" \
       || "$entry_name" == "dist" \
       || $entry_name == *.ts \
-      || "$entry_name" == filename ]]; then
+      || $entry_name == $filename ]]; then
       continue
     fi
 
