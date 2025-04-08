@@ -4,7 +4,7 @@ import { setupWebSocket } from "./ws/setupWebSocket";
 const PORT: number = Number(process.env.PORT);
 const DOMAIN_NAME: string = process.env.DOMAIN_NAME as string;
 
-// Create an HTTPS Fastify serveur
+// Create a Fastify serveur
 const app: FastifyInstance = Fastify({
   //logger: true
 });
@@ -20,7 +20,7 @@ app.setErrorHandler((error, request, reply) => {
 });
 
 // Start the server
-app.listen({ host: "0.0.0.0", port: 8080 }, (err, address) => {
+app.listen({ host: "0.0.0.0", port: 3000 }, (err, address) => {
   if (err) throw err;
   console.log(`Server running at ${DOMAIN_NAME}:${PORT}`);
 
