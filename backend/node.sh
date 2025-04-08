@@ -7,10 +7,20 @@ set -o pipefail # Ensure all parts of a pipeline fail correctly
 RESET='\033[0m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 
+# Install npm dependencies
+echo -e "${BLUE}Installing npm dependencies...${RESET}"
+( cd /var/www/html && npm install ) &
+( cd /var/app && npm install ) &
+
+wait
+echo -e "${GREEN}Npm dependencies installed successfully...${RESET}"
+
+# Compilation of front
 cd /var/www/html
-npm install
+ln -sfn /var/app/src/shared /var/www/html/src/shared
 
 if [ "$NODE_ENV" = "production" ]; then
   echo -e "${CYAN}Building frontend for production...${RESET}"
@@ -22,8 +32,8 @@ else
   FRONTEND_PID=$! # Capture the process ID for later use
 fi
 
+# Compilation of back and run the server
 cd /var/app
-npm install
 npm run build
 
 if [ "$NODE_ENV" = "production" ]; then

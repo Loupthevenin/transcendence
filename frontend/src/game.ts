@@ -1,4 +1,14 @@
 import * as BABYLON from "babylonjs";
+import { GameState, Vector2 } from '@shared/gameElements';
+
+const gameState: GameState = {
+  ballPosition: new Vector2(0, 0),
+  paddle1Position: new Vector2(0, 0),
+  paddle2Position: new Vector2(0, 0),
+  p1Score: 0,
+  p2Score: 0
+};
+console.log("front : Game state: ", gameState);
 
 // Babylon.js setup
 const canvas = document.getElementById("renderCanvas"); // Get the canvas element

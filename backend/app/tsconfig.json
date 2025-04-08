@@ -8,8 +8,15 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": true,
-    "skipLibCheck": true
+    "noUnusedLocals": true,
+    "skipLibCheck": true,
+    "paths": {
+      "@shared/*": ["./src/shared/*"]
+    }
   },
-  "include": ["./src/**/*.ts"],
-  "exclude": ["node_modules", "./public"]
+  "include": [
+    "src/**/*",
+    "src/shared/**/*"
+  ],
+  "exclude": ["node_modules", "./dist"]
 }

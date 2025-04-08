@@ -1,18 +1,16 @@
 import WebSocket, { WebSocketServer } from 'ws';
 import * as BABYLON from 'babylonjs';
+import { GameState } from '@shared/gameElements';
 
 // Game state
-interface GameState {
-  ballPosition: BABYLON.Vector2;
-  paddle1Position: BABYLON.Vector2;
-  paddle2Position: BABYLON.Vector2;
-}
-
 const gameState: GameState = {
   ballPosition: new BABYLON.Vector2(0, 0),
   paddle1Position: new BABYLON.Vector2(0, 0),
-  paddle2Position: new BABYLON.Vector2(0, 0)
+  paddle2Position: new BABYLON.Vector2(0, 0),
+  p1Score: 0,
+  p2Score: 0
 };
+console.log("backend | Game state: ", gameState);
 
 // WebSocket setup
 export function setupWebSocket(): WebSocketServer {
