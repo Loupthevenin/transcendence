@@ -8,6 +8,9 @@ module.exports = {
   },
   resolve: {
     extensions: ['.ts', '.js'], // Resolve TypeScript and JavaScript files
+    alias: {
+      '@shared': path.resolve(__dirname, './src/shared/'), // Path to shared folder
+    },
   },
   module: {
     rules: [

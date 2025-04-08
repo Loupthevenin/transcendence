@@ -11,3 +11,4 @@ dist
 
 frontend/public/output.css
 frontend/public/**/*.js
+frontend/src/shared
