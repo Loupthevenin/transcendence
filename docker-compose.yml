@@ -9,6 +9,7 @@ services:
         SSL_KEY_PATH: ${SSL_KEY_PATH}
         SSL_CERT_PATH: ${SSL_CERT_PATH}
     ports:
+      - "8080:8080"
       - "${PORT}:443"
     volumes:
       - ./frontend:/var/www/html:ro

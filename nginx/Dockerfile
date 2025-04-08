@@ -20,6 +20,6 @@ RUN sed -i "s|SSL_KEY_PATH|${SSL_KEY_PATH}|g" /etc/nginx/nginx.conf && \
     sed -i "s|SSL_CERT_PATH|${SSL_CERT_PATH}|g" /etc/nginx/nginx.conf && \
     sed -i "s|DOMAIN_NAME|${DOMAIN_NAME}|g" /etc/nginx/nginx.conf
 
-EXPOSE 443
+EXPOSE 443 8080
 
 CMD [ "nginx", "-g", "daemon off;" ]

@@ -18,13 +18,14 @@ module.exports = {
       },
       {
         test: /\.css$/, // Process CSS files
-        use: ['style-loader', 'css-loader', 'postcss-loader'], // Process CSS with Tailwind
+        use: ['style-loader', 'css-loader'], // Process CSS with Tailwind
       },
     ],
   },
   devServer: {
-    static: './public', // Serve static files from the dist folder
-    port: 3000, // Webpack Dev Server will run on localhost:3000
+    static: path.resolve(__dirname, 'public'), // Serve static files from the public folder
+    port: 9000, // Webpack Dev Server will run on localhost:9000
+    host: '0.0.0.0',
     hot: true, // Enable Hot Module Replacement
     historyApiFallback: true, // For Single Page Applications
   }

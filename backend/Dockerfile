@@ -11,7 +11,7 @@ COPY ./node.sh /var/
 
 WORKDIR /var/app
 
-EXPOSE 8080
+EXPOSE 3000
 
 ENTRYPOINT ["tini", "--"]
 
