@@ -1,14 +1,4 @@
-import * as BABYLON from "babylonjs";
-import { GameState, Vector2 } from '@shared/gameElements';
-
-const gameState: GameState = {
-  ballPosition: new Vector2(0, 0),
-  paddle1Position: new Vector2(0, 0),
-  paddle2Position: new Vector2(0, 0),
-  p1Score: 0,
-  p2Score: 0
-};
-console.log("front : Game state: ", gameState);
+import { BABYLON, GameState } from '@shared/gameElements';
 
 // Babylon.js setup
 const canvas = document.getElementById("renderCanvas"); // Get the canvas element
@@ -182,9 +172,11 @@ function updateBallPosition(ball: BABYLON.Mesh) {
 
   // Handle ballPosition going out of bounds (score logic)
   if (ballPosition.z - ballRadius < -5) {
+    gameState.p2Score += 1;
     console.log("Player 2 scores!");
     resetBall(ball);
   } else if (ballPosition.z + ballRadius > 5) {
+    gameState.p1Score += 1;
     console.log("Player 1 scores!");
     resetBall(ball);
   }
@@ -229,6 +221,14 @@ fetch("/api/config")
     };
   })
   .catch((error: any) => console.error("Error fetching config:", error));
+
+const gameState: GameState = {
+  ballPosition: new BABYLON.Vector2(0, 0),
+  paddle1Position: new BABYLON.Vector2(0, 0),
+  paddle2Position: new BABYLON.Vector2(0, 0),
+  p1Score: 0,
+  p2Score: 0
+};
 
 resetBall(ball);
 
