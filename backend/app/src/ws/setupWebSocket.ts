@@ -1,6 +1,5 @@
 import WebSocket, { WebSocketServer } from 'ws';
-import * as BABYLON from 'babylonjs';
-import { GameState } from '@shared/gameElements';
+import { BABYLON, GameState } from '../shared/gameElements';
 
 // Game state
 const gameState: GameState = {
@@ -10,7 +9,6 @@ const gameState: GameState = {
   p1Score: 0,
   p2Score: 0
 };
-console.log("backend | Game state: ", gameState);
 
 // WebSocket setup
 export function setupWebSocket(): WebSocketServer {
