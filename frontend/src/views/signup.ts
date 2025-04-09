@@ -1,7 +1,8 @@
 export function SignupView(): HTMLElement {
   const container = document.createElement("div");
-  container.className = "bg-gray-800 p-8 rounded-lg shadow-xl max-w-sm w-full";
+  container.className = "flex justify-center items-center min-h-screen";
   container.innerHTML = `
+	<div class="bg-gray-800 p-8 rounded-lg shadow-xl max-w-sm w-full">
       <h2 class="text-3xl text-center font-bold text-indigo-400 mb-6">
         Créer un compte
       </h2>
@@ -78,12 +79,12 @@ export function SignupView(): HTMLElement {
       <div class="mt-4 text-center">
         <p class="text-sm text-purple-300">
           Vous avez déjà un compte ?
-          <a href="login" class="text-indigo-400 hover:underline"
+          <a href="auth/login" data-link class="text-indigo-400 hover:underline"
             >Se connecter</a
           >
         </p>
       </div>
+	</div>
 `;
-
   return container;
 }

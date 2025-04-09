@@ -1,7 +1,8 @@
 export function LoginView(): HTMLElement {
   const container = document.createElement("div");
-  container.className = "bg-gray-800 p-8 rounded-lg shadow-xl max-w-sm w-full";
+  container.className = "flex justify-center items-center min-h-screen";
   container.innerHTML = `
+	<div class="bg-gray-800 p-8 rounded-lg shadow-xl max-w-sm w-full">
       <h2 class="text-3xl text-center font-bold text-indigo-400 mb-6">
         Se connecter
       </h2>
@@ -52,18 +53,12 @@ export function LoginView(): HTMLElement {
       <div class="mt-4 text-center">
         <p class="text-sm text-purple-300">
           Pas encore de compte ?
-          <a href="signup" class="text-indigo-400 hover:underline"
+          <a href="auth/signup" data-link class="text-indigo-400 hover:underline"
             >S'inscrire</a
           >
         </p>
       </div>
+	</div>
 `;
-
-  // A VOIR apres
-  // const form = container.querySelector("#loginForm") as HTMLFormElement;
-  // form.addEventListener("submit", (e) => {
-  //   e.preventDefault;
-  // });
-
   return container;
 }
