@@ -1,15 +1,7 @@
-<!doctype html>
-<html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login</title>
-    <link rel="stylesheet" href="../output.css" />
-  </head>
-  <body
-    class="bg-gray-900 text-white font-[Inter] flex justify-center items-center min-h-screen"
-  >
-    <div class="bg-gray-800 p-8 rounded-lg shadow-xl max-w-sm w-full">
+export function LoginView(): HTMLElement {
+  const container = document.createElement("div");
+  container.className = "bg-gray-800 p-8 rounded-lg shadow-xl max-w-sm w-full";
+  container.innerHTML = `
       <h2 class="text-3xl text-center font-bold text-indigo-400 mb-6">
         Se connecter
       </h2>
@@ -60,12 +52,18 @@
       <div class="mt-4 text-center">
         <p class="text-sm text-purple-300">
           Pas encore de compte ?
-          <a href="signup.html" class="text-indigo-400 hover:underline"
+          <a href="signup" class="text-indigo-400 hover:underline"
             >S'inscrire</a
           >
         </p>
       </div>
-    </div>
-  </body>
-  <script src="auth.js"></script>
-</html>
+`;
+
+  // A VOIR apres
+  // const form = container.querySelector("#loginForm") as HTMLFormElement;
+  // form.addEventListener("submit", (e) => {
+  //   e.preventDefault;
+  // });
+
+  return container;
+}
