@@ -19,7 +19,6 @@ services:
       - .env
     depends_on:
       - backend
-    restart: always
 
   backend:
     container_name: backend
@@ -33,7 +32,6 @@ services:
       - transcendance
     env_file:
       - .env
-    restart: always
 
 volumes:
   sqlite_data:

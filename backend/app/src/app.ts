@@ -10,6 +10,8 @@ const app: FastifyInstance = Fastify({
 });
 
 // Routes
+app.register(require("./routes/login"), { prefix: "/api/login" });
+app.register(require("./routes/signup"), { prefix: "/api/signup" });
 app.register(require("./routes/users"), { prefix: "/api/users" });
 app.register(require("./routes/config"), { prefix: "/api/config" });
 
