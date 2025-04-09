@@ -1,14 +1,31 @@
 import { LoginView } from "./views/login";
 import { SignupView } from "./views/signup";
 import { MainLayout } from "./layout/layout";
-import { initSideBarNavigation } from "./interactions/navbar";
+import { initSideBarNavigation } from "./controllers/navbar";
 
 type RouteHandler = () => HTMLElement;
+type Route = {
+  view: RouteHandler;
+  setup?: (root: HTMLElement) => void;
+};
 
-const routes: Record<string, RouteHandler> = {
-  "/auth/login": LoginView,
-  "/auth/signup": SignupView,
-  "/": () => MainLayout(),
+const routes: Record<string, Route> = {
+  "/auth/login": {
+    view: LoginView,
+    setup: (root) =>
+      import("./controllers/login").then((mod) => mod.setupLoginHandlers(root)),
+  },
+  "/auth/signup": {
+    view: SignupView,
+    setup: (root) =>
+      import("./controllers/signup").then((mod) =>
+        mod.setupSignupHandlers(root),
+      ),
+  },
+  "/": {
+    view: MainLayout,
+    setup: () => initSideBarNavigation(),
+  },
 };
 
 export function navigateTo(path: string) {
@@ -16,23 +33,24 @@ export function navigateTo(path: string) {
   renderRoute();
 }
 
-export function renderRoute() {
+export async function renderRoute() {
   const path = location.pathname;
-
-  const handler =
-    routes[path] ||
-    (() => {
-      const el = document.createElement("div");
-      el.textContent = "404 - Page non trouvée";
-      return el;
-    });
+  const route = routes[path];
 
   document.body.innerHTML = "";
-  if (path == "/") {
-    document.body.appendChild(MainLayout());
-    initSideBarNavigation();
-  } else {
-    document.body.appendChild(handler());
+
+  if (!route) {
+    const el = document.createElement("div");
+    el.textContent = "404 - Page non trouvée";
+    document.body.appendChild(el);
+    return;
+  }
+
+  const view = route.view();
+  document.body.appendChild(view);
+
+  if (route.setup) {
+    await route.setup(view);
   }
 }
 
