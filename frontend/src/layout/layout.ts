@@ -1,12 +1,11 @@
 import { Sidebar } from "../components/sidebar";
+import { CreateGameCanvas, InitGame } from "../game/game";
 
 export function MainLayout(content?: HTMLElement): HTMLElement {
   const container = Sidebar();
 
-  const canvas = document.createElement("canvas");
-  canvas.id = "renderCanvas";
-
-  container.appendChild(canvas);
+  CreateGameCanvas();
+  InitGame();
 
   if (content) {
     container.appendChild(content);

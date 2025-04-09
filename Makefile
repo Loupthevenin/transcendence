@@ -35,10 +35,21 @@ clean:
 	docker rmi -f $$(docker images -qa); \
 	docker volume rm $$(docker volume ls -q); \
 	docker network rm $$(docker network ls -q)) 2>/dev/null || true
-	rm -rf */node_modules */package-lock.json
 
-re: clean all
+fclean: clean
+	@if [ "$(shell id -u)" != "0" ]; then \
+        echo "Please run with sudo to use rm"; \
+        exit 1; \
+    fi
 
-.PHONY: all up start stop restart logs down status ps clean re
+	rm -rf */node_modules */package-lock.json 2>/dev/null || true
+
+	(rm -rf ./backend/app/dist; \
+	rm -rf ./frontend/public/**/*.js ./frontend/public/output.css; \
+	find ./frontend/public -type d -empty -delete) || true
+
+re: fclean all
+
+.PHONY: all up start stop restart logs down status ps clean fclean re
 
 #delete all cache : docker system prune -a
