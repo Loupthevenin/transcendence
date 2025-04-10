@@ -30,4 +30,4 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-echo -e "${GREEN}Development build completed successfully!${RESET}"
+echo -e "\n${GREEN}Development build completed successfully!${RESET}\n"

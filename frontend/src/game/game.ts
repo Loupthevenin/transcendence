@@ -23,7 +23,7 @@ export function InitGame() {
   const engine: BABYLON.Engine = new BABYLON.Engine(canvas, true); // Initialize the Babylon.js engine
 
   const scene: BABYLON.Scene = new BABYLON.Scene(engine); // Create a new scene
-  scene.detachControl(); // Detach control to prevent user interaction
+  //scene.detachControl(); // Detach control to prevent user interaction
 
   const camera: BABYLON.ArcRotateCamera = new BABYLON.ArcRotateCamera(
     "Camera",
@@ -35,12 +35,20 @@ export function InitGame() {
   );
 
   camera.attachControl(canvas as unknown as HTMLElement, false); // Attach to the canvas without user controls
-  camera.lowerAlphaLimit = camera.alpha; // Lock horizontal rotation
-  camera.upperAlphaLimit = camera.alpha;
-  camera.lowerBetaLimit = camera.beta; // Lock vertical rotation
-  camera.upperBetaLimit = camera.beta;
-  camera.lowerRadiusLimit = camera.radius; // Lock zoom
-  camera.upperRadiusLimit = camera.radius;
+  // camera.lowerAlphaLimit = camera.alpha; // Lock horizontal rotation
+  // camera.upperAlphaLimit = camera.alpha;
+  // camera.lowerBetaLimit = camera.beta; // Lock vertical rotation
+  // camera.upperBetaLimit = camera.beta;
+  // camera.lowerRadiusLimit = camera.radius; // Lock zoom
+  // camera.upperRadiusLimit = camera.radius;
+
+  const gameState: GameState = {
+    ballPosition: new BABYLON.Vector2(0, 0),
+    paddle1Position: new BABYLON.Vector2(0, 0),
+    paddle2Position: new BABYLON.Vector2(0, 0),
+    p1Score: 0,
+    p2Score: 0,
+  };
 
   // Game settings
   const areaWidth: number = 10; // Width of the game area
@@ -108,6 +116,29 @@ export function InitGame() {
     { samplingMode: BABYLON.Texture.NEAREST_SAMPLINGMODE },
   );
   ground.material = groundMaterial;
+
+  ///////////////////////////////////////////////////////////////
+  new BABYLON.AxesViewer(scene, 2);
+  ///////////////////////////////////////////////////////////////
+
+  // Create the score display
+  const fontTexture = new BABYLON.DynamicTexture("fontTexture", 512, scene, true);
+  const font = "bold 50px Arial";
+
+  fontTexture.drawText(`${gameState.p1Score} : ${gameState.p2Score}`, 50, 200, font, "white", "transparent");
+
+  const scoreMaterial = new BABYLON.StandardMaterial("scoreMaterial", scene);
+  scoreMaterial.emissiveTexture = fontTexture;
+
+  const scorePlane = BABYLON.Mesh.CreatePlane("scorePlane", 4, scene);
+  scorePlane.material = scoreMaterial;
+  scorePlane.position = new BABYLON.Vector3(4, 0, 0);
+
+  // Update function to refresh scores
+  scene.onBeforeRenderObservable.add(() => {
+      fontTexture.clear();
+      fontTexture.drawText(`${gameState.p1Score} : ${gameState.p2Score}`, 50, 200, font, "white", "transparent");    
+  });
 
   // Paddle movement variables
   const areaMaxX: number = areaHeight / 2; // Maximum x-position of the area
@@ -230,14 +261,6 @@ export function InitGame() {
     })
     .catch((error: any) => console.error("Error fetching config:", error));
 
-  const gameState: GameState = {
-    ballPosition: new BABYLON.Vector2(0, 0),
-    paddle1Position: new BABYLON.Vector2(0, 0),
-    paddle2Position: new BABYLON.Vector2(0, 0),
-    p1Score: 0,
-    p2Score: 0,
-  };
-
   resetBall(ball);
 
   // Game render loop
@@ -269,4 +292,3 @@ export function InitGame() {
     engine.resize();
   });
 }
-
