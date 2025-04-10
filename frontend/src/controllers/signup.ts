@@ -32,9 +32,7 @@ export function setupSignupHandlers(container: HTMLElement) {
         });
 
         if (!res.ok) throw new Error("Error signup");
-
-        const data = await res.json();
-        localStorage.setItem("auth_token", data.token);
+        await res.json();
         navigateTo("/");
       } catch (err) {
         console.error("Signup error", err);
