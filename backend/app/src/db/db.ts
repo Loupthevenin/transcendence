@@ -11,7 +11,8 @@ db.exec(`
 	email TEST NOT NULL UNIQUE,
 	password TEXT NOT NULL NULL,
 	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-	require2FA BOOLEAN DEFAULT FALSE
+	require2FA BOOLEAN DEFAULT FALSE,
+	twofa_secret TEXT
 )
 `);
 
