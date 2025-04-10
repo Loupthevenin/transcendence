@@ -42,7 +42,8 @@ fclean: clean
         exit 1; \
     fi
 
-	rm -rf */node_modules */package-lock.json 2>/dev/null || true
+	rm -rf backend/app/node_modules frontend/node_modules 2>/dev/null || true
+	rm -rf backend/app/package-lock.json frontend/package-lock.json 2>/dev/null || true
 
 	(rm -rf ./backend/app/dist; \
 	rm -rf ./frontend/public/**/*.js ./frontend/public/output.css; \
