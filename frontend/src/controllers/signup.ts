@@ -35,7 +35,6 @@ export function setupSignupHandlers(container: HTMLElement) {
 
         const data = await res.json();
         localStorage.setItem("auth_token", data.token);
-
         navigateTo("/");
       } catch (err) {
         console.error("Signup error", err);
