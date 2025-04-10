@@ -1,6 +1,8 @@
 import { LoginView } from "./views/login";
 import { SignupView } from "./views/signup";
 import { MainLayout } from "./layout/layout";
+import { TwoFAView } from "./views/2fa";
+
 import { initSideBarNavigation } from "./controllers/navbar";
 import { InitGame, CreateGameCanvas } from "./game/game";
 
@@ -23,6 +25,11 @@ const routes: Record<string, Route> = {
         mod.setupSignupHandlers(root),
       ),
   },
+  "/auth/2fa": {
+    view: TwoFAView,
+    setup: (root) =>
+      import("./controllers/2fa").then((mod) => mod.setupTwoFAHandlers(root)),
+  },
   "/": {
     view: () => MainLayout(CreateGameCanvas()),
     setup: () => {
@@ -33,7 +40,11 @@ const routes: Record<string, Route> = {
 };
 
 export function navigateTo(path: string) {
-  history.pushState(null, "", path);
+  if (path == "/") {
+    history.replaceState(null, "", path);
+  } else {
+    history.pushState(null, "", path);
+  }
   renderRoute();
 }
 

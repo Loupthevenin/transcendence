@@ -1,6 +1,6 @@
 export function Sidebar(): HTMLElement {
   const wrapper = document.createElement("div");
-  wrapper.className = "flex h-screen bg-[#0f172a] text-gray-200";
+  wrapper.className = "flex h-screen bg-[#0f172a] text-gray-200 relative";
 
   // Toggle button
   const toggle = document.createElement("button");
@@ -12,7 +12,7 @@ export function Sidebar(): HTMLElement {
   // Sidebar container
   const sidebar = document.createElement("aside");
   sidebar.className =
-    "w-64 bg-[#1e1b4b] shadow-md flex flex-col transition-transform duration-300 transform -translate-x-full";
+    "w-64 bg-[#1e1b4b] shadow-md flex flex-col transition-transform duration-300 transform -translate-x-full absolute top-0 left-0 z-40 h-full";
   sidebar.id = "sidebar";
 
   sidebar.innerHTML = `

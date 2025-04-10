@@ -1,7 +1,7 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import bcrypt from "bcrypt";
 import db from "../db/db";
-// import jwt from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 
 interface Register {
   name: string;
@@ -20,6 +20,8 @@ interface User {
   password: string;
   requires2FA: boolean;
 }
+
+const JWT_SECRET: string = process.env.JWT_SECRET as string;
 
 export async function registerUser(
   request: FastifyRequest<{ Body: Register }>,
@@ -43,7 +45,15 @@ export async function registerUser(
     );
     insert.run(name, email, hashedPassword);
 
-    return reply.send({ message: "Inscription réussie", requires2FA: false });
+    const token = jwt.sign({ name, email }, JWT_SECRET as string, {
+      expiresIn: "2h",
+    });
+
+    return reply.send({
+      message: "Inscription réussie",
+      token,
+      requires2FA: false,
+    });
   } catch (err) {
     console.error("Error signin:", err);
     return reply.code(500).send({ message: "Erreur serveur" });
@@ -74,16 +84,22 @@ export async function loginUser(
         .send({ message: "Email ou mot de passe incorrect" });
     }
 
-    // A modifier plus tard JWT_SECRET;
-    // if (user.requires2FA) {
-    //   const tempToken = jwt.sign(
-    //     { email: user.email },
-    //     process.end.JWT_SECRET as string,
-    //   );
-    //   return reply.send({ requires2FA: true, tempToken });
-    // }
+    if (user.requires2FA) {
+      const tempToken = jwt.sign({ email: user.email }, JWT_SECRET, {
+        expiresIn: "10m",
+      });
+      return reply.send({ requires2FA: true, tempToken });
+    }
 
-    return reply.send({ message: "Connexion réussie" });
+    const token = jwt.sign({ name: user.name, email: user.email }, JWT_SECRET, {
+      expiresIn: "2h",
+    });
+
+    return reply.send({
+      message: "Connexion réussie",
+      token,
+      requires2FA: false,
+    });
   } catch (err) {
     console.error("Error login:", err);
     return reply.code(500).send({ message: "Erreur serveur" });

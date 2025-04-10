@@ -6,6 +6,7 @@ export function CreateGameCanvas(): HTMLCanvasElement {
 
   canvas.style.width = "100%";
   canvas.style.height = "100%";
+  canvas.className = "absolute top-0 left-0 w-full h-full z-10";
 
   return canvas;
 }
@@ -122,10 +123,22 @@ export function InitGame() {
   ///////////////////////////////////////////////////////////////
 
   // Create the score display
-  const fontTexture = new BABYLON.DynamicTexture("fontTexture", 512, scene, true);
+  const fontTexture = new BABYLON.DynamicTexture(
+    "fontTexture",
+    512,
+    scene,
+    true,
+  );
   const font = "bold 50px Arial";
 
-  fontTexture.drawText(`${gameState.p1Score} : ${gameState.p2Score}`, 50, 200, font, "white", "transparent");
+  fontTexture.drawText(
+    `${gameState.p1Score} : ${gameState.p2Score}`,
+    50,
+    200,
+    font,
+    "white",
+    "transparent",
+  );
 
   const scoreMaterial = new BABYLON.StandardMaterial("scoreMaterial", scene);
   scoreMaterial.emissiveTexture = fontTexture;
@@ -136,8 +149,15 @@ export function InitGame() {
 
   // Update function to refresh scores
   scene.onBeforeRenderObservable.add(() => {
-      fontTexture.clear();
-      fontTexture.drawText(`${gameState.p1Score} : ${gameState.p2Score}`, 50, 200, font, "white", "transparent");    
+    fontTexture.clear();
+    fontTexture.drawText(
+      `${gameState.p1Score} : ${gameState.p2Score}`,
+      50,
+      200,
+      font,
+      "white",
+      "transparent",
+    );
   });
 
   // Paddle movement variables
