@@ -2,6 +2,7 @@ import { LoginView } from "./views/login";
 import { SignupView } from "./views/signup";
 import { MainLayout } from "./layout/layout";
 import { initSideBarNavigation } from "./controllers/navbar";
+import { InitGame, CreateGameCanvas } from "./game/game";
 
 type RouteHandler = () => HTMLElement;
 type Route = {
@@ -23,8 +24,11 @@ const routes: Record<string, Route> = {
       ),
   },
   "/": {
-    view: MainLayout,
-    setup: () => initSideBarNavigation(),
+    view: () => MainLayout(CreateGameCanvas()),
+    setup: () => {
+      initSideBarNavigation();
+      InitGame();
+    },
   },
 };
 
