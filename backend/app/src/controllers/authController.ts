@@ -4,6 +4,7 @@ import db from "../db/db";
 import jwt from "jsonwebtoken";
 import speakeasy from "speakeasy";
 import qrcode from "qrcode";
+import nodemailer from "nodemailer";
 
 interface Register {
   name: string;
@@ -22,9 +23,13 @@ interface User {
   password: string;
   requires2FA: boolean;
   twofa_secret: string;
+  is_verified: boolean;
 }
 
 const JWT_SECRET: string = process.env.JWT_SECRET as string;
+const PORT: number = Number(process.env.PORT);
+const EMAIL_USER: string = process.env.EMAIL_USER as string;
+const EMAIL_PASS: string = process.env.EMAIL_PASS as string;
 
 export async function registerUser(
   request: FastifyRequest<{ Body: Register }>,
@@ -48,18 +53,67 @@ export async function registerUser(
     );
     insert.run(name, email, hashedPassword);
 
-    const token = jwt.sign({ name, email }, JWT_SECRET as string, {
-      expiresIn: "2h",
+    const emailToken = jwt.sign({ email: email }, JWT_SECRET, {
+      expiresIn: "1d",
+    });
+    const verificationLink = `https://localhost:${PORT}/api/verify-email?token=${emailToken}`;
+
+    // ENVOI MAIL
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: EMAIL_USER,
+        pass: EMAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail({
+      from: `"Transcendence" <${EMAIL_USER}>`,
+      to: email,
+      subject: "Vérifie ton adresse email",
+      html: `
+	<h2>Bienvenue ${name} 👋</h2>
+    <p>Merci de t’être inscrit ! Clique sur ce lien pour confirmer ton adresse :</p>
+    <a href="${verificationLink}">Confirmer mon adresse</a>
+    <br/>
+    <small>Ce lien expire dans 24h</small>`,
     });
 
     return reply.send({
-      message: "Inscription réussie",
-      token,
-      requires2FA: false,
+      message:
+        "Inscription réussie. Vérifie ton email pour activer ton compte.",
     });
   } catch (err) {
     console.error("Error signin:", err);
     return reply.code(500).send({ message: "Erreur serveur" });
+  }
+}
+
+export async function verifyEmail(
+  request: FastifyRequest<{ Querystring: { token: string } }>,
+  reply: FastifyReply,
+) {
+  const token = request.query.token;
+
+  try {
+    const decoded: any = jwt.verify(token, JWT_SECRET);
+    if (!decoded.email) {
+      return reply.code(400).send({ message: "Token invalide" });
+    }
+
+    const user = db
+      .prepare("SELECT * FROM users WHERE email = ?")
+      .get(decoded.email) as User;
+    if (!user)
+      return reply.code(404).send({ message: "Utilisateur non trouvé" });
+
+    db.prepare("UPDATE users SET is_verified = 1 WHERE email = ?").run(
+      decoded.email,
+    );
+
+    return reply.send({ message: "Email vérifié !" });
+  } catch (err) {
+    return reply.code(400).send({ message: "Lien invalide ou expiré." });
   }
 }
 
@@ -85,6 +139,12 @@ export async function loginUser(
       return reply
         .code(400)
         .send({ message: "Email ou mot de passe incorrect" });
+    }
+
+    if (!user.is_verified) {
+      return reply.code(400).send({
+        message: "Email non vérifié, veuillez vérifier votre adresse email",
+      });
     }
 
     if (user.requires2FA) {
@@ -148,6 +208,10 @@ export async function verify2FA(
 
   try {
     const decoded: any = jwt.verify(tempToken, JWT_SECRET);
+    if (!decoded.email) {
+      return reply.code(400).send({ message: "Token invalide" });
+    }
+
     const user = db
       .prepare("SELECT * FROM users WHERE email = ?")
       .get(decoded.email) as User;
