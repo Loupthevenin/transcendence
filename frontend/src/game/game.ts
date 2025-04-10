@@ -1,13 +1,13 @@
-import { BABYLON, GameState } from '@shared/gameElements';
+import { BABYLON, GameState } from "@shared/gameElements";
 
-export function CreateGameCanvas() {
+export function CreateGameCanvas(): HTMLCanvasElement {
   const canvas: HTMLCanvasElement = document.createElement("canvas");
   canvas.id = "renderCanvas";
 
   canvas.style.width = "100%";
   canvas.style.height = "100%";
 
-  document.body.appendChild(canvas);
+  return canvas;
 }
 
 // Babylon.js setup
@@ -235,7 +235,7 @@ export function InitGame() {
     paddle1Position: new BABYLON.Vector2(0, 0),
     paddle2Position: new BABYLON.Vector2(0, 0),
     p1Score: 0,
-    p2Score: 0
+    p2Score: 0,
   };
 
   resetBall(ball);
@@ -269,3 +269,4 @@ export function InitGame() {
     engine.resize();
   });
 }
+
