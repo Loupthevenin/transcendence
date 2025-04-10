@@ -12,6 +12,8 @@ const app: FastifyInstance = Fastify({
 // Routes
 app.register(require("./routes/login"), { prefix: "/api/login" });
 app.register(require("./routes/signup"), { prefix: "/api/signup" });
+app.register(require("./routes/verify2fa"), { prefix: "/api/verify-2fa" });
+app.register(require("./routes/setup2fa"), { prefix: "/api/setup-2fa" });
 app.register(require("./routes/users"), { prefix: "/api/users" });
 app.register(require("./routes/config"), { prefix: "/api/config" });
 
