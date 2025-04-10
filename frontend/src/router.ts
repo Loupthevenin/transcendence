@@ -40,11 +40,7 @@ const routes: Record<string, Route> = {
 };
 
 export function navigateTo(path: string) {
-  if (path == "/") {
-    history.replaceState(null, "", path);
-  } else {
-    history.pushState(null, "", path);
-  }
+  history.pushState(null, "", path);
   renderRoute();
 }
 

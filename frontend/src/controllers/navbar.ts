@@ -1,5 +1,3 @@
-import { navigateTo } from "../router";
-
 export function initSideBarNavigation(): void {
   const sidebar = document.getElementById("sidebar");
   const toggleButton = document.getElementById("sidebarToggle");
@@ -16,7 +14,6 @@ export function initSideBarNavigation(): void {
       const target = event.currentTarget as HTMLButtonElement;
       const section = target.dataset.target;
       if (section) {
-        navigateTo(`/${section}`);
         sidebar.classList.add("-translate-x-full");
         sidebar.classList.remove("translate-x-0");
       }
