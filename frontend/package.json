@@ -2,9 +2,8 @@
   "scripts": {
     "build": "tsc && npm run build-css && webpack --mode production",
     "build-css": "tailwindcss -i ./public/style.css -o ./public/output.css --minify",
-    "dev-build": "tsc && npm run build-css && webpack --mode development",
-    "dev": "nodemon --watch src --watch public -e ts,css --exec \"npm run dev-build\""
-  },
+    "dev": "nodemon --watch src --watch public -e ts,css --exec \"./dev-build.sh\""
+  },        
   "dependencies": {
     "@tailwindcss/cli": "^4.1.3",
     "babylonjs": "^8.1.1",
