@@ -4,15 +4,13 @@ export function CreateGameCanvas(): HTMLCanvasElement {
   const canvas: HTMLCanvasElement = document.createElement("canvas");
   canvas.id = "renderCanvas";
 
-  canvas.style.width = "100%";
-  canvas.style.height = "100%";
   canvas.className = "absolute top-0 left-0 w-full h-full z-10";
 
   return canvas;
 }
 
 // Babylon.js setup
-export function InitGame() {
+export function InitGame() : undefined {
   const canvas = document.getElementById("renderCanvas"); // Get the canvas element
 
   if (!(canvas instanceof HTMLCanvasElement)) {
@@ -24,7 +22,7 @@ export function InitGame() {
   const engine: BABYLON.Engine = new BABYLON.Engine(canvas, true); // Initialize the Babylon.js engine
 
   const scene: BABYLON.Scene = new BABYLON.Scene(engine); // Create a new scene
-  //scene.detachControl(); // Detach control to prevent user interaction
+  // scene.detachControl(); // Detach control to prevent user interaction
 
   const camera: BABYLON.ArcRotateCamera = new BABYLON.ArcRotateCamera(
     "Camera",
@@ -40,8 +38,8 @@ export function InitGame() {
   // camera.upperAlphaLimit = camera.alpha;
   // camera.lowerBetaLimit = camera.beta; // Lock vertical rotation
   // camera.upperBetaLimit = camera.beta;
-  // camera.lowerRadiusLimit = camera.radius; // Lock zoom
-  // camera.upperRadiusLimit = camera.radius;
+  camera.lowerRadiusLimit = camera.radius; // Lock zoom
+  camera.upperRadiusLimit = camera.radius;
 
   const gameState: GameState = {
     ballPosition: new BABYLON.Vector2(0, 0),
@@ -57,10 +55,10 @@ export function InitGame() {
 
   const paddleWidth: number = 1; // Width of the paddles
   const paddleDepth: number = 0.1; // Depth of the paddles
-  const paddleSpeed: number = 0.1; // Speed of paddle movement
+  const paddleSpeed: number = 5; // Speed of paddle movement
 
   const ballRadius: number = 0.1; // The radius of the ball
-  const ballSpeed: number = 0.1;
+  const ballSpeed: number = 5;
   let ballVelocity: BABYLON.Vector2 = new BABYLON.Vector2(0, 0);
 
   // Create the paddle
@@ -93,6 +91,7 @@ export function InitGame() {
     { diameter: ballRadius * 2 },
     scene,
   );
+  ball.position = new BABYLON.Vector3(0, ballRadius, 0);
   const ballMaterial: BABYLON.StandardMaterial = new BABYLON.StandardMaterial(
     "ballMaterial",
     scene,
@@ -119,45 +118,60 @@ export function InitGame() {
   ground.material = groundMaterial;
 
   ///////////////////////////////////////////////////////////////
-  new BABYLON.AxesViewer(scene, 2);
+  //new BABYLON.AxesViewer(scene, 2);
   ///////////////////////////////////////////////////////////////
 
   // Create the score display
-  const fontTexture = new BABYLON.DynamicTexture(
+  const scoreFontTexture: BABYLON.DynamicTexture = new BABYLON.DynamicTexture(
     "fontTexture",
-    512,
+    { width: 256, height: 128 },
     scene,
     true,
   );
-  const font = "bold 50px Arial";
 
-  fontTexture.drawText(
-    `${gameState.p1Score} : ${gameState.p2Score}`,
-    50,
-    200,
-    font,
-    "white",
-    "transparent",
-  );
+  function updateScoreText() : undefined {
+    scoreFontTexture.clear();
 
-  const scoreMaterial = new BABYLON.StandardMaterial("scoreMaterial", scene);
-  scoreMaterial.emissiveTexture = fontTexture;
+    const text: string = `${gameState.p1Score} : ${gameState.p2Score}`;
+    const fontSize: number = 80; // Font size in pixels
+    const font: string = `bold ${fontSize}px Arial`;
 
-  const scorePlane = BABYLON.Mesh.CreatePlane("scorePlane", 4, scene);
+    // Set the font on the dynamic texture
+    scoreFontTexture.drawText("", 0, 0, font, "white", "transparent"); // Needed to set the font size
+  
+    // Get the 2D context of the DynamicTexture
+    const context: BABYLON.ICanvasRenderingContext = scoreFontTexture.getContext();
+    context.font = font;
+
+    // Measure the text dimensions
+    const textMetrics: BABYLON.ITextMetrics = context.measureText(text);
+    const textWidth: number = textMetrics.width;
+
+    // Calculate the centered position
+    const textureWidth: number = scoreFontTexture.getSize().width;
+    const textureHeight: number = scoreFontTexture.getSize().height;
+    const x: number = (textureWidth - textWidth) / 2; // Center horizontally
+    const y: number = (textureHeight + fontSize) / 2; // Center vertically
+
+    // Draw the text centered
+    scoreFontTexture.drawText(text, x, y, font, "white", "transparent");
+  }
+
+  updateScoreText();
+
+  const scoreMaterial: BABYLON.StandardMaterial = new BABYLON.StandardMaterial("scoreMaterial", scene);
+  scoreMaterial.emissiveTexture = scoreFontTexture;
+  scoreMaterial.opacityTexture = scoreFontTexture; // Enable transparency
+  scoreMaterial.alpha = 1;
+
+  const scorePlane: BABYLON.Mesh = BABYLON.MeshBuilder.CreatePlane("scorePlane", { width: 2.4, height: 1.2 }, scene);
   scorePlane.material = scoreMaterial;
-  scorePlane.position = new BABYLON.Vector3(4, 0, 0);
+  scorePlane.position = new BABYLON.Vector3(3.6, 0, 0);
+  scorePlane.rotation = new BABYLON.Vector3(Math.PI / 2, Math.PI / 2, 0);
 
   // Update function to refresh scores
   scene.onBeforeRenderObservable.add(() => {
-    fontTexture.clear();
-    fontTexture.drawText(
-      `${gameState.p1Score} : ${gameState.p2Score}`,
-      50,
-      200,
-      font,
-      "white",
-      "transparent",
-    );
+    updateScoreText();
   });
 
   // Paddle movement variables
@@ -202,29 +216,24 @@ export function InitGame() {
   });
 
   // Ball movement logic
-  function updateBallPosition(ball: BABYLON.Mesh) {
-    ball.position.x += ballVelocity.x * ballSpeed; // Update ball x position
-    ball.position.z += ballVelocity.y * ballSpeed; // Update ball z position
+  function updateBallPosition(ball: BABYLON.Mesh, deltaTime: number) : undefined{
+    ball.position.x += ballVelocity.x * ballSpeed * deltaTime; // Update ball x position
+    ball.position.z += ballVelocity.y * ballSpeed * deltaTime; // Update ball z position
     const ballPosition: BABYLON.Vector3 = ball.position;
 
     // Handle ball collision with walls
-    if (
-      ballPosition.x - ballRadius < areaMinX ||
-      ballPosition.x + ballRadius > areaMaxX
+    if (ballPosition.x - ballRadius < areaMinX
+      || ballPosition.x + ballRadius > areaMaxX
     ) {
       ballVelocity.x *= -1; // Reverse direction
     }
 
     // Handle ball collision with paddles
     if (
-      (Math.abs(ballPosition.z - paddle1.position.z) <
-        paddleDepth / 2 + ballRadius &&
-        Math.abs(ballPosition.x - paddle1.position.x) <
-          paddleWidth / 2 + ballRadius) ||
-      (Math.abs(ballPosition.z - paddle2.position.z) <
-        paddleDepth / 2 + ballRadius &&
-        Math.abs(ballPosition.x - paddle2.position.x) <
-          paddleWidth / 2 + ballRadius)
+      (Math.abs(ballPosition.z - paddle1.position.z) < paddleDepth / 2 + ballRadius
+        && Math.abs(ballPosition.x - paddle1.position.x) < paddleWidth / 2 + ballRadius)
+      || (Math.abs(ballPosition.z - paddle2.position.z) < paddleDepth / 2 + ballRadius
+        && Math.abs(ballPosition.x - paddle2.position.x) < paddleWidth / 2 + ballRadius)
     ) {
       ballVelocity.y *= -1; // Reverse direction
     }
@@ -232,21 +241,37 @@ export function InitGame() {
     // Handle ballPosition going out of bounds (score logic)
     if (ballPosition.z - ballRadius < -5) {
       gameState.p2Score += 1;
-      console.log("Player 2 scores!");
       resetBall(ball);
     } else if (ballPosition.z + ballRadius > 5) {
       gameState.p1Score += 1;
-      console.log("Player 1 scores!");
       resetBall(ball);
     }
   }
 
   // Reset ball position and velocity
-  function resetBall(ball: BABYLON.Mesh) {
+  function resetBall(ball: BABYLON.Mesh) : undefined {
     ball.position.x = 0;
     ball.position.z = 0;
 
-    const angle: number = Math.random() * Math.PI * 2;
+    const excludedAngles: Array<number> = [
+        0,                    // 0 degrees
+        Math.PI / 2,          // 90 degrees
+        Math.PI,              // 180 degrees
+        (3 * Math.PI) / 2,    // 270 degrees
+        Math.PI * 2,          // 360 degrees
+    ];
+    const margin: number = Math.PI / 18; // Margin in radians (10° = π/18)
+
+    let angle: number;
+
+    // Generate a random angle until it is not in the excluded angles
+    do {
+        angle = Math.random() * Math.PI * 2; // Random angle in radians
+    } while (excludedAngles.some(excludedAngle => {
+      return angle >= excludedAngle - margin
+          && angle <= excludedAngle + margin;
+    }))
+
     ballVelocity.x = Math.cos(angle);
     ballVelocity.y = Math.sin(angle);
   }
@@ -285,11 +310,13 @@ export function InitGame() {
 
   // Game render loop
   engine.runRenderLoop(() => {
+    const deltaTime: number = engine.getDeltaTime() / 1000; // Get the delta time as seconds (default milliseconds)
+
     // Update paddle positions
     paddle1.position.x +=
-      ((paddle1Input & 0b1) - ((paddle1Input >> 1) & 0b1)) * paddleSpeed;
+      ((paddle1Input & 0b1) - ((paddle1Input >> 1) & 0b1)) * paddleSpeed * deltaTime;
     paddle2.position.x +=
-      ((paddle2Input & 0b1) - ((paddle2Input >> 1) & 0b1)) * paddleSpeed;
+      ((paddle2Input & 0b1) - ((paddle2Input >> 1) & 0b1)) * paddleSpeed * deltaTime;
 
     // Clamp paddle positions to prevent them from going out of bounds
     paddle1.position.x = Math.min(
@@ -301,7 +328,7 @@ export function InitGame() {
       areaMaxX - paddleWidth / 2,
     );
 
-    updateBallPosition(ball);
+    updateBallPosition(ball, deltaTime);
 
     // Render the scene
     scene.render();
