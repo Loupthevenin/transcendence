@@ -2,6 +2,7 @@ import { LoginView } from "./views/login";
 import { SignupView } from "./views/signup";
 import { MainLayout } from "./layout/layout";
 import { TwoFAView } from "./views/2fa";
+import { ProfileView } from "./views/profile";
 
 import { initSideBarNavigation } from "./controllers/navbar";
 import { InitGame, CreateGameCanvas } from "./game/game";
@@ -15,20 +16,31 @@ type Route = {
 const routes: Record<string, Route> = {
   "/auth/login": {
     view: LoginView,
-    setup: (root) =>
-      import("./controllers/login").then((mod) => mod.setupLoginHandlers(root)),
+    setup: async (root) => {
+      const mod = await import("./controllers/login");
+      mod.setupLoginHandlers(root);
+    },
   },
   "/auth/signup": {
     view: SignupView,
-    setup: (root) =>
-      import("./controllers/signup").then((mod) =>
-        mod.setupSignupHandlers(root),
-      ),
+    setup: async (root) => {
+      const mod = await import("./controllers/signup");
+      mod.setupSignupHandlers(root);
+    },
   },
-  "/auth/2fa": {
+  "/profile": {
+    view: ProfileView,
+    setup: async (root) => {
+      const mod = await import("./controllers/profile");
+      mod.setupProfile(root);
+    },
+  },
+  "/auth/verify-2fa": {
     view: TwoFAView,
-    setup: (root) =>
-      import("./controllers/2fa").then((mod) => mod.setupTwoFAHandlers(root)),
+    setup: async (root) => {
+      const mod = await import("./controllers/2fa");
+      mod.setupTwoFAHandlers(root);
+    },
   },
   "/": {
     view: () => MainLayout(CreateGameCanvas()),
@@ -39,9 +51,9 @@ const routes: Record<string, Route> = {
   },
 };
 
-export function navigateTo(path: string) {
+export async function navigateTo(path: string) {
   history.pushState(null, "", path);
-  renderRoute();
+  await renderRoute();
 }
 
 export async function renderRoute() {

@@ -1,27 +1,28 @@
-function isAuthenticated(): boolean {
-  return !!localStorage.getItem("auth_token");
-}
+// function isAuthenticated(): boolean {
+//   return !!localStorage.getItem("auth_token");
+// }
 
 function getSidebarItems(): { label: string; route: string }[] {
   let items;
   items = [
+    { label: "Accueil", route: "/" },
     { label: "Pong", route: "pong" },
     { label: "Chat", route: "chat" },
     { label: "Connexion", route: "auth/login" },
     { label: "Inscription", route: "auth/signup" },
     { label: "Profil", route: "profile" },
-    { label: "Deconnexion", route: "" },
   ];
 
   // if (isAuthenticated()) {
   //   items = [
+  // { label: "Accueil", route: "/" },
   //     { label: "Pong", route: "pong" },
   //     { label: "Chat", route: "chat" },
   //     { label: "Profil", route: "profile" },
-  //     { label: "Deconnexion", route: "" },
   //   ];
   // } else {
   //   items = [
+  // { label: "Accueil", route: "/" },
   //     { label: "Pong", route: "pong" },
   //     { label: "Connexion", route: "auth/login" },
   //     { label: "Inscription", route: "auth/signup" },
