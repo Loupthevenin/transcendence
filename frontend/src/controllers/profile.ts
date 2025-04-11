@@ -1,5 +1,3 @@
-import { jwtDecode } from "jwt-decode";
-
 function listener2FA(container: HTMLElement) {
   const button2FA = container.querySelector("#activate-2fa") as HTMLElement;
 
@@ -10,17 +8,13 @@ function listener2FA(container: HTMLElement) {
         alert("Pas de token !");
         return;
       }
-      const decoded: any = jwtDecode(token);
       try {
         const res = await fetch("/api/setup-2fa", {
-          method: "POST",
+          method: "GET",
           headers: {
             "Content-Type": "application/json",
             authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            email: decoded.email,
-          }),
         });
 
         if (!res.ok) throw new Error("Error activation 2FA");

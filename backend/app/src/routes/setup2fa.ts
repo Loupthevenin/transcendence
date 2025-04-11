@@ -5,5 +5,5 @@ export default async function (
   app: FastifyInstance,
   opts: FastifyPluginOptions,
 ): Promise<void> {
-  app.post("/", setup2FA);
+  app.get("/", setup2FA);
 }
