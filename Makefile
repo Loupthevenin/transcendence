@@ -46,7 +46,7 @@ fclean: clean
 	rm -rf backend/app/package-lock.json frontend/package-lock.json 2>/dev/null || true
 
 	(rm -rf ./backend/app/dist; \
-	rm -rf ./frontend/public/**/*.js ./frontend/public/output.css; \
+	rm -rf ./frontend/public/*.js ./frontend/public/**/*.js ./frontend/public/output.css; \
 	find ./frontend/public -type d -empty -delete) || true
 
 re: fclean all
