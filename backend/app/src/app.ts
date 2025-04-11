@@ -16,7 +16,6 @@ app.register(require("./routes/verifyEmail"), { prefix: "/api/verify-email" });
 app.register(require("./routes/verify2fa"), { prefix: "/api/verify-2fa" });
 app.register(require("./routes/setup2fa"), { prefix: "/api/setup-2fa" });
 app.register(require("./routes/users"), { prefix: "/api/users" });
-app.register(require("./routes/config"), { prefix: "/api/config" });
 
 // Error handling
 app.setErrorHandler((error, request, reply) => {

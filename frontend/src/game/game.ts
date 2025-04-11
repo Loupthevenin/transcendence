@@ -1,6 +1,7 @@
-import { BABYLON, GameState } from "@shared/gameElements";
+import { BABYLON, GAME_CONSTANT, GameData, PlayerPaddle as PaddleData } from "@shared/game/gameElements";
+//import { updateBallPosition, resetBall } from "@shared/game/ball";
 
-export function CreateGameCanvas(): HTMLCanvasElement {
+export function CreateGameCanvas() : HTMLCanvasElement {
   const canvas: HTMLCanvasElement = document.createElement("canvas");
   canvas.id = "renderCanvas";
 
@@ -10,7 +11,7 @@ export function CreateGameCanvas(): HTMLCanvasElement {
 }
 
 // Babylon.js setup
-export function InitGame() : undefined {
+export function InitGame() : void {
   const canvas = document.getElementById("renderCanvas"); // Get the canvas element
 
   if (!(canvas instanceof HTMLCanvasElement)) {
@@ -22,7 +23,7 @@ export function InitGame() : undefined {
   const engine: BABYLON.Engine = new BABYLON.Engine(canvas, true); // Initialize the Babylon.js engine
 
   const scene: BABYLON.Scene = new BABYLON.Scene(engine); // Create a new scene
-  // scene.detachControl(); // Detach control to prevent user interaction
+  scene.detachControl(); // Detach control to prevent user interaction
 
   const camera: BABYLON.ArcRotateCamera = new BABYLON.ArcRotateCamera(
     "Camera",
@@ -34,47 +35,46 @@ export function InitGame() : undefined {
   );
 
   camera.attachControl(canvas as unknown as HTMLElement, false); // Attach to the canvas without user controls
-  // camera.lowerAlphaLimit = camera.alpha; // Lock horizontal rotation
-  // camera.upperAlphaLimit = camera.alpha;
-  // camera.lowerBetaLimit = camera.beta; // Lock vertical rotation
-  // camera.upperBetaLimit = camera.beta;
+  camera.lowerAlphaLimit = camera.alpha; // Lock horizontal rotation
+  camera.upperAlphaLimit = camera.alpha;
+  camera.lowerBetaLimit = camera.beta; // Lock vertical rotation
+  camera.upperBetaLimit = camera.beta;
   camera.lowerRadiusLimit = camera.radius; // Lock zoom
   camera.upperRadiusLimit = camera.radius;
 
-  const gameState: GameState = {
-    ballPosition: new BABYLON.Vector2(0, 0),
-    paddle1Position: new BABYLON.Vector2(0, 0),
-    paddle2Position: new BABYLON.Vector2(0, 0),
+  const gameData: GameData = {
+    ball: {
+      position: new BABYLON.Vector2(0, 0),
+      velocity: new BABYLON.Vector2(0, 0)
+    },
+    paddle1Position: new BABYLON.Vector2(0, GAME_CONSTANT.paddleDefaultYPosition),
+    paddle2Position: new BABYLON.Vector2(0, -GAME_CONSTANT.paddleDefaultYPosition),
     p1Score: 0,
     p2Score: 0,
   };
 
-  // Game settings
-  const areaWidth: number = 10; // Width of the game area
-  const areaHeight: number = 6; // Height of the game area
-
-  const paddleWidth: number = 1; // Width of the paddles
-  const paddleDepth: number = 0.1; // Depth of the paddles
-  const paddleSpeed: number = 5; // Speed of paddle movement
-
-  const ballRadius: number = 0.1; // The radius of the ball
-  const ballSpeed: number = 5;
-  let ballVelocity: BABYLON.Vector2 = new BABYLON.Vector2(0, 0);
-
   // Create the paddle
-  const paddle1: BABYLON.Mesh = BABYLON.MeshBuilder.CreateBox(
+  const paddle1Mesh: BABYLON.Mesh = BABYLON.MeshBuilder.CreateBox(
     "paddle1",
-    { width: paddleWidth, height: paddleDepth, depth: paddleDepth },
+    {
+      width: GAME_CONSTANT.paddleWidth,
+      height: GAME_CONSTANT.paddleDepth,
+      depth: GAME_CONSTANT.paddleDepth
+    },
     scene,
   );
-  paddle1.position = new BABYLON.Vector3(0, 0, -(areaWidth / 2 - 1));
+  paddle1Mesh.position = new BABYLON.Vector3(0, 0, GAME_CONSTANT.paddleDefaultYPosition);
 
-  const paddle2: BABYLON.Mesh = BABYLON.MeshBuilder.CreateBox(
+  const paddle2Mesh: BABYLON.Mesh = BABYLON.MeshBuilder.CreateBox(
     "paddle2",
-    { width: paddleWidth, height: paddleDepth, depth: paddleDepth },
+    {
+      width: GAME_CONSTANT.paddleWidth,
+      height: GAME_CONSTANT.paddleDepth,
+      depth: GAME_CONSTANT.paddleDepth
+    },
     scene,
   );
-  paddle2.position = new BABYLON.Vector3(0, 0, areaWidth / 2 - 1);
+  paddle2Mesh.position = new BABYLON.Vector3(0, 0, -GAME_CONSTANT.paddleDefaultYPosition);
 
   const paddleMaterial: BABYLON.StandardMaterial = new BABYLON.StandardMaterial(
     "paddleMaterial",
@@ -82,27 +82,27 @@ export function InitGame() : undefined {
   );
   paddleMaterial.emissiveColor = BABYLON.Color3.Black();
 
-  paddle1.material = paddleMaterial;
-  paddle2.material = paddleMaterial;
+  paddle1Mesh.material = paddleMaterial;
+  paddle2Mesh.material = paddleMaterial;
 
   // Create the ball
-  const ball: BABYLON.Mesh = BABYLON.MeshBuilder.CreateSphere(
+  const ballMesh: BABYLON.Mesh = BABYLON.MeshBuilder.CreateSphere(
     "ball",
-    { diameter: ballRadius * 2 },
+    { diameter: GAME_CONSTANT.ballRadius * 2 },
     scene,
   );
-  ball.position = new BABYLON.Vector3(0, ballRadius, 0);
+  ballMesh.position = new BABYLON.Vector3(0, GAME_CONSTANT.ballRadius, 0);
   const ballMaterial: BABYLON.StandardMaterial = new BABYLON.StandardMaterial(
     "ballMaterial",
     scene,
   );
   ballMaterial.emissiveColor = BABYLON.Color3.Gray();
-  ball.material = ballMaterial;
+  ballMesh.material = ballMaterial;
 
   // Create the ground
   const ground = BABYLON.MeshBuilder.CreateGround(
     "ground",
-    { width: areaWidth, height: areaHeight },
+    { width: GAME_CONSTANT.areaWidth, height: GAME_CONSTANT.areaHeight },
     scene,
   );
   ground.rotation.y = Math.PI / 2;
@@ -129,10 +129,10 @@ export function InitGame() : undefined {
     true,
   );
 
-  function updateScoreText() : undefined {
+  function updateScoreText() : void {
     scoreFontTexture.clear();
 
-    const text: string = `${gameState.p1Score} : ${gameState.p2Score}`;
+    const text: string = `${gameData.p1Score} : ${gameData.p2Score}`;
     const fontSize: number = 80; // Font size in pixels
     const font: string = `bold ${fontSize}px Arial`;
 
@@ -164,7 +164,11 @@ export function InitGame() : undefined {
   scoreMaterial.opacityTexture = scoreFontTexture; // Enable transparency
   scoreMaterial.alpha = 1;
 
-  const scorePlane: BABYLON.Mesh = BABYLON.MeshBuilder.CreatePlane("scorePlane", { width: 2.4, height: 1.2 }, scene);
+  const scorePlane: BABYLON.Mesh = BABYLON.MeshBuilder.CreatePlane(
+    "scorePlane",
+    { width: 2.4, height: 1.2 },
+    scene
+  );
   scorePlane.material = scoreMaterial;
   scorePlane.position = new BABYLON.Vector3(3.6, 0, 0);
   scorePlane.rotation = new BABYLON.Vector3(Math.PI / 2, Math.PI / 2, 0);
@@ -175,160 +179,186 @@ export function InitGame() : undefined {
   });
 
   // Paddle movement variables
-  const areaMaxX: number = areaHeight / 2; // Maximum x-position of the area
-  const areaMinX: number = -areaHeight / 2; // Minimum x-position of the area
   let paddle1Input: number = 0;
-  let paddle2Input: number = 0;
+  //let paddle2Input: number = 0;
 
   // Add input handling for paddle movement
   window.addEventListener("keydown", (event: KeyboardEvent) => {
     switch (event.key) {
-      case "ArrowUp": // Move Paddle 1 (Player 1) Up
+      case "w": // Move Paddle 1 (Player 1) Up
         paddle1Input |= 0b01;
         break;
-      case "ArrowDown": // Move Paddle 1 (Player 1) Down
+      case "s": // Move Paddle 1 (Player 1) Down
         paddle1Input |= 0b10;
         break;
-      case "w": // Move Paddle 2 (Player 2) Up
-        paddle2Input |= 0b01;
-        break;
-      case "s": // Move Paddle 2 (Player 2) Down
-        paddle2Input |= 0b10;
-        break;
+      // case "ArrowUp": // Move Paddle 2 (Player 2) Up
+      //   paddle2Input |= 0b01;
+      //   break;
+      // case "ArrowDown": // Move Paddle 2 (Player 2) Down
+      //   paddle2Input |= 0b10;
+      //   break;
     }
   });
 
   window.addEventListener("keyup", (event: KeyboardEvent) => {
     switch (event.key) {
-      case "ArrowUp":
+      case "w":
         paddle1Input &= ~0b01; // Stop Paddle 1 Up movement
         break;
-      case "ArrowDown":
+      case "s":
         paddle1Input &= ~0b10; // Stop Paddle 1 Down movement
         break;
-      case "w":
-        paddle2Input &= ~0b01; // Stop Paddle 2 Up movement
-        break;
-      case "s":
-        paddle2Input &= ~0b10; // Stop Paddle 2 Down movement
-        break;
+      // case "ArrowUp":
+      //   paddle2Input &= ~0b01; // Stop Paddle 2 Up movement
+      //   break;
+      // case "ArrowDown":
+      //   paddle2Input &= ~0b10; // Stop Paddle 2 Down movement
+      //   break;
     }
   });
 
-  // Ball movement logic
-  function updateBallPosition(ball: BABYLON.Mesh, deltaTime: number) : undefined{
-    ball.position.x += ballVelocity.x * ballSpeed * deltaTime; // Update ball x position
-    ball.position.z += ballVelocity.y * ballSpeed * deltaTime; // Update ball z position
-    const ballPosition: BABYLON.Vector3 = ball.position;
+  let playerId: number = 0; // Player ID (1 or 2)
 
-    // Handle ball collision with walls
-    if (ballPosition.x - ballRadius < areaMinX
-      || ballPosition.x + ballRadius > areaMaxX
-    ) {
-      ballVelocity.x *= -1; // Reverse direction
-    }
+  //let lastUpdateTime = performance.now(); // For client prediction timing
 
-    // Handle ball collision with paddles
-    if (
-      (Math.abs(ballPosition.z - paddle1.position.z) < paddleDepth / 2 + ballRadius
-        && Math.abs(ballPosition.x - paddle1.position.x) < paddleWidth / 2 + ballRadius)
-      || (Math.abs(ballPosition.z - paddle2.position.z) < paddleDepth / 2 + ballRadius
-        && Math.abs(ballPosition.x - paddle2.position.x) < paddleWidth / 2 + ballRadius)
-    ) {
-      ballVelocity.y *= -1; // Reverse direction
-    }
+  function connectToServer() : WebSocket {
+    // Dynamically construct the WebSocket URL to avoid hardcoding
+    const wsProtocol: string = window.location.protocol === 'https:' ? 'wss://' : 'ws://'; // Use 'wss' for secure, 'ws' for non-secure
+    const wsHost: string = window.location.host; // Get the domain and port (e.g., "example.com:443" or "localhost:8080")
+    const wsPath: string = '/api/'; // The WebSocket endpoint path on the server
 
-    // Handle ballPosition going out of bounds (score logic)
-    if (ballPosition.z - ballRadius < -5) {
-      gameState.p2Score += 1;
-      resetBall(ball);
-    } else if (ballPosition.z + ballRadius > 5) {
-      gameState.p1Score += 1;
-      resetBall(ball);
-    }
+    const wsUrl: string = `${wsProtocol}${wsHost}${wsPath}`;
+    const ws: WebSocket = new WebSocket(wsUrl);
+
+    // Handle connection open
+    ws.onopen = () => {
+        console.log('Connected to WebSocket: ', wsUrl);
+    };
+
+    // Handle incoming messages
+    ws.onmessage = (event) => {
+        //console.log('Received:', JSON.parse(event.data));
+
+        try {
+            const data = JSON.parse(event.data);
+
+            if (data.type === "gameStarted") {
+              playerId = data.id; // Set the player ID based on the server response
+            }
+            else if (data.type === "gameData") {
+              const serverGameData: GameData = data.data as GameData;
+
+              // Update game data with the received data
+              gameData.ball.position = serverGameData.ball.position;
+              if (playerId !== 1) {
+                gameData.paddle1Position = serverGameData.paddle1Position;
+              }
+              if (playerId !== 2) {
+                gameData.paddle2Position = serverGameData.paddle2Position;
+              }
+
+              if (gameData.p1Score !== serverGameData.p1Score || gameData.p2Score !== serverGameData.p2Score) {
+                gameData.p1Score = serverGameData.p1Score;
+                gameData.p2Score = serverGameData.p2Score;
+                updateScoreText();
+              }
+
+              // Update the ball mesh position
+              ballMesh.position.x = gameData.ball.position.x;
+              ballMesh.position.z = gameData.ball.position.y;
+
+              // Update the paddle mesh positions
+              paddle1Mesh.position.x = gameData.paddle1Position.x;
+              paddle1Mesh.position.z = GAME_CONSTANT.paddleDefaultYPosition;
+              paddle2Mesh.position.x = gameData.paddle2Position.x;
+              paddle2Mesh.position.z = -GAME_CONSTANT.paddleDefaultYPosition;
+
+              //lastUpdateTime = performance.now();
+            }
+            else if (data.type === "gameResult") {
+              if ((data.winner as number) === playerId) {
+                console.log("You win!");
+              } else {
+                console.log("You lose!");
+              }
+              playerId = 0; // Reset player ID
+            }
+            else if (data.type === "disconnected") {
+              console.log("The other player disconnected !");
+            }
+        }
+        catch (error) {
+          console.error('An Error occured:', error);
+        }
+    };
+
+    // Handle close
+    ws.onclose = () => {
+        console.log('WebSocket connection closed.');
+        playerId = 0; // Reset player ID
+    };
+
+    // Handle errors
+    ws.onerror = (error) => {
+        console.error('WebSocket error: ', error);
+    };
+
+    return ws;
   }
 
-  // Reset ball position and velocity
-  function resetBall(ball: BABYLON.Mesh) : undefined {
-    ball.position.x = 0;
-    ball.position.z = 0;
-
-    const excludedAngles: Array<number> = [
-        0,                    // 0 degrees
-        Math.PI / 2,          // 90 degrees
-        Math.PI,              // 180 degrees
-        (3 * Math.PI) / 2,    // 270 degrees
-        Math.PI * 2,          // 360 degrees
-    ];
-    const margin: number = Math.PI / 18; // Margin in radians (10° = π/18)
-
-    let angle: number;
-
-    // Generate a random angle until it is not in the excluded angles
-    do {
-        angle = Math.random() * Math.PI * 2; // Random angle in radians
-    } while (excludedAngles.some(excludedAngle => {
-      return angle >= excludedAngle - margin
-          && angle <= excludedAngle + margin;
-    }))
-
-    ballVelocity.x = Math.cos(angle);
-    ballVelocity.y = Math.sin(angle);
-  }
-
-  // WebSocket setup for real-time communication
-  fetch("/api/config")
-    .then((response: Response) => response.json())
-    .then((config: { domainName: string; port: number }) => {
-      const socket: WebSocket = new WebSocket(
-        `ws://${config.domainName}:${config.port}`,
-      );
-
-      socket.onopen = () => {
-        console.log("Connected to server");
-      };
-
-      socket.onmessage = (event: MessageEvent) => {
-        const data = JSON.parse(event.data) as {
-          ballPosition: BABYLON.Vector2;
-        };
-
-        // Update ball position based on server data
-        ball.position.x = data.ballPosition.x;
-        ball.position.z = data.ballPosition.y;
-
-        // Handle other game updates
-      };
-
-      socket.onclose = () => {
-        console.log("Disconnected from server");
-      };
-    })
-    .catch((error: any) => console.error("Error fetching config:", error));
-
-  resetBall(ball);
+  const ws: WebSocket = connectToServer();
 
   // Game render loop
   engine.runRenderLoop(() => {
     const deltaTime: number = engine.getDeltaTime() / 1000; // Get the delta time as seconds (default milliseconds)
 
-    // Update paddle positions
-    paddle1.position.x +=
-      ((paddle1Input & 0b1) - ((paddle1Input >> 1) & 0b1)) * paddleSpeed * deltaTime;
-    paddle2.position.x +=
-      ((paddle2Input & 0b1) - ((paddle2Input >> 1) & 0b1)) * paddleSpeed * deltaTime;
+    if (playerId === 1 || playerId === 2) {
+      if (paddle1Input !== 0) {
+        const pos: BABYLON.Vector2 = playerId === 1 ? gameData.paddle1Position : gameData.paddle2Position;
+        // Update paddle positions
+        pos.x +=
+          ((paddle1Input & 0b1) - ((paddle1Input >> 1) & 0b1)) * GAME_CONSTANT.paddleSpeed * deltaTime;
 
-    // Clamp paddle positions to prevent them from going out of bounds
-    paddle1.position.x = Math.min(
-      Math.max(paddle1.position.x, areaMinX + paddleWidth / 2),
-      areaMaxX - paddleWidth / 2,
-    );
-    paddle2.position.x = Math.min(
-      Math.max(paddle2.position.x, areaMinX + paddleWidth / 2),
-      areaMaxX - paddleWidth / 2,
-    );
+        // Clamp paddle positions to prevent them from going out of bounds
+        pos.x = Math.min(
+          Math.max(pos.x, GAME_CONSTANT.areaMinX + GAME_CONSTANT.paddleWidth / 2),
+          GAME_CONSTANT.areaMaxX - GAME_CONSTANT.paddleWidth / 2,
+        );
 
-    updateBallPosition(ball, deltaTime);
+        // Update paddle mesh positions
+        (playerId === 1 ? paddle1Mesh : paddle2Mesh).position.x = pos.x;
+
+        // Send new paddle position to the server
+        const paddleData: PaddleData = {
+          position: new BABYLON.Vector2(pos.x, pos.y,)
+        };
+
+        ws.send(JSON.stringify(paddleData));
+      }
+    }
+
+    // if (paddle2Input !== 0) {
+    //   // Update paddle positions
+    //   gameData.paddle2Position.x +=
+    //     ((paddle2Input & 0b1) - ((paddle2Input >> 1) & 0b1)) * GAME_CONSTANT.paddleSpeed * deltaTime;
+
+    //   // Clamp paddle positions to prevent them from going out of bounds
+    //   gameData.paddle2Position.x = Math.min(
+    //     Math.max(gameData.paddle2Position.x, GAME_CONSTANT.areaMinX + GAME_CONSTANT.paddleWidth / 2),
+    //     GAME_CONSTANT.areaMaxX - GAME_CONSTANT.paddleWidth / 2,
+    //   );
+
+    //   // Update paddle mesh positions
+    //   paddle2Mesh.position.x = gameData.paddle2Position.x;
+    // }
+
+    /*
+    updateBallPosition(gameData, deltaTime);
+
+    // Update ball mesh position of the ball
+    ballMesh.position.x = gameData.ball.position.x;
+    ballMesh.position.z = gameData.ball.position.y;
+    */
 
     // Render the scene
     scene.render();
