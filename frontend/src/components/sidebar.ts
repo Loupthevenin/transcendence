@@ -1,3 +1,35 @@
+function isAuthenticated(): boolean {
+  return !!localStorage.getItem("auth_token");
+}
+
+function getSidebarItems(): { label: string; route: string }[] {
+  let items;
+  items = [
+    { label: "Pong", route: "pong" },
+    { label: "Chat", route: "chat" },
+    { label: "Connexion", route: "auth/login" },
+    { label: "Inscription", route: "auth/signup" },
+    { label: "Profil", route: "profile" },
+    { label: "Deconnexion", route: "" },
+  ];
+
+  // if (isAuthenticated()) {
+  //   items = [
+  //     { label: "Pong", route: "pong" },
+  //     { label: "Chat", route: "chat" },
+  //     { label: "Profil", route: "profile" },
+  //     { label: "Deconnexion", route: "" },
+  //   ];
+  // } else {
+  //   items = [
+  //     { label: "Pong", route: "pong" },
+  //     { label: "Connexion", route: "auth/login" },
+  //     { label: "Inscription", route: "auth/signup" },
+  //   ];
+  // }
+  return items;
+}
+
 export function Sidebar(): HTMLElement {
   const wrapper = document.createElement("div");
   wrapper.className = "flex h-screen bg-[#0f172a] text-gray-200 relative";
@@ -15,24 +47,20 @@ export function Sidebar(): HTMLElement {
     "w-64 bg-[#1e1b4b] shadow-md flex flex-col transition-transform duration-300 transform -translate-x-full absolute top-0 left-0 z-40 h-full";
   sidebar.id = "sidebar";
 
+  const items = getSidebarItems();
+
   sidebar.innerHTML = `
         <nav class="flex-1 mt-15">
           <ul id="nav" class="space-y-2 p-4">
-				${[
-          { label: "Pong", route: "pong" },
-          { label: "Chat", route: "chat" },
-          { label: "Connexion", route: "auth/login" },
-          { label: "Inscription", route: "auth/signup" },
-          { label: "Profil", route: "profile" },
-        ]
-          .map(
-            (item) => `
+			${items
+        .map(
+          (item) => `
 				<li>
 					<button data-target="${item.route}" class="nav-link w-full text-left flex items-center p-2 rounded text-indigo-400 hover:bg-[#312e81] hover:text-white">${item.label}</button>
 				</li>
 				`,
-          )
-          .join("")}
+        )
+        .join("")}
           </ul>
         </nav>
 `;
