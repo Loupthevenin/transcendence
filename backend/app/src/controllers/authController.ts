@@ -169,10 +169,7 @@ export async function loginUser(
   }
 }
 
-export async function setup2FA(
-  request: FastifyRequest<{ Body: { email: string } }>,
-  reply: FastifyReply,
-) {
+export async function setup2FA(request: FastifyRequest, reply: FastifyReply) {
   const token = request.headers.authorization?.split(" ")[1];
   if (!token) {
     return reply.status(401).send({ error: "Missing Token" });
