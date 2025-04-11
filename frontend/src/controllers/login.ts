@@ -26,9 +26,9 @@ export function setupLoginHandlers(container: HTMLElement) {
         if (!res.ok) throw new Error("Error connexion login");
 
         const data = await res.json();
-        if (data.requires2FA) {
+        if (data.require2FA) {
           localStorage.setItem("temp_token", data.tempToken);
-          navigateTo("/auth/2fa");
+          navigateTo("/auth/verify-2fa");
         } else {
           localStorage.setItem("auth_token", data.token);
           navigateTo("/");

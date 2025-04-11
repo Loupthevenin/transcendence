@@ -16,9 +16,6 @@
       "@shared/*": ["../backend/app/src/shared/*", "./src/shared/*"]
     }
   },
-  "include": [
-    "src/**/*",
-    "src/shared/**/*"
-  ],
+  "include": ["src/**/*", "src/shared/**/*"],
   "exclude": ["node_modules", "./public"]
 }

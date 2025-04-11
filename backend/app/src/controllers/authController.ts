@@ -21,7 +21,7 @@ interface User {
   name: string;
   email: string;
   password: string;
-  requires2FA: boolean;
+  require2FA: boolean;
   twofa_secret: string;
   is_verified: boolean;
 }
@@ -147,11 +147,11 @@ export async function loginUser(
       });
     }
 
-    if (user.requires2FA) {
+    if (user.require2FA) {
       const tempToken = jwt.sign({ email: user.email }, JWT_SECRET, {
         expiresIn: "10m",
       });
-      return reply.send({ requires2FA: true, tempToken });
+      return reply.send({ require2FA: true, tempToken });
     }
 
     const token = jwt.sign({ name: user.name, email: user.email }, JWT_SECRET, {
@@ -161,7 +161,7 @@ export async function loginUser(
     return reply.send({
       message: "Connexion réussie",
       token,
-      requires2FA: false,
+      require2FA: false,
     });
   } catch (err) {
     console.error("Error login:", err);
@@ -173,7 +173,16 @@ export async function setup2FA(
   request: FastifyRequest<{ Body: { email: string } }>,
   reply: FastifyReply,
 ) {
-  const { email } = request.body;
+  const token = request.headers.authorization?.split(" ")[1];
+  if (!token) {
+    return reply.status(401).send({ error: "Missing Token" });
+  }
+
+  const decoded: any = jwt.verify(token, JWT_SECRET);
+  const email = decoded.email;
+  if (!email) {
+    return reply.status(401).send({ error: "Token invalide" });
+  }
 
   const user = db
     .prepare("SELECT * FROM users WHERE email = ?")
@@ -184,10 +193,9 @@ export async function setup2FA(
     name: `Transcendence (${email})`,
   });
 
-  db.prepare("UPDATE users SET twofa_secret = ? WHERE email = ?").run(
-    secret.base32,
-    email,
-  );
+  db.prepare(
+    "UPDATE users SET twofa_secret = ?, require2FA = ? WHERE email = ?",
+  ).run(secret.base32, 1, email);
 
   // QR Code;
   if (!secret.otpauth_url) {
@@ -201,43 +209,45 @@ export async function setup2FA(
 }
 
 export async function verify2FA(
-  request: FastifyRequest<{ Body: { code: string; tempToken: string } }>,
+  request: FastifyRequest<{ Body: { code: string } }>,
   reply: FastifyReply,
 ) {
-  const { code, tempToken } = request.body;
-
-  try {
-    const decoded: any = jwt.verify(tempToken, JWT_SECRET);
-    if (!decoded.email) {
-      return reply.code(400).send({ message: "Token invalide" });
-    }
-
-    const user = db
-      .prepare("SELECT * FROM users WHERE email = ?")
-      .get(decoded.email) as User;
-
-    if (!user || !user.twofa_secret) {
-      return reply.status(400).send({ error: "2FA non configuré" });
-    }
-
-    const verified = speakeasy.totp.verify({
-      secret: user.twofa_secret,
-      encoding: "base32",
-      token: code,
-      window: 1,
-    });
-
-    if (!verified) {
-      return reply.status(400).send({ error: "Code 2FA invalide" });
-    }
-
-    const finalToken = jwt.sign(
-      { email: user.email, name: user.name },
-      JWT_SECRET,
-      { expiresIn: "7d" },
-    );
-    return reply.send({ token: finalToken });
-  } catch (err) {
-    return reply.status(401).send({ error: "Token invalide" });
+  const { code } = request.body;
+  const tempToken = request.headers.authorization?.split(" ")[1];
+  if (!tempToken) {
+    return reply.status(401).send({ error: "Token manquant" });
   }
+
+  const decoded: any = jwt.verify(tempToken, JWT_SECRET);
+  if (!decoded.email) {
+    return reply.status(401).send({ message: "Token invalide" });
+  }
+
+  const user = db
+    .prepare("SELECT * FROM users WHERE email = ?")
+    .get(decoded.email) as User;
+
+  if (!user || !user.twofa_secret) {
+    return reply
+      .status(404)
+      .send({ error: "Utilisateur non trouvé ou 2FA non configuré" });
+  }
+
+  const verified = speakeasy.totp.verify({
+    secret: user.twofa_secret,
+    encoding: "base32",
+    token: code,
+    window: 1,
+  });
+
+  if (!verified) {
+    return reply.status(400).send({ error: "Code 2FA invalide" });
+  }
+
+  const finalToken = jwt.sign(
+    { email: user.email, name: user.name },
+    JWT_SECRET,
+    { expiresIn: "7d" },
+  );
+  return reply.send({ token: finalToken });
 }
