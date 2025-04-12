@@ -12,8 +12,10 @@
     "skipLibCheck": true,
     "paths": {
       "@shared/*": ["./src/shared/*"]
-    }
+    },
+    "types": ["node", "fastify", "./src/types/fastify"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "./dist"]
 }
+

@@ -1,8 +1,6 @@
 import Fastify, { FastifyInstance } from "fastify";
 import { setupWebSocket } from "./ws/setupWebSocket";
-
-const PORT: number = Number(process.env.PORT);
-const DOMAIN_NAME: string = process.env.DOMAIN_NAME as string;
+import { DOMAIN_NAME, PORT } from "./config";
 
 // Create a Fastify serveur
 const app: FastifyInstance = Fastify({
