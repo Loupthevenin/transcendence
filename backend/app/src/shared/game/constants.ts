@@ -7,7 +7,9 @@ export const areaMinX: number = -areaHeight / 2; // Minimum x-position of the ar
 
 // Paddle
 export const paddleWidth: number = 1; // Width of the paddles
+export const paddleHalfWidth: number = paddleWidth / 2;
 export const paddleDepth: number = 0.1; // Depth of the paddles
+export const paddleHalfDepth: number = paddleDepth / 2;
 export const paddleSpeed: number = 5; // Speed of paddle movement
 
 export const paddleDefaultYPosition: number = areaWidth / 2 - 0.6;

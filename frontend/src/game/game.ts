@@ -321,8 +321,8 @@ export function InitGame() : void {
 
         // Clamp paddle positions to prevent them from going out of bounds
         pos.x = Math.min(
-          Math.max(pos.x, GAME_CONSTANT.areaMinX + GAME_CONSTANT.paddleWidth / 2),
-          GAME_CONSTANT.areaMaxX - GAME_CONSTANT.paddleWidth / 2,
+          Math.max(pos.x, GAME_CONSTANT.areaMinX + GAME_CONSTANT.paddleHalfWidth),
+          GAME_CONSTANT.areaMaxX - GAME_CONSTANT.paddleHalfWidth,
         );
 
         // Update paddle mesh positions
@@ -344,8 +344,8 @@ export function InitGame() : void {
 
     //   // Clamp paddle positions to prevent them from going out of bounds
     //   gameData.paddle2Position.x = Math.min(
-    //     Math.max(gameData.paddle2Position.x, GAME_CONSTANT.areaMinX + GAME_CONSTANT.paddleWidth / 2),
-    //     GAME_CONSTANT.areaMaxX - GAME_CONSTANT.paddleWidth / 2,
+    //     Math.max(gameData.paddle2Position.x, GAME_CONSTANT.areaMinX + GAME_CONSTANT.paddleHalfWidth),
+    //     GAME_CONSTANT.areaMaxX - GAME_CONSTANT.paddleHalfWidth,
     //   );
 
     //   // Update paddle mesh positions
