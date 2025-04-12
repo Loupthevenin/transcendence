@@ -104,13 +104,13 @@ let paddle2Input: number = 0;
 
 // Add input handling for paddle movement
 window.addEventListener("keydown", (event: KeyboardEvent) => {
-  switch (event.key) {
-    case "w": // Move Paddle 1 (Player 1) Up
+  switch (event.code) {
+    case "KeyW": // Move Paddle 1 (Player 1) Up
       if (currentGameMode !== GameMode.MENU) {
         paddle1Input |= 0b01;
       }
       break;
-    case "s": // Move Paddle 1 (Player 1) Down
+    case "KeyS": // Move Paddle 1 (Player 1) Down
       if (currentGameMode !== GameMode.MENU) {
         paddle1Input |= 0b10;
       }
@@ -129,11 +129,11 @@ window.addEventListener("keydown", (event: KeyboardEvent) => {
 });
 
 window.addEventListener("keyup", (event: KeyboardEvent) => {
-  switch (event.key) {
-    case "w": // Stop Paddle 1 Up movement
+  switch (event.code) {
+    case "KeyW": // Stop Paddle 1 Up movement
       paddle1Input &= ~0b01;
       break;
-    case "s": // Stop Paddle 1 Down movement
+    case "KeyS": // Stop Paddle 1 Down movement
       paddle1Input &= ~0b10;
       break;
     case "ArrowUp": // Stop Paddle 2 Up movement
