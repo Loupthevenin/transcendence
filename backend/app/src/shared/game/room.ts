@@ -1,4 +1,4 @@
-import { BABYLON, GAME_CONSTANT, GameData, Player } from "./gameElements";
+import { GAME_CONSTANT, GameData, newGameData, Player } from "./gameElements";
 import { resetBall, updateBallPosition } from "./ball";
 
 export class Room {
@@ -12,16 +12,7 @@ export class Room {
     this.id = id;
     this.player1 = null; // Start with no players
     this.player2 = null;
-    this.gameData = {
-      ball: {
-        position: new BABYLON.Vector2(0, 0),
-        velocity: new BABYLON.Vector2(0, 0)
-      },
-      paddle1Position: new BABYLON.Vector2(0, GAME_CONSTANT.paddleDefaultYPosition),
-      paddle2Position: new BABYLON.Vector2(0, -GAME_CONSTANT.paddleDefaultYPosition),
-      p1Score: 0,
-      p2Score: 0
-    };
+    this.gameData = newGameData();
     this.gameLaunched = false;
   }
 
@@ -105,10 +96,7 @@ export class Room {
     this.gameLaunched = true;
 
     // Initialize game data
-    this.gameData.paddle1Position = new BABYLON.Vector2(0, GAME_CONSTANT.paddleDefaultYPosition);
-    this.gameData.paddle2Position = new BABYLON.Vector2(0, -GAME_CONSTANT.paddleDefaultYPosition);
-    this.gameData.p1Score = 0;
-    this.gameData.p2Score = 0;
+    this.gameData = newGameData();
     resetBall(this.gameData.ball);
 
     if (this.isPlayerAlive(this.player1)) {

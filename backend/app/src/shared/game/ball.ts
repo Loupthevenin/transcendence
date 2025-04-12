@@ -16,7 +16,7 @@ function isCollidingWithPaddle(ballPos: BABYLON.Vector2, paddlePos: BABYLON.Vect
 }
 
 // Ball movement logic
-export function updateBallPosition(gameData: GameData, deltaTime: number) : void {
+export function updateBallPosition(gameData: GameData, deltaTime: number, ballMesh?: BABYLON.Mesh) : void {
   const ballPos: BABYLON.Vector2 = gameData.ball.position;
   const ballVel: BABYLON.Vector2 = gameData.ball.velocity;
   const ballNewPos: BABYLON.Vector2 = new BABYLON.Vector2(ballPos.x, ballPos.y);
@@ -54,6 +54,11 @@ export function updateBallPosition(gameData: GameData, deltaTime: number) : void
     // Update ball position with the new position
     ballPos.x = ballNewPos.x;
     ballPos.y = ballNewPos.y;
+  }
+
+  if (ballMesh) {
+    ballMesh.position.x = ballPos.x;
+    ballMesh.position.z = ballPos.y;
   }
 }
 
