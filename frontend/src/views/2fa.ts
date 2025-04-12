@@ -1,5 +1,5 @@
 export function TwoFAView(): HTMLElement {
-  const container = document.createElement("div");
+  const container: HTMLDivElement = document.createElement("div");
   container.className = "flex justify-center items-center min-h-screen";
   container.innerHTML = `
 <div class="bg-gray-800 p-8 rounded-lg shadow-xl max-w-sm w-full">

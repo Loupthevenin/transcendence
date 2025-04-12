@@ -1,13 +1,13 @@
 // GOOGLE Sign-up
 (window as any).handleCredentialResponse = async (response: any) => {
   try {
-    const res = await fetch("/api/google-login", {
+    const res: Response = await fetch("/api/google-login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token: response.credential }),
     });
 
-    const data = await res.json();
+    const data: any = await res.json();
 
     if (data.requires2FA) {
       localStorage.setItem("temp_token", data.tempToken);

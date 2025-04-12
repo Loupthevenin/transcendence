@@ -7,17 +7,19 @@ import { JWT_SECRET } from "../config";
 import { User } from "../types/authTypes";
 
 export async function setup2FA(request: FastifyRequest, reply: FastifyReply) {
-  const email = request.user?.email;
+  const email: string | undefined = request.user?.email;
   if (!email) {
     return reply.status(401).send({ error: "Invalid Token" });
   }
 
-  const user = db
+  const user: User = db
     .prepare("SELECT * FROM users WHERE email = ?")
     .get(email) as User;
-  if (!user) return reply.status(404).send({ error: "User not found" });
+  if (!user) {
+    return reply.status(404).send({ error: "User not found" });
+  }
 
-  const secret = speakeasy.generateSecret({
+  const secret: speakeasy.GeneratedSecret = speakeasy.generateSecret({
     name: `Transcendence (${email})`,
   });
 
@@ -31,7 +33,7 @@ export async function setup2FA(request: FastifyRequest, reply: FastifyReply) {
       .send(500)
       .send({ error: "Impossible de générer l'URL OTPAuth" });
   }
-  const qrCodeDataURL = await qrcode.toDataURL(secret.otpauth_url);
+  const qrCodeDataURL: string = await qrcode.toDataURL(secret.otpauth_url);
 
   return reply.send({ qrCodeDataURL });
 }
@@ -41,12 +43,12 @@ export async function verify2FA(
   reply: FastifyReply,
 ) {
   const { code } = request.body;
-  const email = request.user?.email;
+  const email: string | undefined = request.user?.email;
   if (!email) {
     return reply.status(401).send({ message: "Invalid Token" });
   }
 
-  const user = db
+  const user: User = db
     .prepare("SELECT * FROM users WHERE email = ?")
     .get(email) as User;
 
@@ -56,7 +58,7 @@ export async function verify2FA(
       .send({ error: "Utilisateur non trouvé ou 2FA non configuré" });
   }
 
-  const verified = speakeasy.totp.verify({
+  const verified: boolean = speakeasy.totp.verify({
     secret: user.twofa_secret,
     encoding: "base32",
     token: code,
@@ -67,7 +69,7 @@ export async function verify2FA(
     return reply.status(400).send({ error: "Code 2FA invalide" });
   }
 
-  const finalToken = jwt.sign(
+  const finalToken: string = jwt.sign(
     { email: user.email, name: user.name },
     JWT_SECRET,
     { expiresIn: "7d" },

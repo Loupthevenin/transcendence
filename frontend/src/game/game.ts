@@ -12,7 +12,7 @@ export function CreateGameCanvas() : HTMLCanvasElement {
 
 // Babylon.js setup
 export function InitGame() : void {
-  const canvas = document.getElementById("renderCanvas"); // Get the canvas element
+  const canvas: HTMLElement | null = document.getElementById("renderCanvas"); // Get the canvas element
 
   if (!(canvas instanceof HTMLCanvasElement)) {
     throw new Error(
@@ -34,7 +34,7 @@ export function InitGame() : void {
     scene,
   );
 
-  camera.attachControl(canvas as unknown as HTMLElement, false); // Attach to the canvas without user controls
+  camera.attachControl(canvas as HTMLElement, false); // Attach to the canvas without user controls
   camera.lowerAlphaLimit = camera.alpha; // Lock horizontal rotation
   camera.upperAlphaLimit = camera.alpha;
   camera.lowerBetaLimit = camera.beta; // Lock vertical rotation
@@ -100,7 +100,7 @@ export function InitGame() : void {
   ballMesh.material = ballMaterial;
 
   // Create the ground
-  const ground = BABYLON.MeshBuilder.CreateGround(
+  const ground: BABYLON.GroundMesh = BABYLON.MeshBuilder.CreateGround(
     "ground",
     { width: GAME_CONSTANT.areaWidth, height: GAME_CONSTANT.areaHeight },
     scene,
@@ -217,7 +217,7 @@ export function InitGame() : void {
     }
   });
 
-  let playerId: number = 0; // Player ID (1 or 2)
+  let playerId: number = 0; // Player ID (1 or 2) to identify which paddle the player controls
 
   //let lastUpdateTime = performance.now(); // For client prediction timing
 
@@ -240,7 +240,7 @@ export function InitGame() : void {
         //console.log('Received:', JSON.parse(event.data));
 
         try {
-            const data = JSON.parse(event.data);
+            const data: any = JSON.parse(event.data);
 
             if (data.type === "gameStarted") {
               playerId = data.id; // Set the player ID based on the server response
@@ -269,9 +269,9 @@ export function InitGame() : void {
 
               // Update the paddle mesh positions
               paddle1Mesh.position.x = gameData.paddle1Position.x;
-              paddle1Mesh.position.z = GAME_CONSTANT.paddleDefaultYPosition;
+              paddle1Mesh.position.z = gameData.paddle1Position.y;
               paddle2Mesh.position.x = gameData.paddle2Position.x;
-              paddle2Mesh.position.z = -GAME_CONSTANT.paddleDefaultYPosition;
+              paddle2Mesh.position.z = gameData.paddle2Position.y;
 
               //lastUpdateTime = performance.now();
             }
@@ -316,8 +316,7 @@ export function InitGame() : void {
       if (paddle1Input !== 0) {
         const pos: BABYLON.Vector2 = playerId === 1 ? gameData.paddle1Position : gameData.paddle2Position;
         // Update paddle positions
-        pos.x +=
-          ((paddle1Input & 0b1) - ((paddle1Input >> 1) & 0b1)) * GAME_CONSTANT.paddleSpeed * deltaTime;
+        pos.x += ((paddle1Input & 0b1) - ((paddle1Input >> 1) & 0b1)) * GAME_CONSTANT.paddleSpeed * deltaTime;
 
         // Clamp paddle positions to prevent them from going out of bounds
         pos.x = Math.min(

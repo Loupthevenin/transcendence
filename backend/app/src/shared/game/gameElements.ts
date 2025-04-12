@@ -1,10 +1,10 @@
 import { WebSocket } from 'ws';
 import * as BABYLON from "babylonjs";
-import * as GAME_CONSTANT from "./constants";
+export * as GAME_CONSTANT from "./constants";
 import { Ball } from "./ball";
 import { Room } from "./room";
 
-export { BABYLON, GAME_CONSTANT };
+export { BABYLON };
 
 export interface GameData {
   ball: Ball;

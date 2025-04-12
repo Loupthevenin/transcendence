@@ -6,10 +6,7 @@ export const listUsers = async (
   reply: FastifyReply,
 ): Promise<void> => {
   const stmt = db.prepare("SELECT * FROM users");
-  const users: Array<Record<string, any>> = stmt.all() as Array<
-    Record<string, any>
-  >;
-
+  const users: Array<Record<string, any>> = stmt.all() as Array<Record<string, any>>;
   return reply.send(users);
 };
 

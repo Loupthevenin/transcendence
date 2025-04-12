@@ -3,13 +3,13 @@ function listener2FA(container: HTMLElement) {
 
   if (button2FA) {
     button2FA.addEventListener("click", async () => {
-      const token = localStorage.getItem("auth_token");
+      const token: string | null = localStorage.getItem("auth_token");
       if (!token) {
         alert("Pas de token !");
         return;
       }
       try {
-        const res = await fetch("/api/setup-2fa", {
+        const res: Response = await fetch("/api/setup-2fa", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -19,11 +19,11 @@ function listener2FA(container: HTMLElement) {
 
         if (!res.ok) throw new Error("Error activation 2FA");
 
-        const data = await res.json();
-        const qrCodeDataURL = data.qrCodeDataURL;
+        const data: any = await res.json();
+        const qrCodeDataURL: any = data.qrCodeDataURL;
 
         if (qrCodeDataURL) {
-          const qrCodeContainer = container.querySelector("#qr-code-container");
+          const qrCodeContainer: Element | null = container.querySelector("#qr-code-container");
           if (qrCodeContainer) {
             qrCodeContainer.innerHTML = `<img src="${qrCodeDataURL}" alt="QR Code 2FA" />`;
           }

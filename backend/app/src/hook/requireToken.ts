@@ -8,13 +8,13 @@ export async function requireToken(
   reply: FastifyReply,
 ) {
   try {
-    const authHeader = request.headers.authorization;
+    const authHeader: string | undefined = request.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return reply.status(401).send({ error: "Missing or malformed token" });
     }
 
-    const token = authHeader.split(" ")[1];
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const token: string = authHeader.split(" ")[1];
+    const decoded: string | jwt.JwtPayload = jwt.verify(token, JWT_SECRET);
     if (typeof decoded == "string") {
       return reply.status(401).send({ error: "Invalid Token" });
     }

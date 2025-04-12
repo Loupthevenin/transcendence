@@ -1,13 +1,13 @@
 import { navigateTo } from "../router";
 
 export function setupTwoFAHandlers(container: HTMLElement) {
-  const twoFaForm = document.getElementById("2FAForm") as HTMLFormElement;
+  const twoFaForm: HTMLFormElement = document.getElementById("2FAForm") as HTMLFormElement;
 
   if (twoFaForm) {
     twoFaForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const code = (document.getElementById("code") as HTMLInputElement).value;
-      const tempToken = localStorage.getItem("temp_token");
+      const code: string = (document.getElementById("code") as HTMLInputElement).value;
+      const tempToken: string | null = localStorage.getItem("temp_token");
 
       if (!tempToken) {
         alert("Session expirée, reconnecte-toi");
@@ -16,7 +16,7 @@ export function setupTwoFAHandlers(container: HTMLElement) {
       }
 
       try {
-        const res = await fetch("/api/verify-2fa", {
+        const res: Response = await fetch("/api/verify-2fa", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -27,7 +27,7 @@ export function setupTwoFAHandlers(container: HTMLElement) {
 
         if (!res.ok) throw new Error("Code invalid");
 
-        const data = await res.json();
+        const data: any = await res.json();
 
         localStorage.removeItem("temp_token");
         localStorage.setItem("auth_token", data.token);
