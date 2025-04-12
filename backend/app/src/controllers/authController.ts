@@ -21,17 +21,17 @@ export async function registerUser(
       return reply.code(400).send({ message: "Email déjà utilisé" });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword: string = await bcrypt.hash(password, 10);
 
     const insert = db.prepare(
       "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
     );
     insert.run(name, email, hashedPassword);
 
-    const emailToken = jwt.sign({ email: email }, JWT_SECRET, {
+    const emailToken: string = jwt.sign({ email: email }, JWT_SECRET, {
       expiresIn: "1d",
     });
-    const verificationLink = `https://localhost:${PORT}/api/verify-email?token=${emailToken}`;
+    const verificationLink: string = `https://localhost:${PORT}/api/verify-email?token=${emailToken}`;
 
     // ENVOI MAIL
     const transporter = nodemailer.createTransport({
@@ -68,7 +68,7 @@ export async function verifyEmail(
   request: FastifyRequest<{ Querystring: { token: string } }>,
   reply: FastifyReply,
 ) {
-  const token = request.query.token;
+  const token: string = request.query.token;
 
   try {
     const decoded: any = jwt.verify(token, JWT_SECRET);
@@ -76,7 +76,7 @@ export async function verifyEmail(
       return reply.code(400).send({ message: "Invalid Token" });
     }
 
-    const user = db
+    const user: User = db
       .prepare("SELECT * FROM users WHERE email = ?")
       .get(decoded.email) as User;
     if (!user)
@@ -99,7 +99,7 @@ export async function loginUser(
   const { email, password } = request.body;
 
   try {
-    const user = db
+    const user: User = db
       .prepare("SELECT * FROM users WHERE email = ?")
       .get(email) as User;
 
@@ -109,7 +109,7 @@ export async function loginUser(
         .send({ message: "Email ou mot de passe incorrect" });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid: boolean = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return reply
         .code(400)
@@ -123,13 +123,13 @@ export async function loginUser(
     }
 
     if (user.require2FA) {
-      const tempToken = jwt.sign({ email: user.email }, JWT_SECRET, {
+      const tempToken: string = jwt.sign({ email: user.email }, JWT_SECRET, {
         expiresIn: "10m",
       });
       return reply.send({ require2FA: true, tempToken });
     }
 
-    const token = jwt.sign({ name: user.name, email: user.email }, JWT_SECRET, {
+    const token: string = jwt.sign({ name: user.name, email: user.email }, JWT_SECRET, {
       expiresIn: "2h",
     });
 

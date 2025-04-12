@@ -57,19 +57,19 @@ export async function navigateTo(path: string) {
 }
 
 export async function renderRoute() {
-  const path = location.pathname;
-  const route = routes[path];
+  const path: string = location.pathname;
+  const route: Route = routes[path];
 
   document.body.innerHTML = "";
 
   if (!route) {
-    const el = document.createElement("div");
+    const el: HTMLDivElement = document.createElement("div");
     el.textContent = "404 - Page non trouvée";
     document.body.appendChild(el);
     return;
   }
 
-  const view = route.view();
+  const view: HTMLElement = route.view();
   document.body.appendChild(view);
 
   if (route.setup) {

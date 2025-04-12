@@ -1,7 +1,7 @@
 import { navigateTo } from "../router";
 
 export function setupSignupHandlers(container: HTMLElement) {
-  const signupForm = container.querySelector(
+  const signupForm: HTMLFormElement | null = container.querySelector(
     "#signupForm",
   ) as HTMLFormElement | null;
 
@@ -9,15 +9,10 @@ export function setupSignupHandlers(container: HTMLElement) {
     signupForm.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const name = (container.querySelector("#name") as HTMLInputElement).value;
-      const email = (container.querySelector("#email") as HTMLInputElement)
-        .value;
-      const password = (
-        container.querySelector("#password") as HTMLInputElement
-      ).value;
-      const confirm_password = (
-        container.querySelector("#confirm_password") as HTMLInputElement
-      ).value;
+      const name: string = (container.querySelector("#name") as HTMLInputElement).value;
+      const email: string = (container.querySelector("#email") as HTMLInputElement).value;
+      const password: string = (container.querySelector("#password") as HTMLInputElement).value;
+      const confirm_password: string = (container.querySelector("#confirm_password") as HTMLInputElement).value;
 
       if (password != confirm_password) {
         alert("Les mots de passe en correspondent pas");
@@ -25,7 +20,7 @@ export function setupSignupHandlers(container: HTMLElement) {
       }
 
       try {
-        const res = await fetch("/api/signup", {
+        const res: Response = await fetch("/api/signup", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name, email, password }),

@@ -1,5 +1,5 @@
 export function ProfileView(): HTMLElement {
-  const container = document.createElement("div");
+  const container: HTMLDivElement = document.createElement("div");
   container.className = "";
   container.innerHTML = `
 <div class="mt-8 bg-[#1e1b4b] p-6 rounded-xl shadow-lg">

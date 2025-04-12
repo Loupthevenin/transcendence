@@ -1,21 +1,18 @@
 import { navigateTo } from "../router";
 
 export function setupLoginHandlers(container: HTMLElement) {
-  const loginForm = container.querySelector(
+  const loginForm: HTMLFormElement | null = container.querySelector(
     "#loginForm",
   ) as HTMLFormElement | null;
 
   if (loginForm) {
     loginForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const email = (container.querySelector("#email") as HTMLInputElement)
-        .value;
-      const password = (
-        container.querySelector("#password") as HTMLInputElement
-      ).value;
+      const email: string = (container.querySelector("#email") as HTMLInputElement).value;
+      const password: string = (container.querySelector("#password") as HTMLInputElement).value;
 
       try {
-        const res = await fetch("/api/login", {
+        const res: Response = await fetch("/api/login", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -25,7 +22,7 @@ export function setupLoginHandlers(container: HTMLElement) {
 
         if (!res.ok) throw new Error("Error connexion login");
 
-        const data = await res.json();
+        const data: any = await res.json();
         if (data.require2FA) {
           localStorage.setItem("temp_token", data.tempToken);
           navigateTo("/auth/verify-2fa");
