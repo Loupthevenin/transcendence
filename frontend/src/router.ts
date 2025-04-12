@@ -5,7 +5,7 @@ import { TwoFAView } from "./views/2fa";
 import { ProfileView } from "./views/profile";
 
 import { initSideBarNavigation } from "./controllers/navbar";
-import { InitGame, CreateGameCanvas } from "./game/game";
+import { CreateGameCanvas, InitGameEnvironment, BackToMenu } from "./game/game";
 
 type RouteHandler = () => HTMLElement;
 type Route = {
@@ -46,7 +46,8 @@ const routes: Record<string, Route> = {
     view: () => MainLayout(CreateGameCanvas()),
     setup: () => {
       initSideBarNavigation();
-      InitGame();
+      InitGameEnvironment();
+      BackToMenu();
     },
   },
 };

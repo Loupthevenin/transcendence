@@ -21,3 +21,5 @@ export const ballSpeedFactor: number = 1.1; // Factor to increase ball speed
 
 // Others
 export const scoreToWin: number = 5; // the score to win the game
+
+export const cameraRotationSpeed: number = 0.2; // Speed of camera rotation when in the menu

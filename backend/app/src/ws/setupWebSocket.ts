@@ -1,6 +1,6 @@
 import WebSocket, { WebSocketServer } from 'ws';
 import { v4 as uuidv4 } from 'uuid';
-import { Player, PlayerPaddle } from '../shared/game/gameElements';
+import { Player, PaddleData } from '../shared/game/gameElements';
 import { Room } from "../shared/game/room";
 import { scoreToWin } from "../shared/game/constants";
 
@@ -52,7 +52,7 @@ export function setupWebSocket() : WebSocketServer {
       //console.log('Received data:', message);
 
       try {
-        const data: PlayerPaddle = JSON.parse(message);
+        const data: PaddleData = JSON.parse(message);
 
         // Update paddle positions
         if (room.player1?.id === player.id) {
