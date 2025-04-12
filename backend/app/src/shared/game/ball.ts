@@ -5,39 +5,55 @@ export interface Ball {
   velocity: BABYLON.Vector2;
 }
 
+const ballAreaMinX: number = GAME_CONSTANT.areaMinX + GAME_CONSTANT.ballRadius;
+const ballAreaMaxX: number = GAME_CONSTANT.areaMaxX - GAME_CONSTANT.ballRadius;
+const ballPaddleCollisionMarginX: number = GAME_CONSTANT.paddleHalfWidth + GAME_CONSTANT.ballRadius;
+const ballPaddleCollisionMarginY: number = GAME_CONSTANT.paddleHalfDepth + GAME_CONSTANT.ballRadius;
+
+function isCollidingWithPaddle(ballPos: BABYLON.Vector2, paddlePos: BABYLON.Vector2) : boolean {
+  return Math.abs(ballPos.x - paddlePos.x) < ballPaddleCollisionMarginX
+      && Math.abs(ballPos.y - paddlePos.y) < ballPaddleCollisionMarginY;
+}
+
 // Ball movement logic
 export function updateBallPosition(gameData: GameData, deltaTime: number) : void {
   const ballPos: BABYLON.Vector2 = gameData.ball.position;
   const ballVel: BABYLON.Vector2 = gameData.ball.velocity;
+  const ballNewPos: BABYLON.Vector2 = new BABYLON.Vector2(ballPos.x, ballPos.y);
 
   // Update ball position
-  ballPos.x += ballVel.x * GAME_CONSTANT.ballSpeed * deltaTime;
-  ballPos.y += ballVel.y * GAME_CONSTANT.ballSpeed * deltaTime;
-
-  // Handle ball collision with walls
-  if (ballPos.x - GAME_CONSTANT.ballRadius < GAME_CONSTANT.areaMinX
-    || ballPos.x + GAME_CONSTANT.ballRadius > GAME_CONSTANT.areaMaxX
-  ) {
-    ballVel.x *= -1; // Reverse direction
-  }
+  ballNewPos.x += ballVel.x * GAME_CONSTANT.ballSpeed * deltaTime;
+  ballNewPos.y += ballVel.y * GAME_CONSTANT.ballSpeed * deltaTime;
 
   // Handle ball collision with paddles
-  if (
-    (Math.abs(ballPos.y - gameData.paddle1Position.y) < GAME_CONSTANT.paddleDepth / 2 + GAME_CONSTANT.ballRadius
-      && Math.abs(ballPos.x - gameData.paddle1Position.x) < GAME_CONSTANT.paddleWidth / 2 + GAME_CONSTANT.ballRadius)
-    || (Math.abs(ballPos.y - gameData.paddle2Position.y) < GAME_CONSTANT.paddleDepth / 2 + GAME_CONSTANT.ballRadius
-      && Math.abs(ballPos.x - gameData.paddle2Position.x) < GAME_CONSTANT.paddleWidth / 2 + GAME_CONSTANT.ballRadius)
+  if ((isCollidingWithPaddle(ballNewPos, gameData.paddle1Position)
+        || isCollidingWithPaddle(ballNewPos, gameData.paddle2Position))
+      && !(isCollidingWithPaddle(ballPos, gameData.paddle1Position)
+        || isCollidingWithPaddle(ballPos, gameData.paddle2Position))
   ) {
     ballVel.y *= -1; // Reverse direction
+    ballNewPos.y = ballPos.y; // Reset position to prevent getting stuck
+  }
+
+  // Handle ball collision with walls
+  if ((ballNewPos.x < ballAreaMinX || ballNewPos.x > ballAreaMaxX) // if new position is out of bounds
+      && !(ballPos.x < ballAreaMinX || ballPos.x > ballAreaMaxX)   // and previous position was in bounds
+  ) {
+    ballVel.x *= -1; // Reverse direction
+    ballNewPos.x = ballPos.x; // Reset position to prevent getting stuck
   }
 
   // Handle ball position going out of bounds (score logic)
-  if (ballPos.y - GAME_CONSTANT.ballRadius < -GAME_CONSTANT.areaWidth / 2) {
+  if (ballNewPos.y - GAME_CONSTANT.ballRadius < -GAME_CONSTANT.areaWidth / 2) {
     gameData.p1Score += 1;
     resetBall(gameData.ball);
-  } else if (ballPos.y + GAME_CONSTANT.ballRadius > GAME_CONSTANT.areaWidth / 2) {
+  } else if (ballNewPos.y + GAME_CONSTANT.ballRadius > GAME_CONSTANT.areaWidth / 2) {
     gameData.p2Score += 1;
     resetBall(gameData.ball);
+  } else {
+    // Update ball position with the new position
+    ballPos.x = ballNewPos.x;
+    ballPos.y = ballNewPos.y;
   }
 }
 
