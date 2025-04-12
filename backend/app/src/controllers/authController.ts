@@ -3,7 +3,13 @@ import bcrypt from "bcrypt";
 import db from "../db/db";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
-import { JWT_SECRET, PORT, EMAIL_USER, EMAIL_PASS } from "../config";
+import {
+  JWT_SECRET,
+  DOMAIN_NAME,
+  PORT,
+  EMAIL_USER,
+  EMAIL_PASS,
+} from "../config";
 import { Register, Login, User } from "../types/authTypes";
 
 export async function registerUser(
@@ -31,7 +37,7 @@ export async function registerUser(
     const emailToken: string = jwt.sign({ email: email }, JWT_SECRET, {
       expiresIn: "1d",
     });
-    const verificationLink: string = `https://localhost:${PORT}/api/verify-email?token=${emailToken}`;
+    const verificationLink: string = `https://${DOMAIN_NAME}:${PORT}/api/verify-email?token=${emailToken}`;
 
     // ENVOI MAIL
     const transporter = nodemailer.createTransport({
@@ -109,7 +115,10 @@ export async function loginUser(
         .send({ message: "Email ou mot de passe incorrect" });
     }
 
-    const isPasswordValid: boolean = await bcrypt.compare(password, user.password);
+    const isPasswordValid: boolean = await bcrypt.compare(
+      password,
+      user.password,
+    );
     if (!isPasswordValid) {
       return reply
         .code(400)
@@ -129,9 +138,13 @@ export async function loginUser(
       return reply.send({ require2FA: true, tempToken });
     }
 
-    const token: string = jwt.sign({ name: user.name, email: user.email }, JWT_SECRET, {
-      expiresIn: "2h",
-    });
+    const token: string = jwt.sign(
+      { name: user.name, email: user.email },
+      JWT_SECRET,
+      {
+        expiresIn: "2h",
+      },
+    );
 
     return reply.send({
       message: "Connexion réussie",
