@@ -2,9 +2,13 @@
 //   return !!localStorage.getItem("auth_token");
 // }
 
-function getSidebarItems(): { label: string; route: string }[] {
-  let items;
-  items = [
+interface SidebarItem {
+  label: string;
+  route: string;
+}
+
+function getSidebarItems(): SidebarItem[] {
+  const items: SidebarItem[] = [
     { label: "Accueil", route: "/" },
     { label: "Pong", route: "pong" },
     { label: "Chat", route: "chat" },
@@ -48,14 +52,14 @@ export function Sidebar(): HTMLElement {
     "w-64 bg-[#1e1b4b] shadow-md flex flex-col transition-transform duration-300 transform -translate-x-full absolute top-0 left-0 z-40 h-full";
   sidebar.id = "sidebar";
 
-  const items = getSidebarItems();
+  const items: SidebarItem[] = getSidebarItems();
 
   sidebar.innerHTML = `
         <nav class="flex-1 mt-15">
           <ul id="nav" class="space-y-2 p-4">
 			${items
         .map(
-          (item) => `
+          (item: SidebarItem) => `
 				<li>
 					<button data-target="${item.route}" class="nav-link w-full text-left flex items-center p-2 rounded text-indigo-400 hover:bg-[#312e81] hover:text-white">${item.label}</button>
 				</li>
