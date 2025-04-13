@@ -1,0 +1,121 @@
+.sidebar-toggle {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 1001;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  font-weight: bold;
+  background: #333;
+  border: 2px solid #444;
+  border-radius: 8px;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  transition:
+    background-color 0.3s ease,
+    transform 0.3s ease-in-out;
+}
+
+.sidebar-toggle .bracket {
+  display: inline-block;
+  transition:
+    transform 0.3s ease-in-out,
+    color 0.3s ease-in-out;
+  color: #bbb;
+}
+
+.sidebar-toggle:hover .bracket:first-child {
+  transform: translateX(-5px);
+  color: #a855f7;
+}
+
+.sidebar-toggle:hover .bracket:last-child {
+  transform: translateX(5px);
+  color: #a855f7;
+}
+
+.sidebar-toggle .menu-text {
+  margin-left: 0.25rem;
+  margin-right: 0.25rem;
+  color: #fff;
+  transition: color 0.3s ease-in-out;
+}
+
+.sidebar-toggle:hover .menu-text {
+  color: #a855f7;
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 300px;
+  height: 100vh;
+  background-color: #111;
+  color: white;
+  z-index: 1000;
+  padding: 80px 30px;
+  clip-path: polygon(0 0, 0 0, 0 0, 0 0);
+  transition:
+    clip-path 0.7s ease-in-out,
+    opacity 0.3s ease;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.sidebar nav ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar nav ul li {
+  margin: 20px 0;
+}
+
+.sidebar nav ul li a {
+  position: relative;
+  color: white;
+  text-decoration: none;
+  font-size: 20px;
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+
+.sidebar nav ul li a::before {
+  content: "=>";
+  position: absolute;
+  left: -25px;
+  opacity: 0;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition:
+    transform 0.3s ease,
+    opacity 0.3s ease;
+  color: #ff6f61;
+}
+
+.sidebar nav ul li a:hover {
+  transform: scale(1.2);
+  color: #a855f7;
+}
+
+.sidebar nav ul li a:hover::before {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.sidebar.open {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.sidebar.closing {
+  clip-path: polygon(0 0, 0 0, 00 100%, 0 100%);
+  opacity: 0;
+  pointer-events: none;
+}

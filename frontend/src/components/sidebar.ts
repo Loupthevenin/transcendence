@@ -38,13 +38,12 @@ function getSidebarItems(): SidebarItem[] {
 function ToggleMenu(): HTMLElement {
   const toggle: HTMLDivElement = document.createElement("div");
   toggle.id = "sidebarToggle";
-  toggle.className =
-    "absolute top-4 left-4 z-50 text-xl flex items-center cursor-pointer group select-none";
+  toggle.className = "sidebar-toggle";
 
   toggle.innerHTML = `
-    <span class="bracket transform transition-transform duration-300 group-hover:-translate-x-1">[</span>
-    <span class="mx-1">MENU</span>
-    <span class="bracket transform transition-transform duration-300 group-hover:translate-x-1">]</span>
+    <span class="bracket">[</span>
+    <span class="menu-text">MENU</span>
+    <span class="bracket">]</span>
   `;
   return toggle;
 }
@@ -56,21 +55,20 @@ export function Sidebar(): HTMLElement {
 
   const toggle: HTMLElement = ToggleMenu();
 
-  const sidebar: HTMLElement = document.createElement("aside");
-  sidebar.className =
-    "w-64 bg-black shadow-md flex flex-col transition-transform duration-300 transform -translate-x-full absolute top-0 left-0 z-40 h-full";
+  const sidebar: HTMLElement = document.createElement("div");
+  sidebar.className = "sidebar";
   sidebar.id = "sidebar";
 
   const items: SidebarItem[] = getSidebarItems();
 
   sidebar.innerHTML = `
-        <nav class="flex-1 mt-15">
-          <ul id="nav" class="space-y-2 p-4">
+        <nav >
+          <ul id="nav">
 			${items
         .map(
           (item: SidebarItem) => `
 				<li>
-					<button data-target="${item.route}" class="nav-link w-full text-left flex items-center p-2 rounded text-indigo-400 hover:bg-[#312e81] hover:text-white">${item.label}</button>
+					<a data-target="${item.route}" class="nav-link">${item.label}</a>
 				</li>
 				`,
         )
