@@ -29,9 +29,10 @@ const routes: Record<string, Route> = {
     },
   },
   "/profile": {
-    view: ProfileView,
+    view: () => MainLayout(ProfileView()),
     setup: async (root: HTMLElement) => {
       const mod = await import("./controllers/profile");
+      initSideBarNavigation();
       mod.setupProfile(root);
     },
   },

@@ -1,9 +1,9 @@
 import { renderRoute, navigateTo } from "./router";
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Button + [data-target] listener;
+  // [data-target] listener;
   document.body.addEventListener("click", (e: MouseEvent) => {
-    const target: HTMLButtonElement = e.target as HTMLButtonElement;
+    const target: HTMLElement = e.target as HTMLElement;
     if (target.matches("[data-target]")) {
       e.preventDefault();
       const targetPath: string | undefined = target.dataset.target;
