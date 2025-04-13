@@ -66,36 +66,50 @@ let paddle2Material: BABYLON.StandardMaterial;
 let ballMesh: BABYLON.Mesh;
 let ballMaterial: BABYLON.StandardMaterial;
 
-let scoreFontTexture: BABYLON.DynamicTexture;
-let scorePlane: BABYLON.Mesh;
-let scoreMaterial: BABYLON.StandardMaterial;
+let scoreFontTextureTop: BABYLON.DynamicTexture;
+let scorePlaneTop: BABYLON.Mesh;
+let scoreMaterialTop: BABYLON.StandardMaterial;
+let scoreFontTextureBottom: BABYLON.DynamicTexture;
+let scorePlaneBottom: BABYLON.Mesh;
+let scoreMaterialBottom: BABYLON.StandardMaterial;
 
-function updateScoreText(fontTexture: BABYLON.DynamicTexture) : void {
-  fontTexture.clear();
+function updateScoreText() : void {
+  function updateScoreFontTexture(fontTexture: BABYLON.DynamicTexture, leftScore: number, rightScore: number) : void {
+    fontTexture.clear();
+  
+    const text: string = `${leftScore} : ${rightScore}`;
+    const fontSize: number = 80; // Font size in pixels
+    const font: string = `bold ${fontSize}px Arial`;
+  
+    // Set the font on the dynamic texture
+    fontTexture.drawText("", 0, 0, font, "white", "transparent"); // Needed to set the font size
+  
+    // Get the 2D context of the DynamicTexture
+    const context: BABYLON.ICanvasRenderingContext = fontTexture.getContext();
+    context.font = font;
+  
+    // Measure the text dimensions
+    const leftScoreWidth: number = context.measureText(`${leftScore} `).width; // Width of left score + space
+    const colonWidth: number = context.measureText(':').width; // Width of the colon
+  
+    // Calculate the centered position
+    const textureWidth: number = fontTexture.getSize().width;
+    const textureHeight: number = fontTexture.getSize().height;
+    const x: number = textureWidth / 2 - (colonWidth / 2 + leftScoreWidth); // Position to align colon at the center
+    const y: number = (textureHeight + fontSize) / 2;       // Center vertically
+  
+    // Draw the text centered
+    fontTexture.drawText(text, x, y, font, "white", "transparent");
+  }
 
-  const text: string = `${gameData.p1Score} : ${gameData.p2Score}`;
-  const fontSize: number = 80; // Font size in pixels
-  const font: string = `bold ${fontSize}px Arial`;
-
-  // Set the font on the dynamic texture
-  fontTexture.drawText("", 0, 0, font, "white", "transparent"); // Needed to set the font size
-
-  // Get the 2D context of the DynamicTexture
-  const context: BABYLON.ICanvasRenderingContext = fontTexture.getContext();
-  context.font = font;
-
-  // Measure the text dimensions
-  const textMetrics: BABYLON.ITextMetrics = context.measureText(text);
-  const textWidth: number = textMetrics.width;
-
-  // Calculate the centered position
-  const textureWidth: number = fontTexture.getSize().width;
-  const textureHeight: number = fontTexture.getSize().height;
-  const x: number = (textureWidth - textWidth) / 2; // Center horizontally
-  const y: number = (textureHeight + fontSize) / 2; // Center vertically
-
-  // Draw the text centered
-  fontTexture.drawText(text, x, y, font, "white", "transparent");
+  if (gameData) {
+    if (scoreFontTextureTop) {
+      updateScoreFontTexture(scoreFontTextureTop, gameData.p1Score, gameData.p2Score);
+    }
+    if (scoreFontTextureBottom) {
+      updateScoreFontTexture(scoreFontTextureBottom, gameData.p2Score, gameData.p1Score);
+    }
+  }
 }
 
 // Paddle movement variables
@@ -296,7 +310,7 @@ function connectToServer(oncloseCallback?: () => void) : WebSocket {
             if (gameData.p1Score !== serverGameData.p1Score || gameData.p2Score !== serverGameData.p2Score) {
               gameData.p1Score = serverGameData.p1Score;
               gameData.p2Score = serverGameData.p2Score;
-              updateScoreText(scoreFontTexture);
+              updateScoreText();
             }
 
             // Update the ball mesh position
@@ -416,7 +430,7 @@ export function InitGameEnvironment() : void {
   paddle1Mesh.position = new BABYLON.Vector3(0, GAME_CONSTANT.paddleDepth / 2, GAME_CONSTANT.paddleDefaultYPosition);
 
   paddle1Material = new BABYLON.StandardMaterial(
-    "paddleMaterial",
+    "paddle1Material",
     scene,
   );
   paddle1Material.emissiveColor = BABYLON.Color3.Blue();
@@ -435,7 +449,7 @@ export function InitGameEnvironment() : void {
   paddle2Mesh.position = new BABYLON.Vector3(0, GAME_CONSTANT.paddleDepth / 2, -GAME_CONSTANT.paddleDefaultYPosition);
 
   paddle2Material = new BABYLON.StandardMaterial(
-    "paddleMaterial",
+    "paddle2Material",
     scene,
   );
   paddle2Material.emissiveColor = BABYLON.Color3.Red();
@@ -460,31 +474,55 @@ export function InitGameEnvironment() : void {
   //new BABYLON.AxesViewer(scene, 2);
   ///////////////////////////////////////////////////////////////
 
-  // Create the score display
-  scoreFontTexture = new BABYLON.DynamicTexture(
-    "fontTexture",
-    { width: 256, height: 128 },
+  // Create the top score display
+  scoreFontTextureTop = new BABYLON.DynamicTexture(
+    "scoreFontTextureTop",
+    { width: 512, height: 128 },
     scene,
     true,
   );
 
-  updateScoreText(scoreFontTexture);
-
-  scorePlane = BABYLON.MeshBuilder.CreatePlane(
-    "scorePlane",
-    { width: 2.4, height: 1.2 },
+  scorePlaneTop = BABYLON.MeshBuilder.CreatePlane(
+    "scorePlaneTop",
+    { width: 4, height: 1 },
     scene
   );
-  scorePlane.position = new BABYLON.Vector3(3.6, 0, 0);
-  scorePlane.rotation = new BABYLON.Vector3(Math.PI / 2, Math.PI / 2, 0);
+  scorePlaneTop.position = new BABYLON.Vector3(3.6, 0, 0);
+  scorePlaneTop.rotation = new BABYLON.Vector3(Math.PI / 2, Math.PI / 2, 0);
 
-  scoreMaterial = new BABYLON.StandardMaterial("scoreMaterial", scene);
-  scoreMaterial.emissiveTexture = scoreFontTexture;
-  scoreMaterial.opacityTexture = scoreFontTexture; // Enable transparency
-  scoreMaterial.alpha = 1;
+  scoreMaterialTop = new BABYLON.StandardMaterial("scoreMaterialTop", scene);
+  scoreMaterialTop.emissiveTexture = scoreFontTextureTop;
+  scoreMaterialTop.opacityTexture = scoreFontTextureTop; // Enable transparency
+  scoreMaterialTop.alpha = 1;
 
-  scorePlane.material = scoreMaterial;
+  scorePlaneTop.material = scoreMaterialTop;
 
+  // Create the bottom score display
+  scoreFontTextureBottom = new BABYLON.DynamicTexture(
+    "scoreFontTextureBottom",
+    { width: 512, height: 128 },
+    scene,
+    true,
+  );
+
+  scorePlaneBottom = BABYLON.MeshBuilder.CreatePlane(
+    "scorePlaneBottom",
+    { width: 4, height: 1 },
+    scene
+  );
+  scorePlaneBottom.position = new BABYLON.Vector3(-3.6, 0, 0);
+  scorePlaneBottom.rotation = new BABYLON.Vector3(Math.PI / 2, -Math.PI / 2, 0);
+
+  scoreMaterialBottom = new BABYLON.StandardMaterial("scoreMaterialBottom", scene);
+  scoreMaterialBottom.emissiveTexture = scoreFontTextureBottom;
+  scoreMaterialBottom.opacityTexture = scoreFontTextureBottom; // Enable transparency
+  scoreMaterialBottom.alpha = 1;
+
+  scorePlaneBottom.material = scoreMaterialBottom;
+
+  updateScoreText();
+
+  // Setup up dragging data
   paddle1DraggingData = { pointerId: -1, mesh: paddle1Mesh, targetX: null };
   paddle2DraggingData = { pointerId: -1, mesh: paddle2Mesh, targetX: null };
   scene.onPointerObservable.add(handlePlayerDragInput);
@@ -499,7 +537,7 @@ export function InitGameEnvironment() : void {
       case GameMode.MENU:
         camera.alpha += GAME_CONSTANT.cameraRotationSpeed * deltaTime;
         updateBallPosition(gameData, deltaTime, ballMesh);
-        updateScoreText(scoreFontTexture);
+        updateScoreText();
         break;
 
       case GameMode.SINGLEPLAYER:
@@ -514,7 +552,7 @@ export function InitGameEnvironment() : void {
         // TODO: AI paddle
 
         updateBallPosition(gameData, deltaTime, ballMesh);
-        updateScoreText(scoreFontTexture);
+        updateScoreText();
         break;
 
       case GameMode.LOCAL:
@@ -535,7 +573,7 @@ export function InitGameEnvironment() : void {
         )
 
         updateBallPosition(gameData, deltaTime, ballMesh);
-        updateScoreText(scoreFontTexture);
+        updateScoreText();
         break;
 
       case GameMode.ONLINE:
