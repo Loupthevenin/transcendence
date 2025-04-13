@@ -6,7 +6,7 @@ export function setupSignupHandlers(container: HTMLElement) {
   ) as HTMLFormElement | null;
 
   if (signupForm) {
-    signupForm.addEventListener("submit", async (e) => {
+    signupForm.addEventListener("submit", async (e: SubmitEvent) => {
       e.preventDefault();
 
       const name: string = (container.querySelector("#name") as HTMLInputElement).value;

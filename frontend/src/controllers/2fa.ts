@@ -4,7 +4,7 @@ export function setupTwoFAHandlers(container: HTMLElement) {
   const twoFaForm: HTMLFormElement = document.getElementById("2FAForm") as HTMLFormElement;
 
   if (twoFaForm) {
-    twoFaForm.addEventListener("submit", async (e) => {
+    twoFaForm.addEventListener("submit", async (e: SubmitEvent) => {
       e.preventDefault();
       const code: string = (document.getElementById("code") as HTMLInputElement).value;
       const tempToken: string | null = localStorage.getItem("temp_token");

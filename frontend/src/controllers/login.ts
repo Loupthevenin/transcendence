@@ -6,7 +6,7 @@ export function setupLoginHandlers(container: HTMLElement) {
   ) as HTMLFormElement | null;
 
   if (loginForm) {
-    loginForm.addEventListener("submit", async (e) => {
+    loginForm.addEventListener("submit", async (e: SubmitEvent) => {
       e.preventDefault();
       const email: string = (container.querySelector("#email") as HTMLInputElement).value;
       const password: string = (container.querySelector("#password") as HTMLInputElement).value;

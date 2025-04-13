@@ -1,4 +1,5 @@
-import Fastify, { FastifyInstance } from "fastify";
+import Fastify, { FastifyInstance, FastifyError } from "fastify";
+import { WebSocketServer } from 'ws';
 import { setupWebSocket } from "./ws/setupWebSocket";
 import { DOMAIN_NAME, PORT } from "./config";
 
@@ -16,17 +17,17 @@ app.register(require("./routes/setup2fa"), { prefix: "/api/setup-2fa" });
 app.register(require("./routes/users"), { prefix: "/api/users" });
 
 // Error handling
-app.setErrorHandler((error, request, reply) => {
+app.setErrorHandler((error: FastifyError, request, reply) => {
   console.error(error);
   reply.status(500).send("Server error occurred");
 });
 
 // Start the server
-app.listen({ host: "0.0.0.0", port: 3000 }, (err, address) => {
+app.listen({ host: "0.0.0.0", port: 3000 }, (err: Error | null, address: string) => {
   if (err) throw err;
   console.log(`Server running at ${DOMAIN_NAME}:${PORT}`);
 
-  const wss = setupWebSocket();
+  const wss: WebSocketServer = setupWebSocket();
 
   // Integrate WebSocket with Fastify
   app.server.on("upgrade", (request, socket, head) => {

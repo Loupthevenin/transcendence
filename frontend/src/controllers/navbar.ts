@@ -9,7 +9,7 @@ export function initSideBarNavigation(): void {
     sidebar.classList.toggle("-translate-x-full");
   });
 
-  sidebar.querySelectorAll(".nav-link").forEach((button) => {
+  sidebar.querySelectorAll(".nav-link").forEach((button: Element) => {
     button.addEventListener("click", (event: Event) => {
       const target: HTMLButtonElement = event.currentTarget as HTMLButtonElement;
       const section: string | undefined = target.dataset.target;
