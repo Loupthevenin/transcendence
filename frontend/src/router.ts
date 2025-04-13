@@ -46,6 +46,7 @@ const routes: Record<string, Route> = {
   "/": {
     view: () => MainLayout(CreateGameCanvas()),
     setup: () => {
+      document.body.style.overflow = "hidden";
       initSideBarNavigation();
       InitGameEnvironment();
       BackToMenu();
