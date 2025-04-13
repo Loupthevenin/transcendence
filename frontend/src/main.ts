@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
       e.preventDefault();
       const targetPath: string | undefined = target.dataset.target;
       if (targetPath) {
-        navigateTo(`/${targetPath}`);
+        navigateTo(`${targetPath}`);
       }
     }
   });
@@ -16,11 +16,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // A +[data-link] listener;
   document.body.addEventListener("click", (e: MouseEvent) => {
     const target: HTMLElement = e.target as HTMLElement;
+
     if (target.matches("a[data-link]")) {
       e.preventDefault();
       const href: string | null = target.getAttribute("href");
       if (href) {
-        navigateTo(`/${href}`);
+        navigateTo(`${href}`);
       }
     }
   });
