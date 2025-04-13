@@ -22,26 +22,26 @@ echo -e "${GREEN}Npm dependencies installed successfully...${RESET}"
 cd /var/www/html
 ln -sfn /var/app/src/shared /var/www/html/src/shared
 
-if [ "$NODE_ENV" = "production" ]; then
-  echo -e "${CYAN}Building frontend for production...${RESET}"
-  npm run build # Production build
-  echo -e "${GREEN}Frontend build successfully...${RESET}"
-else
+if [ "$NODE_ENV" = "development" ]; then
   echo -e "${YELLOW}Starting frontend development server...${RESET}"
   npm run dev & # Development server running in background
   FRONTEND_PID=$! # Capture the process ID for later use
+else
+  echo -e "${CYAN}Building frontend for production...${RESET}"
+  npm run build # Production build
+  echo -e "${GREEN}Frontend build successfully...${RESET}"
 fi
 
 # Compilation of back and run the server
 cd /var/app
 npm run build
 
-if [ "$NODE_ENV" = "production" ]; then
-  echo -e "${CYAN}Launching backend in production mode...${RESET}"
-  npm start # Production server
-else
+if [ "$NODE_ENV" = "development" ]; then
   echo -e "${YELLOW}Launching backend in development mode...${RESET}"
   npm run dev # Development server
+else
+  echo -e "${CYAN}Launching backend in production mode...${RESET}"
+  npm start # Production server
 fi
 
 if [ ! -z "$FRONTEND_PID" ]; then
