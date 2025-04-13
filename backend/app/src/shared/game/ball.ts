@@ -74,7 +74,7 @@ export function resetBall(ball: Ball) : void {
       (3 * Math.PI) / 2, // 270 degrees
       Math.PI * 2,       // 360 degrees
   ];
-  const margin: number = Math.PI / 18; // Margin in radians (10° = π/18)
+  const margin: number = BABYLON.Tools.ToRadians(15); // Margin of excluded angles
 
   let angle: number;
 

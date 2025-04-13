@@ -51,7 +51,7 @@ function updateCameraRotation(camera: BABYLON.ArcRotateCamera, gameMode: GameMod
   }
 }
 
-let gameData: GameData = newGameData();;
+let gameData: GameData = newGameData();
 
 // environment
 let ground: BABYLON.GroundMesh;
@@ -145,23 +145,114 @@ window.addEventListener("keyup", (event: KeyboardEvent) => {
   }
 });
 
-// Function to handle player input and update paddle positions
-function handlePlayerInput(paddlePosition: BABYLON.Vector2, paddleMesh: BABYLON.Mesh, input: number, deltaTime: number) : void {
-  if (input === 0) {
+// Function to update paddle positions based on deltaX
+function movePaddle(paddlePosition: BABYLON.Vector2, paddleMesh: BABYLON.Mesh, deltaX: number, deltaTime: number) : void {
+  if (deltaX === 0) {
     return; // No input, no movement
   }
 
-  // Update paddle positions
-  paddlePosition.x += ((input & 0b1) - ((input >> 1) & 0b1)) * GAME_CONSTANT.paddleSpeed * deltaTime;
-
-  // Clamp paddle positions to prevent them from going out of bounds
+  // Update and clamp paddle positions to prevent them from going out of bounds
   paddlePosition.x = Math.min(
-    Math.max(paddlePosition.x, GAME_CONSTANT.areaMinX + GAME_CONSTANT.paddleHalfWidth),
+    Math.max(paddlePosition.x + deltaX, GAME_CONSTANT.areaMinX + GAME_CONSTANT.paddleHalfWidth),
     GAME_CONSTANT.areaMaxX - GAME_CONSTANT.paddleHalfWidth,
   );
 
   // Update paddle mesh positions
   paddleMesh.position.x = paddlePosition.x;
+}
+
+interface PaddleDraggingData {
+  pointerId: number,
+  mesh: BABYLON.Mesh,
+  targetX: number | null
+}
+
+let paddle1DraggingData: PaddleDraggingData;
+let paddle2DraggingData: PaddleDraggingData;
+
+// Function to handle player input
+function handlePlayerInput(paddlePosition: BABYLON.Vector2, paddleMesh: BABYLON.Mesh, keyInput: number, draggingData: PaddleDraggingData, deltaTime: number) : void {
+  if (keyInput === 0 && draggingData.pointerId === -1) {
+    return; // No key input, no movement
+  }
+
+  let deltaX: number = 0;
+  if (draggingData.pointerId !== -1) {
+    if (draggingData.targetX !== null) {
+      const computedDelta: number = (draggingData.targetX - paddlePosition.x) * GAME_CONSTANT.paddleSpeed * deltaTime;
+      deltaX = Math.min(Math.max(computedDelta, -1), 1);
+    }
+  } else {
+    deltaX = ((keyInput & 0b1) - ((keyInput >> 1) & 0b1)) * GAME_CONSTANT.paddleSpeed * deltaTime;
+  }
+
+  movePaddle(
+    paddlePosition,
+    paddleMesh,
+    deltaX,
+    deltaTime
+  );
+}
+
+// Function to handle player drag input
+function handlePlayerDragInput(pointerInfo: BABYLON.PointerInfo) : void {
+  if (!engine || !gameData) {
+    return;
+  }
+
+  // BABYLON.IMouseEvent.pointerId doesn't appear in typescript for some reason,
+  // so we need to cast it as 'any' to access it
+  const pointerId: number = (pointerInfo.event as any).pointerId;
+
+  switch (pointerInfo.type) {
+      case BABYLON.PointerEventTypes.POINTERDOWN:
+          if (pointerInfo.pickInfo?.hit) {
+            const pickedMesh: BABYLON.Nullable<BABYLON.AbstractMesh> = pointerInfo.pickInfo.pickedMesh;
+
+            // Check if pickedMesh is not null and cast it to BABYLON.Mesh
+            if (pickedMesh && pickedMesh instanceof BABYLON.Mesh) {
+              if (pickedMesh === paddle1Mesh) {
+                if (paddle1DraggingData.pointerId === -1) {
+                  paddle1DraggingData.pointerId = pointerId;
+                }
+              } else if (pickedMesh === paddle2Mesh) {
+                if (paddle2DraggingData.pointerId === -1) {
+                  paddle2DraggingData.pointerId = pointerId;
+                }
+              }
+            }
+          }
+          break;
+
+      case BABYLON.PointerEventTypes.POINTERUP:
+          if (paddle1DraggingData.pointerId === pointerId) {
+            paddle1DraggingData.pointerId = -1;
+            paddle1DraggingData.targetX = null;
+          } else if (paddle2DraggingData.pointerId === pointerId) {
+            paddle2DraggingData.pointerId = -1;
+            paddle2DraggingData.targetX = null;
+          }
+          break;
+
+      case BABYLON.PointerEventTypes.POINTERMOVE:
+          let paddleDraggingData: PaddleDraggingData | null = null;
+
+          // Get the correct paddle dragging data
+          if (paddle1DraggingData.pointerId === pointerId) {
+            paddleDraggingData = paddle1DraggingData;
+          } else if (paddle2DraggingData.pointerId === pointerId) {
+            paddleDraggingData = paddle2DraggingData;
+          }
+
+          // Assign the target X if found
+          if (paddleDraggingData) {
+            const pickInfo: BABYLON.PickingInfo = scene.pick(scene.pointerX, scene.pointerY);
+            if (pickInfo?.hit) {
+              paddleDraggingData.targetX = pickInfo.pickedPoint?.x ?? null;
+            }
+          }
+          break;
+  }
 }
 
 let socket: WebSocket | null = null; // WebSocket connection to the server
@@ -290,8 +381,6 @@ export function InitGameEnvironment() : void {
   engine = new BABYLON.Engine(canvas, true); // Initialize the Babylon.js engine
 
   scene = new BABYLON.Scene(engine); // Create a new scene
-  scene.detachControl(); // Detach control to prevent user interaction
-  //scene.attachControl(true, true, true); // Re-attach control to allow user interaction
 
   camera = new BABYLON.ArcRotateCamera(
     "Camera",
@@ -301,7 +390,8 @@ export function InitGameEnvironment() : void {
     new BABYLON.Vector3(0, 0, 0), // Target position
     scene,
   );
-  camera.attachControl(canvas as HTMLElement, false); // Attach to the canvas without user controls
+  camera.attachControl(canvas as HTMLElement, false);
+  camera.inputs.clear(); // Delete all default camera's inputs
 
   updateCameraRotation(camera, currentGameMode);
 
@@ -405,6 +495,10 @@ export function InitGameEnvironment() : void {
 
   scorePlane.material = scoreMaterial;
 
+  paddle1DraggingData = { pointerId: -1, mesh: paddle1Mesh, targetX: null };
+  paddle2DraggingData = { pointerId: -1, mesh: paddle2Mesh, targetX: null };
+  scene.onPointerObservable.add(handlePlayerDragInput);
+
   //let lastUpdateTime = performance.now(); // For client prediction timing
 
   // Game render loop
@@ -423,6 +517,7 @@ export function InitGameEnvironment() : void {
           gameData.paddle1Position,
           paddle1Mesh,
           paddle1Input,
+          paddle1DraggingData,
           deltaTime
         )
 
@@ -437,6 +532,7 @@ export function InitGameEnvironment() : void {
           gameData.paddle1Position,
           paddle1Mesh,
           paddle1Input,
+          paddle1DraggingData,
           deltaTime
         )
 
@@ -444,6 +540,7 @@ export function InitGameEnvironment() : void {
           gameData.paddle2Position,
           paddle2Mesh,
           paddle2Input,
+          paddle2DraggingData,
           deltaTime
         )
 
@@ -459,9 +556,10 @@ export function InitGameEnvironment() : void {
               pos,
               playerId === 1 ? paddle1Mesh : paddle2Mesh,
               paddle1Input,
+              playerId === 1 ? paddle1DraggingData : paddle2DraggingData,
               deltaTime
             )
-    
+
             // Send new paddle position to the server
             const paddleData: PaddleData = {
               position: new BABYLON.Vector2(pos.x, pos.y,)
