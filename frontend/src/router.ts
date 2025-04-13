@@ -16,28 +16,28 @@ type Route = {
 const routes: Record<string, Route> = {
   "/auth/login": {
     view: LoginView,
-    setup: async (root) => {
+    setup: async (root: HTMLElement) => {
       const mod = await import("./controllers/login");
       mod.setupLoginHandlers(root);
     },
   },
   "/auth/signup": {
     view: SignupView,
-    setup: async (root) => {
+    setup: async (root: HTMLElement) => {
       const mod = await import("./controllers/signup");
       mod.setupSignupHandlers(root);
     },
   },
   "/profile": {
     view: ProfileView,
-    setup: async (root) => {
+    setup: async (root: HTMLElement) => {
       const mod = await import("./controllers/profile");
       mod.setupProfile(root);
     },
   },
   "/auth/verify-2fa": {
     view: TwoFAView,
-    setup: async (root) => {
+    setup: async (root: HTMLElement) => {
       const mod = await import("./controllers/2fa");
       mod.setupTwoFAHandlers(root);
     },

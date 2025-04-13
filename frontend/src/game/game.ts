@@ -145,22 +145,6 @@ window.addEventListener("keyup", (event: KeyboardEvent) => {
   }
 });
 
-// Function to update paddle positions based on deltaX
-function movePaddle(paddlePosition: BABYLON.Vector2, paddleMesh: BABYLON.Mesh, deltaX: number, deltaTime: number) : void {
-  if (deltaX === 0) {
-    return; // No input, no movement
-  }
-
-  // Update and clamp paddle positions to prevent them from going out of bounds
-  paddlePosition.x = Math.min(
-    Math.max(paddlePosition.x + deltaX, GAME_CONSTANT.areaMinX + GAME_CONSTANT.paddleHalfWidth),
-    GAME_CONSTANT.areaMaxX - GAME_CONSTANT.paddleHalfWidth,
-  );
-
-  // Update paddle mesh positions
-  paddleMesh.position.x = paddlePosition.x;
-}
-
 interface PaddleDraggingData {
   pointerId: number,
   mesh: BABYLON.Mesh,
@@ -170,7 +154,7 @@ interface PaddleDraggingData {
 let paddle1DraggingData: PaddleDraggingData;
 let paddle2DraggingData: PaddleDraggingData;
 
-// Function to handle player input
+// Function to handle player input and update paddle position
 function handlePlayerInput(paddlePosition: BABYLON.Vector2, paddleMesh: BABYLON.Mesh, keyInput: number, draggingData: PaddleDraggingData, deltaTime: number) : void {
   if (keyInput === 0 && draggingData.pointerId === -1) {
     return; // No key input, no movement
@@ -186,12 +170,18 @@ function handlePlayerInput(paddlePosition: BABYLON.Vector2, paddleMesh: BABYLON.
     deltaX = ((keyInput & 0b1) - ((keyInput >> 1) & 0b1)) * GAME_CONSTANT.paddleSpeed * deltaTime;
   }
 
-  movePaddle(
-    paddlePosition,
-    paddleMesh,
-    deltaX,
-    deltaTime
+  if (deltaX === 0) {
+    return; // No delta, no movement
+  }
+
+  // Update and clamp paddle positions to prevent them from going out of bounds
+  paddlePosition.x = Math.min(
+    Math.max(paddlePosition.x + deltaX, GAME_CONSTANT.areaMinX + GAME_CONSTANT.paddleHalfWidth),
+    GAME_CONSTANT.areaMaxX - GAME_CONSTANT.paddleHalfWidth,
   );
+
+  // Update paddle mesh positions
+  paddleMesh.position.x = paddlePosition.x;
 }
 
 // Function to handle player drag input
@@ -499,7 +489,7 @@ export function InitGameEnvironment() : void {
   paddle2DraggingData = { pointerId: -1, mesh: paddle2Mesh, targetX: null };
   scene.onPointerObservable.add(handlePlayerDragInput);
 
-  //let lastUpdateTime = performance.now(); // For client prediction timing
+  //let lastUpdateTime: number = performance.now(); // For client prediction timing
 
   // Game render loop
   engine.runRenderLoop(() => {
@@ -585,7 +575,7 @@ export function InitGameEnvironment() : void {
   });
 }
 
-// Launch the game in single player against an AI
+// Quit the game and go back to the menu
 export function BackToMenu() : void {
   currentGameMode = GameMode.MENU;
   updateCameraRotation(camera, currentGameMode);
@@ -594,7 +584,7 @@ export function BackToMenu() : void {
   ResetGame();
 }
 
-// Launch the game in single player against an AI
+// Launch the game in single player against an AI opponent
 export function SinglePlayer() : void {
   currentGameMode = GameMode.SINGLEPLAYER;
   updateCameraRotation(camera, currentGameMode);
@@ -603,7 +593,7 @@ export function SinglePlayer() : void {
   ResetGame();
 }
 
-// Launch the game in local 2 players mode
+// Launch the game in local 1v1 mode
 export function LocalGame() : void {
   currentGameMode = GameMode.LOCAL;
   updateCameraRotation(camera, currentGameMode);
@@ -611,6 +601,7 @@ export function LocalGame() : void {
 
   ResetGame();
 }
+
 // Launch the game in online mode against a remote player
 export function OnlineGame() : void {
   currentGameMode = GameMode.ONLINE;
@@ -619,7 +610,7 @@ export function OnlineGame() : void {
 
   ResetGame();
 
-  socket = connectToServer(() => {socket = null;});
+  socket = connectToServer(() => { socket = null; });
 }
 
 //// TO DELETE //// TO DELETE //// TO DELETE //// TO DELETE ////

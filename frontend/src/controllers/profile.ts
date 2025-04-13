@@ -1,5 +1,5 @@
 function listener2FA(container: HTMLElement) {
-  const button2FA = container.querySelector("#activate-2fa") as HTMLElement;
+  const button2FA: HTMLElement = container.querySelector("#activate-2fa") as HTMLElement;
 
   if (button2FA) {
     button2FA.addEventListener("click", async () => {
