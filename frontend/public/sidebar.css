@@ -82,13 +82,14 @@
   text-decoration: none;
   font-size: 20px;
   display: inline-block;
+  padding-left: 30px;
   transition: transform 0.3s ease;
 }
 
 .sidebar nav ul li a::before {
   content: "=>";
   position: absolute;
-  left: -25px;
+  left: 0;
   opacity: 0;
   transform: scaleX(0);
   transform-origin: left;
