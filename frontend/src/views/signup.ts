@@ -79,7 +79,7 @@ export function SignupView(): HTMLElement {
       <div class="mt-4 text-center">
         <p class="text-sm text-purple-300">
           Vous avez déjà un compte ?
-          <a href="auth/login" data-link class="text-indigo-400 hover:underline"
+          <a href="/auth/login" data-link class="text-indigo-400 hover:underline"
             >Se connecter</a
           >
         </p>

@@ -53,7 +53,7 @@ export function LoginView(): HTMLElement {
       <div class="mt-4 text-center">
         <p class="text-sm text-purple-300">
           Pas encore de compte ?
-          <a href="auth/signup" data-link class="text-indigo-400 hover:underline"
+          <a href="/auth/signup" data-link class="text-indigo-400 hover:underline"
             >S'inscrire</a
           >
         </p>
