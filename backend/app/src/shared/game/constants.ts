@@ -12,7 +12,7 @@ export const paddleDepth: number = 0.1; // Depth of the paddles
 export const paddleHalfDepth: number = paddleDepth / 2;
 export const paddleSpeed: number = 5; // Speed of paddle movement
 
-export const paddleDefaultYPosition: number = areaWidth / 2 - 0.6;
+export const paddleDefaultZPosition: number = areaWidth / 2 - 0.6;
 
 // Ball
 export const ballRadius: number = 0.1; // The default radius of the ball

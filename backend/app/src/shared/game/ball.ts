@@ -1,8 +1,16 @@
-import { BABYLON, GAME_CONSTANT, GameData } from "./gameElements";
+import { BABYLON, GAME_CONSTANT, isVector2, GameData } from "./gameElements";
 
 export interface Ball {
   position: BABYLON.Vector2;
   velocity: BABYLON.Vector2;
+}
+
+export function isBall(data: any): data is Ball {
+  return (
+    data &&
+    isVector2(data.position) &&
+    isVector2(data.velocity)
+  );
 }
 
 const ballAreaMinX: number = GAME_CONSTANT.areaMinX + GAME_CONSTANT.ballRadius;

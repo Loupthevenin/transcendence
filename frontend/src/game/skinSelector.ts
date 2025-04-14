@@ -1,4 +1,5 @@
 import { BABYLON } from "@shared/game/gameElements";
+import { loadPadddleSkin } from "./paddleSkinLoader";
 
 let canvas: HTMLCanvasElement | null = null;
 let engine: BABYLON.Engine;
@@ -6,7 +7,7 @@ let scene: BABYLON.Scene;
 let camera: BABYLON.ArcRotateCamera;
 let light: BABYLON.HemisphericLight;
 
-const modelIds: number[] = [0, 1, 2, 3, 4];
+const skinIds: number[] = [0, 1, 2, 3, 4];
 
 const models: (BABYLON.AbstractMesh | null)[] = [];
 let currentIndex: number = 0;
@@ -16,7 +17,7 @@ let isMouseDown: boolean = false;
 let lastMouseX: number = 0;
 
 // Create the canvas
-export function CreateSkinSelectorCanvas(root: HTMLElement) : void {
+export function createSkinSelectorCanvas(root: HTMLElement) : void {
   // If a canvas already exists, remove it
   if (canvas) {
     canvas.remove();
@@ -38,39 +39,18 @@ async function loadModels() : Promise<void> {
     }
   });
   models.length = 0; // Clear the array
-  currentIndex = 0;
+
+  if (!scene) {
+    return;
+  }
 
   try {
     // Use Promise.all to fetch all models concurrently
     const results: (BABYLON.AbstractMesh | null)[] = await Promise.all(
-      modelIds.map(async (modelId: number) => {
-        try {
-          const result: BABYLON.ISceneLoaderAsyncResult =
-            await BABYLON.ImportMeshAsync("/api/models/" + modelId, scene);
-          const model: BABYLON.AbstractMesh = result.meshes[0]; // Get the root of the model
-          model.setEnabled(false); // Disable by default
-          model.position = new BABYLON.Vector3(0, 0, 0);
-          model.rotation = new BABYLON.Vector3(0, 0, 0);
-
-          // For each model, extract color and texture from the original material if exist
-          for (const mesh of result.meshes) {
-            const originalMaterial: BABYLON.Material | null = mesh.material;
-    
-            // Check if the original material exist
-            if (originalMaterial) {
-              if ((originalMaterial as any).specularColor) {
-                // Set specular to Black to avoid any reflection
-                (originalMaterial as any).specularColor = BABYLON.Color3.Black();
-              }
-            }
-          }
-
-          return model; // Return the model
-        } catch (error) {
-          console.error("Failed to load model:", error);
-          return null; // Return null for failed loads to maintain the order
-        }
-      })
+      skinIds.map((skinId: number) => loadPadddleSkin(skinId, scene).catch((error) => {
+        console.error(`Failed to load paddle skin with ID ${skinId}:`, error);
+        return null; // Return null on failure to maintain array order
+      }))
     );
 
     // Add all models (or nulls) to the models array
@@ -78,9 +58,9 @@ async function loadModels() : Promise<void> {
   } catch (error) {
     console.error("Error occurred while loading models:", error);
   }
+  //console.log(models);
 
   updatePositions(); // Initial positioning
-  console.log(models);
 }
 
 function updatePositions() : void {
@@ -159,7 +139,7 @@ function handleMouseInput(pointerInfo: BABYLON.PointerInfo) : void {
   }
 }
 
-export function InitSkinSelector() : void {
+export function initSkinSelector() : void {
   if (!canvas) {
     throw new Error(
       "Canvas element is not created. Call CreateSkinSelectorCanvas() first.",
@@ -213,3 +193,22 @@ export function InitSkinSelector() : void {
   loadModels();
 }
 
+export function showSkinSelector() : void {
+  if (!canvas) {
+    return;
+  }
+  // Set visibility to 'visible' to show the canvas
+  canvas.style.visibility = "visible";
+}
+
+export function hideSkinSelector() : void {
+  if (!canvas) {
+    return;
+  }
+  // Set visibility to 'hidden' to hide the canvas
+  canvas.style.visibility = "hidden";
+}
+
+export function getSelectedSkinId() : number {
+  return currentIndex;
+}
