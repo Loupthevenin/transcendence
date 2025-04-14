@@ -1,12 +1,15 @@
 import { navigateTo } from "../router";
 
 export function setupTwoFAHandlers(container: HTMLElement) {
-  const twoFaForm: HTMLFormElement = document.getElementById("2FAForm") as HTMLFormElement;
+  const twoFaForm: HTMLFormElement = document.getElementById(
+    "2FAForm",
+  ) as HTMLFormElement;
 
   if (twoFaForm) {
     twoFaForm.addEventListener("submit", async (e: SubmitEvent) => {
       e.preventDefault();
-      const code: string = (document.getElementById("code") as HTMLInputElement).value;
+      const code: string = (document.getElementById("code") as HTMLInputElement)
+        .value;
       const tempToken: string | null = localStorage.getItem("temp_token");
 
       if (!tempToken) {
@@ -25,9 +28,12 @@ export function setupTwoFAHandlers(container: HTMLElement) {
           body: JSON.stringify({ code }),
         });
 
-        if (!res.ok) throw new Error("Code invalid");
-
         const data: any = await res.json();
+        if (!res.ok) {
+          const errorMsg = data?.message || data?.error || "Code invalid";
+          alert(errorMsg);
+          return;
+        }
 
         localStorage.removeItem("temp_token");
         localStorage.setItem("auth_token", data.token);

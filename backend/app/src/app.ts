@@ -1,4 +1,12 @@
-import Fastify, { FastifyInstance, FastifyError, FastifyRequest, FastifyReply } from "fastify";
+import Fastify, {
+  FastifyInstance,
+  FastifyError,
+  FastifyRequest,
+  FastifyReply,
+} from "fastify";
+import fastifyStatic from "@fastify/static";
+import fastifyMultipart from "@fastify/multipart";
+import path from "path";
 import { WebSocketServer } from "ws";
 import { setupWebSocket } from "./ws/setupWebSocket";
 import { DOMAIN_NAME, PORT } from "./config";
@@ -6,6 +14,19 @@ import { DOMAIN_NAME, PORT } from "./config";
 // Create a Fastify serveur
 const app: FastifyInstance = Fastify({
   //logger: true
+});
+
+// Setup bodysize for Avatars
+app.register(fastifyMultipart, {
+  limits: {
+    fileSize: 100 * 1024 * 1024,
+  },
+});
+
+// Serve Avatars for front
+app.register(fastifyStatic, {
+  root: path.join(__dirname, "..", "assets", "avatars"),
+  prefix: "/uploads/",
 });
 
 // Routes
@@ -17,24 +38,30 @@ app.register(require("./routes/setup2fa"), { prefix: "/api/setup-2fa" });
 app.register(require("./routes/users"), { prefix: "/api/users" });
 app.register(require("./routes/models"), { prefix: "/api/models" });
 app.register(require("./routes/textures"), { prefix: "/api/textures" });
+app.register(require("./routes/profile"), { prefix: "/api/profile" });
 
 // Error handling
-app.setErrorHandler((error: FastifyError, request: FastifyRequest, reply: FastifyReply) => {
-  console.error(error);
-  reply.status(500).send("Server error occurred");
-});
+app.setErrorHandler(
+  (error: FastifyError, request: FastifyRequest, reply: FastifyReply) => {
+    console.error(error);
+    reply.status(500).send("Server error occurred");
+  },
+);
 
 // Start the server
-app.listen({ host: "0.0.0.0", port: 3000 }, (err: Error | null, address: string) => {
-  if (err) throw err;
-  console.log(`Server running at ${DOMAIN_NAME}:${PORT}`);
+app.listen(
+  { host: "0.0.0.0", port: 3000 },
+  (err: Error | null, address: string) => {
+    if (err) throw err;
+    console.log(`Server running at ${DOMAIN_NAME}:${PORT}`);
 
-  const wss: WebSocketServer = setupWebSocket();
+    const wss: WebSocketServer = setupWebSocket();
 
-  // Integrate WebSocket with Fastify
-  app.server.on("upgrade", (request, socket, head) => {
-    wss.handleUpgrade(request, socket, head, (ws: any) => {
-      wss.emit("connection", ws, request);
+    // Integrate WebSocket with Fastify
+    app.server.on("upgrade", (request, socket, head) => {
+      wss.handleUpgrade(request, socket, head, (ws: any) => {
+        wss.emit("connection", ws, request);
+      });
     });
-  });
-});
+  },
+);

@@ -9,10 +9,18 @@ export function setupSignupHandlers(container: HTMLElement) {
     signupForm.addEventListener("submit", async (e: SubmitEvent) => {
       e.preventDefault();
 
-      const name: string = (container.querySelector("#name") as HTMLInputElement).value;
-      const email: string = (container.querySelector("#email") as HTMLInputElement).value;
-      const password: string = (container.querySelector("#password") as HTMLInputElement).value;
-      const confirm_password: string = (container.querySelector("#confirm_password") as HTMLInputElement).value;
+      const name: string = (
+        container.querySelector("#name") as HTMLInputElement
+      ).value;
+      const email: string = (
+        container.querySelector("#email") as HTMLInputElement
+      ).value;
+      const password: string = (
+        container.querySelector("#password") as HTMLInputElement
+      ).value;
+      const confirm_password: string = (
+        container.querySelector("#confirm_password") as HTMLInputElement
+      ).value;
 
       if (password != confirm_password) {
         alert("Les mots de passe en correspondent pas");
@@ -26,8 +34,12 @@ export function setupSignupHandlers(container: HTMLElement) {
           body: JSON.stringify({ name, email, password }),
         });
 
-        if (!res.ok) throw new Error("Error signup");
-        await res.json();
+        const data = await res.json();
+        if (!res.ok) {
+          const errorMsg = data?.message || "Error signup";
+          alert(errorMsg);
+          return;
+        }
         navigateTo("/");
       } catch (err) {
         console.error("Signup error", err);

@@ -8,8 +8,12 @@ export function setupLoginHandlers(container: HTMLElement) {
   if (loginForm) {
     loginForm.addEventListener("submit", async (e: SubmitEvent) => {
       e.preventDefault();
-      const email: string = (container.querySelector("#email") as HTMLInputElement).value;
-      const password: string = (container.querySelector("#password") as HTMLInputElement).value;
+      const email: string = (
+        container.querySelector("#email") as HTMLInputElement
+      ).value;
+      const password: string = (
+        container.querySelector("#password") as HTMLInputElement
+      ).value;
 
       try {
         const res: Response = await fetch("/api/login", {
@@ -20,9 +24,13 @@ export function setupLoginHandlers(container: HTMLElement) {
           body: JSON.stringify({ email, password }),
         });
 
-        if (!res.ok) throw new Error("Error connexion login");
-
         const data: any = await res.json();
+        if (!res.ok) {
+          const errorMsg = data?.message || data?.error || "Error login";
+          alert(errorMsg);
+          return;
+        }
+
         if (data.require2FA) {
           localStorage.setItem("temp_token", data.tempToken);
           navigateTo("/auth/verify-2fa");
