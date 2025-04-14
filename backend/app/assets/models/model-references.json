@@ -1,9 +1,21 @@
 {
+    "0": {
+        "name": "Paddle Blue",
+        "filepath": "Paddle_Blue.glb"
+    },
     "1": {
-        "name": "Baseball Bat",
-        "filepath": "Baseball_Bat.glb"
+        "name": "Paddle Red",
+        "filepath": "Paddle_Red.glb"
     },
     "2": {
+        "name": "Paddle Green",
+        "filepath": "Paddle_Green.glb"
+    },
+    "3": {
+        "name": "Paddle Yellow",
+        "filepath": "Paddle_Yellow.glb"
+    },
+    "4": {
         "name": "Baseball Bat",
         "filepath": "Baseball_Bat.glb"
     }
