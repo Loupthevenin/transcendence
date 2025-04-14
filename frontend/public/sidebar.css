@@ -84,6 +84,7 @@
   display: inline-block;
   padding-left: 30px;
   transition: transform 0.3s ease;
+  cursor: pointer;
 }
 
 .sidebar nav ul li a::before {
