@@ -30,6 +30,7 @@ export function CreateGameCanvas() : HTMLCanvasElement {
 let engine: BABYLON.Engine;
 let scene: BABYLON.Scene;
 let camera: BABYLON.ArcRotateCamera;
+let light: BABYLON.HemisphericLight;
 
 // Update camera rotation based on game mode
 function updateCameraRotation(camera: BABYLON.ArcRotateCamera, gameMode: GameMode) : void {
@@ -399,6 +400,10 @@ export function InitGameEnvironment() : void {
 
   updateCameraRotation(camera, currentGameMode);
 
+  // Create an hemispheric light
+  light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
+  light.intensity = 1.0;
+
   // Create the ground
   ground = BABYLON.MeshBuilder.CreateGround(
     "ground",
@@ -410,7 +415,8 @@ export function InitGameEnvironment() : void {
     "groundMaterial",
     scene,
   );
-  groundMaterial.emissiveTexture = new BABYLON.Texture(
+  groundMaterial.specularColor = BABYLON.Color3.Black();
+  groundMaterial.diffuseTexture = new BABYLON.Texture(
     "/api/textures/tennis_court.svg",
     scene,
     { samplingMode: BABYLON.Texture.NEAREST_SAMPLINGMODE },
@@ -433,7 +439,8 @@ export function InitGameEnvironment() : void {
     "paddle1Material",
     scene,
   );
-  paddle1Material.emissiveColor = BABYLON.Color3.Blue();
+  paddle1Material.diffuseColor = BABYLON.Color3.Blue();
+  paddle1Material.specularColor = BABYLON.Color3.Black();
 
   paddle1Mesh.material = paddle1Material;
 
@@ -452,7 +459,8 @@ export function InitGameEnvironment() : void {
     "paddle2Material",
     scene,
   );
-  paddle2Material.emissiveColor = BABYLON.Color3.Red();
+  paddle2Material.diffuseColor = BABYLON.Color3.Red();
+  paddle2Material.specularColor = BABYLON.Color3.Black();
 
   paddle2Mesh.material = paddle2Material;
 
@@ -463,11 +471,14 @@ export function InitGameEnvironment() : void {
     scene,
   );
   ballMesh.position = new BABYLON.Vector3(0, GAME_CONSTANT.ballRadius, 0);
+
   ballMaterial = new BABYLON.StandardMaterial(
     "ballMaterial",
     scene,
   );
-  ballMaterial.emissiveColor = BABYLON.Color3.Gray();
+  ballMaterial.diffuseColor = BABYLON.Color3.Gray();
+  ballMaterial.specularColor = BABYLON.Color3.Black();
+
   ballMesh.material = ballMaterial;
 
   ///////////////////////////////////////////////////////////////
@@ -491,7 +502,8 @@ export function InitGameEnvironment() : void {
   scorePlaneTop.rotation = new BABYLON.Vector3(Math.PI / 2, Math.PI / 2, 0);
 
   scoreMaterialTop = new BABYLON.StandardMaterial("scoreMaterialTop", scene);
-  scoreMaterialTop.emissiveTexture = scoreFontTextureTop;
+  scoreMaterialTop.specularColor = BABYLON.Color3.Black();
+  scoreMaterialTop.diffuseTexture = scoreFontTextureTop;
   scoreMaterialTop.opacityTexture = scoreFontTextureTop; // Enable transparency
   scoreMaterialTop.alpha = 1;
 
@@ -514,7 +526,8 @@ export function InitGameEnvironment() : void {
   scorePlaneBottom.rotation = new BABYLON.Vector3(Math.PI / 2, -Math.PI / 2, 0);
 
   scoreMaterialBottom = new BABYLON.StandardMaterial("scoreMaterialBottom", scene);
-  scoreMaterialBottom.emissiveTexture = scoreFontTextureBottom;
+  scoreMaterialBottom.specularColor = BABYLON.Color3.Black();
+  scoreMaterialBottom.diffuseTexture = scoreFontTextureBottom;
   scoreMaterialBottom.opacityTexture = scoreFontTextureBottom; // Enable transparency
   scoreMaterialBottom.alpha = 1;
 
