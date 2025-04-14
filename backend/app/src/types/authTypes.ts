@@ -16,4 +16,5 @@ export interface User {
   require2FA: boolean;
   twofa_secret: string;
   is_verified: boolean;
+  avatar_url: string;
 }

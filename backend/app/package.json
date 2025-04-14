@@ -13,6 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "@fastify/autoload": "^6.0.0",
+    "@fastify/multipart": "^9.0.3",
     "@fastify/sensible": "^6.0.0",
     "babylonjs": "^8.2.0",
     "babylonjs-loaders": "^8.2.0",

@@ -43,14 +43,14 @@ async function loadUserProfile() {
   }
 }
 
-async function updateUserProfile(updatedData: any) {
+async function updateUserProfile(updatedData: any, request: string) {
   const token: string | null = localStorage.getItem("auth_token");
   if (!token) {
     alert("Pas de token !");
     return;
   }
   try {
-    const res: Response = await fetch("/api/profile", {
+    const res: Response = await fetch(`/api/profile/${request}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -60,7 +60,7 @@ async function updateUserProfile(updatedData: any) {
     });
     if (!res.ok) throw new Error("Erreur lors de la mise a jour du profile");
 
-    await res.json();
+    return await res.json();
   } catch (err) {
     console.error("Erreur update :", err);
     alert("Impossible de mettre à jour le profile");
@@ -82,7 +82,7 @@ function listenerName() {
       input.addEventListener("blur", async () => {
         const newName = input.value.trim();
         if (newName && newName !== currentName) {
-          await updateUserProfile({ name: newName });
+          await updateUserProfile({ name: newName }, "name");
           displayName.textContent = newName;
         }
         displayName.classList.remove("hidden");
@@ -98,32 +98,47 @@ function listenerName() {
   }
 }
 
-// function listenerEmail() {
-//   const emailElement = document.getElementById("user-email");
-//
-//   if (emailElement) {
-//     emailElement.addEventListener("click", () => {
-//       const currentEmail: string = emailElement.textContent || "";
-//       const input: HTMLInputElement = document.createElement("input");
-//       input.type = "email";
-//       input.value = currentEmail;
-//       input.className =
-//         "bg-[#2a255c] text-white border border-indigo-500 rounded px-2 py-1";
-//       input.addEventListener("blur", async () => {
-//         const newEmail = input.value.trim();
-//         if (newEmail && newEmail !== currentEmail) {
-//           await updateUserProfile({ email: newEmail });
-//           emailElement.textContent = newEmail;
-//         }
-//         emailElement.classList.remove("hidden");
-//         input.remove();
-//       });
-//       emailElement.classList.add("hidden");
-//       emailElement.parentNode?.appendChild(input);
-//       input.focus;
-//     });
-//   }
-// }
+function listenerEmail() {
+  const emailElement = document.getElementById("user-email");
+
+  if (emailElement) {
+    emailElement.addEventListener("click", () => {
+      const currentEmail: string = emailElement.textContent || "";
+      const input: HTMLInputElement = document.createElement("input");
+      input.type = "email";
+      input.value = currentEmail;
+      input.className =
+        "bg-[#2a255c] text-white border border-indigo-500 rounded px-2 py-1";
+      input.addEventListener("blur", async () => {
+        const newEmail = input.value.trim();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(newEmail)) {
+          alert("veuillez entrer une adresse email valide.");
+          input.focus();
+          return;
+        }
+        if (newEmail && newEmail !== currentEmail) {
+          const res = await updateUserProfile({ email: newEmail }, "email");
+          if (res && res.success) {
+            alert(res.message);
+            localStorage.removeItem("auth_token");
+            setTimeout(() => {
+              navigateTo("/auth/login");
+            }, 1500);
+          } else {
+            alert(res?.error);
+            emailElement.textContent = currentEmail;
+          }
+        }
+        emailElement.classList.remove("hidden");
+        input.remove();
+      });
+      emailElement.classList.add("hidden");
+      emailElement.parentNode?.appendChild(input);
+      input.focus;
+    });
+  }
+}
 
 function listenerAvatar() {
   const avatarInput = document.getElementById(
@@ -158,9 +173,14 @@ function listenerAvatar() {
         },
         body: formData,
       });
-      if (!res.ok) throw new Error("Erreur lors du chargement de l'avatar");
 
       const data: any = await res.json();
+      if (!res.ok) {
+        const errorMsg = data?.message || data?.error || "Error update Avatar";
+        alert(errorMsg);
+        return;
+      }
+
       if (data.avatarUrl) {
         avatarImg.src = data.avatarUrl;
       }
@@ -191,9 +211,14 @@ function listener2FA(container: HTMLElement) {
           },
         });
 
-        if (!res.ok) throw new Error("Error activation 2FA");
-
         const data: any = await res.json();
+        if (!res.ok) {
+          const errorMsg =
+            data?.message || data?.error || "Error activation 2FA";
+          alert(errorMsg);
+          return;
+        }
+
         const qrCodeDataURL: any = data.qrCodeDataURL;
 
         if (qrCodeDataURL) {
@@ -235,5 +260,5 @@ export function setupProfile(container: HTMLElement) {
 
   listenerName();
   listenerAvatar();
-  // listenerEmail();
+  listenerEmail();
 }

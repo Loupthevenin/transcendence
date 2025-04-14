@@ -5,7 +5,7 @@ export function ProfileView(): HTMLElement {
 <!-- Profil Utilisateur -->
     <div class="bg-[#1e1b4b] p-6 rounded-xl shadow-lg text-white">
       <h3 class="text-xl font-semibold text-indigo-300 mb-4">Profil</h3>
-      <div class="flex items-center space-x-6">
+      <div class="flex items-center space-x-10">
         <div class="relative group">
           <img src="" alt="Avatar"
                class="w-24 h-24 rounded-full object-cover border-2 border-indigo-500 shadow-md cursor-pointer hover:opacity-80 transition"
@@ -17,13 +17,14 @@ export function ProfileView(): HTMLElement {
         </div>
         <div>
           <p class="text-sm text-purple-300 mb-1">Nom d’utilisateur</p>
-          <div id="display-name-container">
+          <div id="display-name-container" class="mb-4">
             <span id="display-name" class="text-lg font-bold cursor-pointer hover:underline">Nom d'utilisateur</span>
           </div>
-          <!-- <p class="text-sm text-purple-300 mb-1">Email</p> -->
-          <!-- <div id="display-name-container"> -->
-          <!--   <span id="user-email" class="text-lg font-bold cursor-pointer hover:underline">email@exemple.com</span> -->
-          <!-- </div> -->
+
+          <p class="text-sm text-purple-300 mb-1">Email</p>
+          <div id="user-email-container">
+            <span id="user-email" class="text-lg font-bold cursor-pointer hover:underline">email@exemple.com</span>
+          </div>
         </div>
       </div>
     </div>

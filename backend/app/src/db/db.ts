@@ -12,7 +12,8 @@ db.exec(`
 	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 	require2FA BOOLEAN DEFAULT FALSE,
 	twofa_secret TEXT,
-	is_verified BOOLEAN DEFAULT FALSE
+	is_verified BOOLEAN DEFAULT FALSE,
+	avatar_url TEXT DEFAULT 'https://upload.wikimedia.org/wikipedia/commons/2/2c/Default_pfp.svg'
 )
 `);
 
