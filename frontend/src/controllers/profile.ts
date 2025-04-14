@@ -1,5 +1,9 @@
+import { navigateTo } from "../router";
+
 function listener2FA(container: HTMLElement) {
-  const button2FA: HTMLElement = container.querySelector("#activate-2fa") as HTMLElement;
+  const button2FA: HTMLElement = container.querySelector(
+    "#activate-2fa",
+  ) as HTMLElement;
 
   if (button2FA) {
     button2FA.addEventListener("click", async () => {
@@ -23,7 +27,8 @@ function listener2FA(container: HTMLElement) {
         const qrCodeDataURL: any = data.qrCodeDataURL;
 
         if (qrCodeDataURL) {
-          const qrCodeContainer: Element | null = container.querySelector("#qr-code-container");
+          const qrCodeContainer: Element | null =
+            container.querySelector("#qr-code-container");
           if (qrCodeContainer) {
             qrCodeContainer.innerHTML = `<img src="${qrCodeDataURL}" alt="QR Code 2FA" />`;
           }
@@ -38,6 +43,22 @@ function listener2FA(container: HTMLElement) {
   }
 }
 
+function logout(container: HTMLElement) {
+  const buttonLogout = container.querySelector("#logout-button") as HTMLElement;
+  if (buttonLogout) {
+    buttonLogout.addEventListener("click", () => {
+      const token: string | null = localStorage.getItem("auth_token");
+      if (!token) {
+        alert("Pas de token !");
+        return;
+      }
+      localStorage.removeItem("auth_token");
+      navigateTo("/");
+    });
+  }
+}
+
 export function setupProfile(container: HTMLElement) {
   listener2FA(container);
+  logout(container);
 }

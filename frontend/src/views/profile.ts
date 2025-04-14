@@ -88,6 +88,7 @@ export function ProfileView(): HTMLElement {
       </ul>
     </div>
 
+	<!-- 2FA -->
 <div class="mt-8 bg-[#1e1b4b] p-6 rounded-xl shadow-lg">
   <h3 class="text-xl font-semibold text-indigo-300 mb-4">Sécurisez votre compte</h3>
   <p class="text-sm text-purple-300 mb-4">
@@ -100,6 +101,15 @@ export function ProfileView(): HTMLElement {
     Activer l'authentification à deux facteurs
   </button>
 	<div id="qr-code-container"></div>
+</div>
+<!-- Bouton de déconnexion -->
+<div class="mt-8 bg-[#1e1b4b] p-6 rounded-xl shadow-lg flex justify-center">
+  <button
+    class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl transition"
+    id="logout-button"
+  >
+    Déconnexion
+  </button>
 </div>
 `;
   return container;
