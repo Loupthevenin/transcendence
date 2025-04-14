@@ -5,11 +5,7 @@ let engine: BABYLON.Engine;
 let scene: BABYLON.Scene;
 let camera: BABYLON.ArcRotateCamera;
 
-const modelPaths: string[] = [
-  "./assets/models/Baseball_Bat.glb",
-  "./assets/models/Baseball_Bat.glb",
-  "./assets/models/Baseball_Ba.glb",
-];
+const modelIds: number[] = [0, 1, 2];
 
 const models: (BABYLON.AbstractMesh | null)[] = [];
 let currentIndex: number = 0;
@@ -33,10 +29,10 @@ export function CreateSkinSelectorCanvas(root: HTMLElement): void {
 
 // Load models dynamically
 async function loadModels(): Promise<void> {
-  for (const path of modelPaths) {
+  for (const modelId of modelIds) {
     try {
       const result: BABYLON.ISceneLoaderAsyncResult =
-        await BABYLON.ImportMeshAsync(path, scene);
+        await BABYLON.ImportMeshAsync("/api/models/" + modelId, scene);
       //console.log(result);
 
       const model: BABYLON.AbstractMesh = result.meshes[0]; // get the root of the model

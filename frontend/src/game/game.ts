@@ -411,7 +411,7 @@ export function InitGameEnvironment() : void {
     scene,
   );
   groundMaterial.emissiveTexture = new BABYLON.Texture(
-    "./assets/tennis_court.svg",
+    "/api/textures/tennis_court.svg",
     scene,
     { samplingMode: BABYLON.Texture.NEAREST_SAMPLINGMODE },
   );

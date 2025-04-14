@@ -1,5 +1,5 @@
-import Fastify, { FastifyInstance, FastifyError } from "fastify";
-import { WebSocketServer } from 'ws';
+import Fastify, { FastifyInstance, FastifyError, FastifyRequest, FastifyReply } from "fastify";
+import { WebSocketServer } from "ws";
 import { setupWebSocket } from "./ws/setupWebSocket";
 import { DOMAIN_NAME, PORT } from "./config";
 
@@ -15,9 +15,11 @@ app.register(require("./routes/verifyEmail"), { prefix: "/api/verify-email" });
 app.register(require("./routes/verify2fa"), { prefix: "/api/verify-2fa" });
 app.register(require("./routes/setup2fa"), { prefix: "/api/setup-2fa" });
 app.register(require("./routes/users"), { prefix: "/api/users" });
+app.register(require("./routes/models"), { prefix: "/api/models" });
+app.register(require("./routes/textures"), { prefix: "/api/textures" });
 
 // Error handling
-app.setErrorHandler((error: FastifyError, request, reply) => {
+app.setErrorHandler((error: FastifyError, request: FastifyRequest, reply: FastifyReply) => {
   console.error(error);
   reply.status(500).send("Server error occurred");
 });
