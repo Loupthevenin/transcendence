@@ -5,7 +5,7 @@ let engine: BABYLON.Engine;
 let scene: BABYLON.Scene;
 let camera: BABYLON.ArcRotateCamera;
 
-const modelIds: number[] = [0, 1, 2];
+const modelIds: number[] = [0, 1, 2, 3, 4];
 
 const models: (BABYLON.AbstractMesh | null)[] = [];
 let currentIndex: number = 0;
@@ -38,6 +38,8 @@ async function loadModels(): Promise<void> {
       const model: BABYLON.AbstractMesh = result.meshes[0]; // get the root of the model
       model.setEnabled(false); // Disable by default
       models.push(model);
+      model.position = new BABYLON.Vector3(0, 0, 0);
+      model.rotation = new BABYLON.Vector3(0, 0, 0);
 
       // For each model, extract color and texture from the original material if exist
       for (const mesh of result.meshes) {
@@ -48,24 +50,19 @@ async function loadModels(): Promise<void> {
           // Create a new standard material
           const standardMaterial: BABYLON.StandardMaterial =
             new BABYLON.StandardMaterial(
-              "StandardMaterial_" +
-                (originalMaterial ? originalMaterial.name : mesh.name),
+              "StandardMaterial_" + (originalMaterial ? originalMaterial.name : mesh.name),
               scene,
             );
 
           // Check if the material has a diffuse texture (used in StandardMaterial)
-          const diffuseTexture: BABYLON.BaseTexture | undefined = (
-            originalMaterial as any
-          ).diffuseTexture as BABYLON.BaseTexture | undefined;
+          const diffuseTexture: BABYLON.BaseTexture | undefined = (originalMaterial as any).diffuseTexture as BABYLON.BaseTexture | undefined;
           if (diffuseTexture) {
             standardMaterial.emissiveTexture = diffuseTexture; // Copy the texture reference
           }
 
           // Check if the material has a diffuse color
           if ((originalMaterial as any).albedoColor instanceof BABYLON.Color3) {
-            standardMaterial.emissiveColor = (
-              (originalMaterial as any).albedoColor as BABYLON.Color3
-            ).clone();
+            standardMaterial.emissiveColor = ((originalMaterial as any).albedoColor as BABYLON.Color3).clone();
           }
 
           // Assign the new standard material to the model
@@ -85,30 +82,25 @@ function updatePositions(): void {
   if (models.length === 0) return;
 
   const currentModel: BABYLON.AbstractMesh | null = models[currentIndex];
-  const previousModel: BABYLON.AbstractMesh | null =
-    models[(currentIndex - 1 + models.length) % models.length];
-  const nextModel: BABYLON.AbstractMesh | null =
-    models[(currentIndex + 1) % models.length];
+  const previousModel: BABYLON.AbstractMesh | null = models[(currentIndex - 1 + models.length) % models.length];
+  const nextModel: BABYLON.AbstractMesh | null = models[(currentIndex + 1) % models.length];
 
   // Position the current model at the center
   if (currentModel) {
     currentModel.setEnabled(true);
     currentModel.position = new BABYLON.Vector3(0, 0, 0);
-    currentModel.rotation = new BABYLON.Vector3(0, 0, 0);
   }
 
   // Position the previous model to the left
   if (previousModel) {
     previousModel.setEnabled(true);
     previousModel.position = new BABYLON.Vector3(0, 1, -1);
-    previousModel.rotation = new BABYLON.Vector3(0, 0, 0);
   }
 
   // Position the next model to the right
   if (nextModel) {
     nextModel.setEnabled(true);
     nextModel.position = new BABYLON.Vector3(0, 1, 1);
-    nextModel.rotation = new BABYLON.Vector3(0, 0, 0);
   }
 
   // Hide other models
@@ -137,14 +129,14 @@ export function InitSkinSelector(): void {
 
   engine = new BABYLON.Engine(canvas, true);
   scene = new BABYLON.Scene(engine);
-  //scene.clearColor = new BABYLON.Color4(0, 0, 0, 0); // transparent skybox
-  scene.clearColor = new BABYLON.Color4(0, 0, 0, 1);
+  scene.clearColor = new BABYLON.Color4(0, 0, 0, 0); // transparent skybox
+  //scene.clearColor = new BABYLON.Color4(0, 0, 0, 1);
 
   camera = new BABYLON.ArcRotateCamera(
     "Camera",
     0, // Horizontal rotation
     Math.PI, // Vertical rotation
-    3, // Distance from target
+    1.5, // Distance from target
     new BABYLON.Vector3(0, 0, 0), // Target position
     scene,
   );
@@ -165,24 +157,28 @@ export function InitSkinSelector(): void {
   });
 
   // Mouse controls for rotating the current model
-  canvas.addEventListener("mousedown", (event: MouseEvent) => {
-    isMouseDown = true;
-    lastMouseX = event.clientX;
-  });
+  scene.onPointerObservable.add((pointerInfo: BABYLON.PointerInfo) => {
+    switch (pointerInfo.type) {
+        case BABYLON.PointerEventTypes.POINTERDOWN:
+            isMouseDown = true;
+            lastMouseX = pointerInfo.event.clientX;
+            break;
 
-  canvas.addEventListener("mouseup", () => {
-    isMouseDown = false;
-  });
+        case BABYLON.PointerEventTypes.POINTERUP:
+            isMouseDown = false;
+            break;
 
-  canvas.addEventListener("mousemove", (event: MouseEvent) => {
-    if (isMouseDown) {
-      const deltaX: number = event.clientX - lastMouseX;
-      lastMouseX = event.clientX;
+        case BABYLON.PointerEventTypes.POINTERMOVE:
+            if (isMouseDown) {
+              const deltaX: number = lastMouseX - pointerInfo.event.clientX;
+              lastMouseX = pointerInfo.event.clientX;
 
-      const currentModel: BABYLON.AbstractMesh | null = models[currentIndex];
-      if (currentModel) {
-        currentModel.rotation.y += deltaX * 0.01;
-      }
+              const currentModel: BABYLON.AbstractMesh | null = models[currentIndex];
+              if (currentModel) {
+                currentModel.rotation.x += deltaX * 0.01;
+              }
+            }
+            break;
     }
   });
 

@@ -15,7 +15,7 @@ canvas {
 #skinSelectorCanvas {
   position: absolute;
   top: 50%;
-  left: 0;
+  left: 10%;
   transform: translateY(-50%);
   width: 50vw;
   height: auto;
