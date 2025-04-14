@@ -8,7 +8,7 @@ let camera: BABYLON.ArcRotateCamera;
 const modelPaths: string[] = [
   "./assets/models/Baseball_Bat.glb",
   "./assets/models/Baseball_Bat.glb",
-  "./assets/models/Baseball_Ba.glb"
+  "./assets/models/Baseball_Ba.glb",
 ];
 
 const models: (BABYLON.AbstractMesh | null)[] = [];
@@ -18,7 +18,7 @@ let currentIndex: number = 0;
 let isMouseDown: boolean = false;
 let lastMouseX: number = 0;
 
-export function CreateSkinSelectorCanvas(root: HTMLElement) : void {
+export function CreateSkinSelectorCanvas(root: HTMLElement): void {
   // If a canvas already exists, remove it
   if (canvas) {
     canvas.remove();
@@ -28,16 +28,15 @@ export function CreateSkinSelectorCanvas(root: HTMLElement) : void {
   canvas = document.createElement("canvas");
   canvas.id = "skinSelectorCanvas";
 
-  canvas.className = "absolute w-[35%] h-[50%] top-[25%] left-[10%] z-15";
-
   root.appendChild(canvas);
 }
 
 // Load models dynamically
-async function loadModels() : Promise<void> {
+async function loadModels(): Promise<void> {
   for (const path of modelPaths) {
     try {
-      const result: BABYLON.ISceneLoaderAsyncResult = await BABYLON.ImportMeshAsync(path, scene);
+      const result: BABYLON.ISceneLoaderAsyncResult =
+        await BABYLON.ImportMeshAsync(path, scene);
       //console.log(result);
 
       const model: BABYLON.AbstractMesh = result.meshes[0]; // get the root of the model
@@ -51,17 +50,26 @@ async function loadModels() : Promise<void> {
         // Check if the original material exist
         if (originalMaterial) {
           // Create a new standard material
-          const standardMaterial: BABYLON.StandardMaterial = new BABYLON.StandardMaterial("StandardMaterial_" + (originalMaterial ? originalMaterial.name : mesh.name), scene);
+          const standardMaterial: BABYLON.StandardMaterial =
+            new BABYLON.StandardMaterial(
+              "StandardMaterial_" +
+                (originalMaterial ? originalMaterial.name : mesh.name),
+              scene,
+            );
 
           // Check if the material has a diffuse texture (used in StandardMaterial)
-          const diffuseTexture: BABYLON.BaseTexture | undefined = (originalMaterial as any).diffuseTexture as BABYLON.BaseTexture | undefined;
+          const diffuseTexture: BABYLON.BaseTexture | undefined = (
+            originalMaterial as any
+          ).diffuseTexture as BABYLON.BaseTexture | undefined;
           if (diffuseTexture) {
             standardMaterial.emissiveTexture = diffuseTexture; // Copy the texture reference
           }
 
           // Check if the material has a diffuse color
           if ((originalMaterial as any).albedoColor instanceof BABYLON.Color3) {
-            standardMaterial.emissiveColor = ((originalMaterial as any).albedoColor as BABYLON.Color3).clone();
+            standardMaterial.emissiveColor = (
+              (originalMaterial as any).albedoColor as BABYLON.Color3
+            ).clone();
           }
 
           // Assign the new standard material to the model
@@ -75,14 +83,16 @@ async function loadModels() : Promise<void> {
   }
   updatePositions(); // Initial positioning
   //console.log(models);
-};
+}
 
-function updatePositions() : void {
+function updatePositions(): void {
   if (models.length === 0) return;
 
   const currentModel: BABYLON.AbstractMesh | null = models[currentIndex];
-  const previousModel: BABYLON.AbstractMesh | null = models[(currentIndex - 1 + models.length) % models.length];
-  const nextModel: BABYLON.AbstractMesh | null = models[(currentIndex + 1) % models.length];
+  const previousModel: BABYLON.AbstractMesh | null =
+    models[(currentIndex - 1 + models.length) % models.length];
+  const nextModel: BABYLON.AbstractMesh | null =
+    models[(currentIndex + 1) % models.length];
 
   // Position the current model at the center
   if (currentModel) {
@@ -108,18 +118,22 @@ function updatePositions() : void {
   // Hide other models
   models.forEach((model: BABYLON.AbstractMesh | null, index: number) => {
     if (model) {
-      if (index !== currentIndex
-        && index !== (currentIndex - 1 + models.length) % models.length
-        && index !== (currentIndex + 1) % models.length) {
+      if (
+        index !== currentIndex &&
+        index !== (currentIndex - 1 + models.length) % models.length &&
+        index !== (currentIndex + 1) % models.length
+      ) {
         model.setEnabled(false);
       }
     }
   });
-};
+}
 
-export function InitSkinSelector() : void {
+export function InitSkinSelector(): void {
   if (!canvas) {
-    throw new Error("Canvas element is not created. Call CreateSkinSelectorCanvas() first.");
+    throw new Error(
+      "Canvas element is not created. Call CreateSkinSelectorCanvas() first.",
+    );
   }
   if (engine) {
     engine.dispose(); // Dispose of the previous engine if it exists
@@ -166,13 +180,13 @@ export function InitSkinSelector() : void {
 
   canvas.addEventListener("mousemove", (event: MouseEvent) => {
     if (isMouseDown) {
-        const deltaX: number = event.clientX - lastMouseX;
-        lastMouseX = event.clientX;
+      const deltaX: number = event.clientX - lastMouseX;
+      lastMouseX = event.clientX;
 
-        const currentModel: BABYLON.AbstractMesh | null = models[currentIndex];
-        if (currentModel) {
-            currentModel.rotation.y += deltaX * 0.01;
-        }
+      const currentModel: BABYLON.AbstractMesh | null = models[currentIndex];
+      if (currentModel) {
+        currentModel.rotation.y += deltaX * 0.01;
+      }
     }
   });
 
@@ -189,3 +203,4 @@ export function InitSkinSelector() : void {
   // Start loading models
   loadModels();
 }
+
