@@ -47,6 +47,7 @@ function updateCameraRotation(camera: BABYLON.ArcRotateCamera, gameMode: GameMod
       camera.beta = BABYLON.Tools.ToRadians(50); // Vertical rotation
       break;
     case GameMode.ONLINE:
+      // If the player control the 2e paddle, rotate the camera to get the correct view
       if (playerId === 2) {
         camera.alpha = BABYLON.Tools.ToRadians(0); // Horizontal rotation
         camera.beta = BABYLON.Tools.ToRadians(0); // Vertical rotation
@@ -467,6 +468,7 @@ export function initGameEnvironment() : void {
     scene,
   );
   ground.rotation.y = Math.PI / 2;
+
   const groundMaterial: BABYLON.StandardMaterial = new BABYLON.StandardMaterial(
     "groundMaterial",
     scene,
@@ -611,22 +613,23 @@ export function initGameEnvironment() : void {
       case GameMode.ONLINE:
         if (playerId === 1 || playerId === 2) {
           if (paddle1Input !== 0) {
-            const pos: BABYLON.Vector2 = playerId === 1 ? gameData.paddle1Position : gameData.paddle2Position;
+            const isPlayer1: boolean = playerId === 1;
+            const pos: BABYLON.Vector2 = isPlayer1 ? gameData.paddle1Position : gameData.paddle2Position;
             handlePlayerInput(
               pos,
-              playerId === 1 ? paddle1Mesh : paddle2Mesh,
-              playerId === 1 ? paddle1Input : ~paddle1Input, // if we are the 2e player inverse the input
-              playerId === 1 ? paddle1DraggingData : paddle2DraggingData,
+              isPlayer1 ? paddle1Mesh : paddle2Mesh,
+              isPlayer1 ? paddle1Input : ~paddle1Input, // If we are the 2e player inverse the input since the view is inverted
+              isPlayer1 ? paddle1DraggingData : paddle2DraggingData,
               deltaTime
             )
 
-            // Send new paddle position to the server
-            const paddleData: PaddlePositionMessage = {
-              type: "paddlePosition",
-              position: new BABYLON.Vector2(pos.x, pos.y)
-            };
-
             if (socket) {
+              // Send new paddle position to the server
+              const paddleData: PaddlePositionMessage = {
+                type: "paddlePosition",
+                position: new BABYLON.Vector2(pos.x, pos.y)
+              };
+
               socket.send(JSON.stringify(paddleData));
             }
           }
@@ -655,8 +658,8 @@ export function BackToMenu() : void {
   ResetGame();
 
   showSkinSelector();
-  setPaddleSkin(1, 0);
-  setPaddleSkin(2, 1);
+  setPaddleSkin(1, -1);
+  setPaddleSkin(2, -1);
 }
 
 // Launch the game in single player against an AI opponent
@@ -669,7 +672,7 @@ export function SinglePlayer() : void {
 
   hideSkinSelector();
   setPaddleSkin(1, getSelectedSkinId());
-  setPaddleSkin(2, 1);
+  setPaddleSkin(2, -1);
 }
 
 // Launch the game in local 1v1 mode
