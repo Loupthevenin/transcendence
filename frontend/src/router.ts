@@ -5,8 +5,8 @@ import { TwoFAView } from "./views/2fa";
 import { ProfileView } from "./views/profile";
 
 import { initSideBarNavigation } from "./controllers/navbar";
-import { CreateGameCanvas, InitGameEnvironment, BackToMenu } from "./game/game";
-import { CreateSkinSelectorCanvas, InitSkinSelector } from "./game/skinSelector"; ////////////////
+import { createGameCanvas, initGameEnvironment, BackToMenu } from "./game/game";
+import { createSkinSelectorCanvas, initSkinSelector } from "./game/skinSelector";
 
 type RouteHandler = () => HTMLElement;
 type Route = {
@@ -45,15 +45,16 @@ const routes: Record<string, Route> = {
     },
   },
   "/": {
-    view: () => MainLayout(CreateGameCanvas()),
+    view: () => MainLayout(createGameCanvas()),
     setup: (root: HTMLElement) => {
       document.body.style.overflow = "hidden";
       initSideBarNavigation();
-      InitGameEnvironment();
-      BackToMenu();
+      initGameEnvironment();
 
-      CreateSkinSelectorCanvas(root); ////////////////
-      InitSkinSelector(); ////////////////
+      createSkinSelectorCanvas(root);
+      initSkinSelector();
+
+      BackToMenu();
     },
   },
 };

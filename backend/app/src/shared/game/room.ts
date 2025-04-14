@@ -1,5 +1,6 @@
 import { GAME_CONSTANT, GameData, newGameData, Player } from "./gameElements";
 import { resetBall, updateBallPosition } from "./ball";
+import { GameDataMessage, GameStartedMessage, GameResultMessage, DisconnectionMessage } from "./gameMessage";
 
 export class Room {
   id: string;
@@ -81,6 +82,20 @@ export class Room {
   }
 
   /**
+   * Get the index of the player.
+   * @param player The player to check.
+   * @returns the index of player (p1 = 1, p2 = 2) or -1 if player isn't in this room.
+   */
+  indexOfPlayer(player: Player) : -1 | 1 | 2 {
+    if (this.player1?.id === player.id) {
+      return 1;
+    } else if (this.player2?.id === player.id) {
+      return 2;
+    }
+    return -1;
+  }
+
+  /**
    * Starts the game by initializing game data and running mainLoop.
    * @returns A promise that resolves when the game ends.
    */
@@ -100,10 +115,12 @@ export class Room {
     resetBall(this.gameData.ball);
 
     if (this.isPlayerAlive(this.player1)) {
-      this.player1?.socket.send(JSON.stringify({ type: "gameStarted", id: 1 }));
+      const gameStartedMessage: GameStartedMessage = { type: "gameStarted", id: 1 };
+      this.player1?.socket.send(JSON.stringify(gameStartedMessage));
     }
     if (this.isPlayerAlive(this.player2)) {
-      this.player2?.socket.send(JSON.stringify({ type: "gameStarted", id: 2 }));
+      const gameStartedMessage: GameStartedMessage = { type: "gameStarted", id: 2 };
+      this.player2?.socket.send(JSON.stringify(gameStartedMessage));
     }
 
     let previousTime: number = Date.now();
@@ -113,7 +130,8 @@ export class Room {
       roomMainLoopInterval = setInterval(() => {
         // Stop the game if one player disconnects
         if (!this.isPlayerAlive(this.player1) || !this.isPlayerAlive(this.player2)) {
-          this.sendMessage(JSON.stringify({ type: "disconnected" }));
+          const disconnectionMessage: DisconnectionMessage = { type: "disconnection" };
+          this.sendMessage(JSON.stringify(disconnectionMessage));
           clearInterval(roomMainLoopInterval);
           reject("A player disconnected");
         }
@@ -124,12 +142,17 @@ export class Room {
 
         // Use the computed deltaTime to update the ball position
         updateBallPosition(this.gameData, deltaTime);
-        this.sendMessage(JSON.stringify({ type: "gameData", data: this.gameData }));
+        const gameDataMessage: GameDataMessage = { type: "gameData", data: this.gameData };
+        this.sendMessage(JSON.stringify(gameDataMessage));
 
         // Stop the game if one player reaches enought points
         if (this.gameData.p1Score >= GAME_CONSTANT.scoreToWin
           || this.gameData.p2Score >= GAME_CONSTANT.scoreToWin) {
-          this.sendMessage(JSON.stringify({ type: "gameResult", winner: this.gameData.p1Score >= GAME_CONSTANT.scoreToWin ? 1 : 2 }));
+          const gameResultMessage: GameResultMessage = {
+            type: "gameResult",
+            winner: this.gameData.p1Score >= GAME_CONSTANT.scoreToWin ? 1 : 2
+          };
+          this.sendMessage(JSON.stringify(gameResultMessage));
           clearInterval(roomMainLoopInterval);
           resolve();
         }
@@ -141,11 +164,11 @@ export class Room {
    * Sends a message to both players.
    * @param message The message to send.
    */
-  sendMessage(message: string) : void {
-    if (this.isPlayerAlive(this.player1)) {
+  sendMessage(message: string, excludedPlayerId?: string[]) : void {
+    if (this.player1 && this.isPlayerAlive(this.player1) && !(excludedPlayerId?.includes(this.player1.id))) {
       this.player1?.socket.send(message);
     }
-    if (this.isPlayerAlive(this.player2)) {
+    if (this.player2 && this.isPlayerAlive(this.player2) && !(excludedPlayerId?.includes(this.player2.id))) {
       this.player2?.socket.send(message);
     }
   }
