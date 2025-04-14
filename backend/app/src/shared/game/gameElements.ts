@@ -1,10 +1,16 @@
 import { WebSocket } from 'ws';
 import * as BABYLON from "babylonjs";
+import { GLTFFileLoader } from "babylonjs-loaders";
 import * as GAME_CONSTANT from "./constants";
 import { Ball } from "./ball";
 import { Room } from "./room";
 
 export { BABYLON, GAME_CONSTANT };
+
+// One of the method is deprecated, but its the only way I found to load this plugin to be able to load the 3d model
+if (!BABYLON.SceneLoader.IsPluginForExtensionAvailable(".glb")) {
+  BABYLON.RegisterSceneLoaderPlugin(new GLTFFileLoader());
+}
 
 export interface GameData {
   ball: Ball;
