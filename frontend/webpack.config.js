@@ -7,9 +7,9 @@ module.exports = {
     path: path.resolve(__dirname, "public"), // Output directory
   },
   resolve: {
-    extensions: [".ts", ".js"], // Resolve TypeScript and JavaScript files
+    extensions: [".js", ".ts", ".tsx"], // Resolve JavaScript and TypeScript files
     alias: {
-      "@shared": path.resolve(__dirname, "./src/shared/"), // Path to shared folder
+      "@shared": path.resolve(__dirname, "./src/shared/") // Path to shared folder
     },
   },
   module: {
@@ -22,7 +22,7 @@ module.exports = {
       {
         test: /\.css$/, // Process CSS files
         use: ["style-loader", "css-loader"], // Process CSS with Tailwind
-      },
+      }
     ],
   },
   devServer: {

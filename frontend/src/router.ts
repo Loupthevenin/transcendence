@@ -6,6 +6,7 @@ import { ProfileView } from "./views/profile";
 
 import { initSideBarNavigation } from "./controllers/navbar";
 import { CreateGameCanvas, InitGameEnvironment, BackToMenu } from "./game/game";
+import { CreateSkinSelectorCanvas, InitSkinSelector } from "./game/skinSelector"; ////////////////
 
 type RouteHandler = () => HTMLElement;
 type Route = {
@@ -45,11 +46,14 @@ const routes: Record<string, Route> = {
   },
   "/": {
     view: () => MainLayout(CreateGameCanvas()),
-    setup: () => {
+    setup: (root: HTMLElement) => {
       document.body.style.overflow = "hidden";
       initSideBarNavigation();
       InitGameEnvironment();
       BackToMenu();
+
+      CreateSkinSelectorCanvas(root); ////////////////
+      InitSkinSelector(); ////////////////
     },
   },
 };

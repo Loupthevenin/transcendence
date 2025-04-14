@@ -14,8 +14,7 @@
   "dependencies": {
     "@fastify/autoload": "^6.0.0",
     "@fastify/sensible": "^6.0.0",
-    "babylonjs": "^8.1.1",
-    "babylonjs-gui": "^8.2.0",
+    "babylonjs": "^8.2.0",
     "babylonjs-loaders": "^8.2.0",
     "bcrypt": "^5.1.1",
     "better-sqlite3": "^11.9.1",
