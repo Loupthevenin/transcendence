@@ -7,10 +7,10 @@ export function ProfileView(): HTMLElement {
       <h3 class="text-xl font-semibold text-indigo-300 mb-4">Profil</h3>
       <div class="flex items-center space-x-6">
         <div class="relative group">
-          <img src="/path/to/default-avatar.png" alt="Avatar"
+          <img src="" alt="Avatar"
                class="w-24 h-24 rounded-full object-cover border-2 border-indigo-500 shadow-md cursor-pointer hover:opacity-80 transition"
                id="user-avatar">
-          <input type="file" accept="image/*" id="avatar-upload" class="hidden" />
+          <input type="file" accept="image/*" id="avatar-upload" class="sr-only" />
           <div class="absolute inset-0 bg-black bg-opacity-40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-sm text-white">
             Changer
           </div>
@@ -20,11 +20,13 @@ export function ProfileView(): HTMLElement {
           <div id="display-name-container">
             <span id="display-name" class="text-lg font-bold cursor-pointer hover:underline">Nom d'utilisateur</span>
           </div>
-          <p class="text-sm text-purple-300 mt-2" id="user-email">email@exemple.com</p>
+          <!-- <p class="text-sm text-purple-300 mb-1">Email</p> -->
+          <!-- <div id="display-name-container"> -->
+          <!--   <span id="user-email" class="text-lg font-bold cursor-pointer hover:underline">email@exemple.com</span> -->
+          <!-- </div> -->
         </div>
       </div>
     </div>
-
 
 <!-- Historique des matchs -->
     <div class="bg-[#1e1b4b] p-6 rounded-xl shadow-lg text-white">
