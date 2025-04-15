@@ -80,3 +80,16 @@ export function isDisconnectionMessage(data: any): data is DisconnectionMessage 
     //&& (data.id === 1 || data.id === 2)
   );
 }
+
+export type MatchmakingMessage = {
+  readonly type: "matchmaking";
+  username: string; // The player username
+};
+
+export function isMatchmakingMessage(data: any): data is MatchmakingMessage {
+  return (
+    data &&
+    data.type === "matchmaking" &&
+    typeof data.username === "string"
+  );
+}

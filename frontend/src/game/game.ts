@@ -1,8 +1,10 @@
 import { BABYLON, GAME_CONSTANT, GameData, newGameData } from "@shared/game/gameElements";
 import { updateBallPosition, resetBall } from "@shared/game/ball";
-import { SkinChangeMessage, isSkinChangeMessage, PaddlePositionMessage, isGameStartedMessage, isGameDataMessage, isGameResultMessage, isDisconnectionMessage } from "@shared/game/gameMessage";
+import { SkinChangeMessage, isSkinChangeMessage, PaddlePositionMessage, isGameStartedMessage, isGameDataMessage, isGameResultMessage, isDisconnectionMessage, MatchmakingMessage } from "@shared/game/gameMessageTypes";
 import { showSkinSelector, hideSkinSelector, getSelectedSkinId } from "./skinSelector";
 import { createDefaultSkin, loadPadddleSkin } from "./paddleSkinLoader";
+import { subscribeToMessage, unsubscribeToMessage, sendMessage } from "../websocketManager";
+import { GameMessageData } from "@shared/messageType"
 
 enum GameMode {
   MENU,         // Player is in the menu
@@ -290,125 +292,96 @@ function setPaddleSkin(paddle: 1 | 2, skinId: number) : void {
   }
 }
 
-let socket: WebSocket | null = null; // WebSocket connection to the server
 let playerId: -1 | 1 | 2 = -1; // Player ID (1 or 2) to identify which paddle the player controls
 let localSkinId: number = -1;
 
-// Function to close the WebSocket connection
-function closeSocket() : void {
-  if (socket) {
-    socket.close();
-    socket = null;
+function handleGameMessages(data: GameMessageData) : void {
+  //console.log('Received:', data);
+  try {
+    if (isGameStartedMessage(data)) {
+      playerId = data.id; // Set the player ID based on the server response
+      if (playerId === 2) {
+        // if we are the 2e player then set our skin to the 2e paddle and rotate camera
+        setPaddleSkin(2, localSkinId);
+        updateCameraRotation(camera, currentGameMode);
+      }
+      const skinChangeMessage: SkinChangeMessage = {
+        type: "skinId",
+        id: data.id,
+        skinId: localSkinId
+      }
+      sendMessage("game", skinChangeMessage);
+    }
+    else if (isSkinChangeMessage(data)) {
+      const otherPlayerId: 1 | 2 = data.id;
+      if (playerId !== otherPlayerId) {
+        setPaddleSkin(otherPlayerId, data.skinId);
+      }
+    }
+    else if (isGameDataMessage(data)) {
+      // Update game data with the received data
+      gameData.ball.position = data.data.ball.position;
+      if (playerId !== 1) {
+        gameData.paddle1Position = data.data.paddle1Position;
+      }
+      if (playerId !== 2) {
+        gameData.paddle2Position = data.data.paddle2Position;
+      }
+
+      if (gameData.p1Score !== data.data.p1Score || gameData.p2Score !== data.data.p2Score) {
+        gameData.p1Score = data.data.p1Score;
+        gameData.p2Score = data.data.p2Score;
+        updateScoreText();
+      }
+
+      // Update the ball mesh position
+      if (ballMesh) {
+        ballMesh.position.x = gameData.ball.position.x;
+        ballMesh.position.z = gameData.ball.position.y;
+      }
+
+      // Update the paddle mesh positions
+      if (paddle1Mesh) {
+        paddle1Mesh.position.x = gameData.paddle1Position.x;
+        paddle1Mesh.position.z = gameData.paddle1Position.y;
+      }
+      if (paddle2Mesh) {
+        paddle2Mesh.position.x = gameData.paddle2Position.x;
+        paddle2Mesh.position.z = gameData.paddle2Position.y;
+      }
+
+      //lastUpdateTime = performance.now();
+    }
+    else if (isGameResultMessage(data)) {
+      if (data.winner === playerId) {
+        console.log("You win!");
+      } else {
+        console.log("You lose!");
+      }
+      playerId = -1; // Reset player ID
+
+      if (currentGameMode == GameMode.ONLINE) {
+        BackToMenu();
+      }
+    }
+    else if (isDisconnectionMessage(data)) {
+      console.log("The other player disconnected !");
+
+      if (currentGameMode == GameMode.ONLINE) {
+        BackToMenu();
+      }
+    }
+  } catch (error) {
+    console.error('An Error occured:', error);
   }
 }
 
-// Function to connect to the WebSocket server
-function connectToServer(oncloseCallback?: () => void) : WebSocket {
-  // Dynamically construct the WebSocket URL to avoid hardcoding
-  const wsProtocol: string = window.location.protocol === 'https:' ? 'wss://' : 'ws://'; // Use 'wss' for secure, 'ws' for non-secure
-  const wsHost: string = window.location.host; // Get the domain and port (e.g., "example.com:443" or "localhost:8080")
-  const wsPath: string = '/api/'; // The WebSocket endpoint path on the server
+function registerToGameMessages() : void {
+  subscribeToMessage("game", handleGameMessages);
+}
 
-  const wsUrl: string = `${wsProtocol}${wsHost}${wsPath}`;
-  const ws: WebSocket = new WebSocket(wsUrl);
-
-  // Handle connection open
-  ws.onopen = () => {
-      console.log('Connected to WebSocket: ', wsUrl);
-  };
-
-  // Handle incoming messages
-  ws.onmessage = (event: MessageEvent) => {
-      //console.log('Received:', JSON.parse(event.data));
-      try {
-          const data: any = JSON.parse(event.data);
-
-          if (isGameStartedMessage(data)) {
-            playerId = data.id; // Set the player ID based on the server response
-            if (playerId === 2) {
-              // if we are the 2e player then set our skin to the 2e paddle and rotate camera
-              setPaddleSkin(2, localSkinId);
-              updateCameraRotation(camera, currentGameMode);
-            }
-            const skinChangeMessage: SkinChangeMessage = {
-              type: "skinId",
-              id: data.id,
-              skinId: localSkinId
-            }
-            ws.send(JSON.stringify(skinChangeMessage));
-          }
-          else if (isSkinChangeMessage(data)) {
-            const otherPlayerId: 1 | 2 = data.id;
-            if (playerId !== otherPlayerId) {
-              setPaddleSkin(otherPlayerId, data.skinId);
-            }
-          }
-          else if (isGameDataMessage(data)) {
-            // Update game data with the received data
-            gameData.ball.position = data.data.ball.position;
-            if (playerId !== 1) {
-              gameData.paddle1Position = data.data.paddle1Position;
-            }
-            if (playerId !== 2) {
-              gameData.paddle2Position = data.data.paddle2Position;
-            }
-
-            if (gameData.p1Score !== data.data.p1Score || gameData.p2Score !== data.data.p2Score) {
-              gameData.p1Score = data.data.p1Score;
-              gameData.p2Score = data.data.p2Score;
-              updateScoreText();
-            }
-
-            // Update the ball mesh position
-            if (ballMesh) {
-              ballMesh.position.x = gameData.ball.position.x;
-              ballMesh.position.z = gameData.ball.position.y;
-            }
-
-            // Update the paddle mesh positions
-            if (paddle1Mesh) {
-              paddle1Mesh.position.x = gameData.paddle1Position.x;
-              paddle1Mesh.position.z = gameData.paddle1Position.y;
-            }
-            if (paddle2Mesh) {
-              paddle2Mesh.position.x = gameData.paddle2Position.x;
-              paddle2Mesh.position.z = gameData.paddle2Position.y;
-            }
-
-            //lastUpdateTime = performance.now();
-          }
-          else if (isGameResultMessage(data)) {
-            if (data.winner === playerId) {
-              console.log("You win!");
-            } else {
-              console.log("You lose!");
-            }
-            playerId = -1; // Reset player ID
-          }
-          else if (isDisconnectionMessage(data)) {
-            console.log("The other player disconnected !");
-          }
-      }
-      catch (error) {
-        console.error('An Error occured:', error);
-      }
-  };
-
-  // Handle close
-  ws.onclose = () => {
-      console.log('WebSocket connection closed.');
-      if (oncloseCallback) {
-        oncloseCallback();
-      }
-      playerId = -1; // Reset player ID
-  };
-
-  // Handle errors
-  ws.onerror = (error) => {
-      console.error('WebSocket error: ', error);
-  };
-
-  return ws;
+function unregisterToGameMessages() : void {
+  unsubscribeToMessage("game", handleGameMessages);
 }
 
 // Reset the game and all position
@@ -429,6 +402,7 @@ function ResetGame() : void {
   }
 
   resetBall(gameData.ball);
+  updateScoreText();
 }
 
 // Babylon.js setup
@@ -623,15 +597,11 @@ export function initGameEnvironment() : void {
               deltaTime
             )
 
-            if (socket) {
-              // Send new paddle position to the server
-              const paddleData: PaddlePositionMessage = {
-                type: "paddlePosition",
-                position: new BABYLON.Vector2(pos.x, pos.y)
-              };
-
-              socket.send(JSON.stringify(paddleData));
-            }
+            const paddleData: PaddlePositionMessage = {
+              type: "paddlePosition",
+              position: new BABYLON.Vector2(pos.x, pos.y)
+            };
+            sendMessage("game", paddleData);
           }
         }
         break;
@@ -653,7 +623,7 @@ export function initGameEnvironment() : void {
 export function BackToMenu() : void {
   currentGameMode = GameMode.MENU;
   updateCameraRotation(camera, currentGameMode);
-  closeSocket();
+  unregisterToGameMessages();
 
   ResetGame();
 
@@ -666,7 +636,7 @@ export function BackToMenu() : void {
 export function SinglePlayer() : void {
   currentGameMode = GameMode.SINGLEPLAYER;
   updateCameraRotation(camera, currentGameMode);
-  closeSocket();
+  unregisterToGameMessages();
 
   ResetGame();
 
@@ -679,7 +649,7 @@ export function SinglePlayer() : void {
 export function LocalGame() : void {
   currentGameMode = GameMode.LOCAL;
   updateCameraRotation(camera, currentGameMode);
-  closeSocket();
+  unregisterToGameMessages();
 
   ResetGame();
 
@@ -692,7 +662,6 @@ export function LocalGame() : void {
 export function OnlineGame() : void {
   currentGameMode = GameMode.ONLINE;
   updateCameraRotation(camera, currentGameMode);
-  closeSocket();
 
   ResetGame();
 
@@ -700,12 +669,9 @@ export function OnlineGame() : void {
   localSkinId = getSelectedSkinId();
   setPaddleSkin(1, localSkinId);
 
-  socket = connectToServer(() => {
-    socket = null;
-    if (currentGameMode == GameMode.ONLINE) {
-      BackToMenu();
-    }
-  });
+  registerToGameMessages();
+  const matchmakingMessage: MatchmakingMessage = { type: "matchmaking", username: `Player-${localSkinId}` };
+  sendMessage("game", matchmakingMessage);
 }
 
 //// TO DELETE //// TO DELETE //// TO DELETE //// TO DELETE ////
