@@ -6,6 +6,14 @@ interface UserProfile {
   email: string;
 }
 
+interface MatchHistory {
+  date: string;
+  mode: string;
+  opponent: string;
+  result: "win" | "lose";
+  score: string;
+}
+
 async function loadUserProfile() {
   const token: string | null = localStorage.getItem("auth_token");
   if (!token) {
@@ -19,9 +27,14 @@ async function loadUserProfile() {
         authorization: `Bearer ${token}`,
       },
     });
-    if (!res.ok) throw new Error("Erreur lors du chargement du profile");
 
-    const data: UserProfile = await res.json();
+    const rawData: any = await res.json();
+    if (!res.ok) {
+      const errorMsg = rawData?.message || "Erreur chargement profile";
+      alert(errorMsg);
+      return;
+    }
+    const data = rawData as UserProfile;
 
     const avatarElement = document.getElementById(
       "user-avatar",
@@ -189,6 +202,68 @@ function listenerAvatar() {
   });
 }
 
+function formatDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+
+async function loadHistory() {
+  const token: string | null = localStorage.getItem("auth_token");
+  if (!token) {
+    alert("Pas de token !");
+    return;
+  }
+  try {
+    const res: Response = await fetch("/api/profile/history", {
+      method: "GET",
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
+    });
+
+    const rawData: any = await res.json();
+    if (!res.ok) {
+      const errorMsg = rawData?.message || "Erreur chargement historique";
+      alert(errorMsg);
+      return;
+    }
+    const data = rawData as MatchHistory[];
+
+    const historyList = document.getElementById("match-history");
+    if (!historyList) return;
+
+    historyList.innerHTML = "";
+
+    data.forEach((match) => {
+      const li = document.createElement("li");
+      const isWin = match.result === "win";
+      const borderColor = isWin ? "border-green-400" : "border-red-400";
+      const scoreColor = isWin ? "text-green-400" : "text-red-400";
+      const resultText = isWin ? "✅ Victoire" : "❌ Défaite";
+
+      li.className = `p-4 rounded-lg bg-[#2a255c] shadow border-l-4 ${borderColor}`;
+      li.innerHTML = `
+      <div class="flex justify-between items-center">
+        <div>
+          <p class="text-sm text-purple-300 mb-1">${formatDate(match.date)}</p>
+          <p class="font-semibold">${match.mode} vs ${match.opponent}</p>
+          <p class="text-sm">${resultText}</p>
+        </div>
+        <div class="text-xl font-bold ${scoreColor}">${match.score}</div>
+      </div>
+	`;
+      historyList.appendChild(li);
+    });
+  } catch (err) {
+    console.error("Error history : ", err);
+    alert("impossible de charger l'historique");
+  }
+}
+
 function listener2FA(container: HTMLElement) {
   const button2FA: HTMLElement = container.querySelector(
     "#activate-2fa",
@@ -253,6 +328,7 @@ function logout(container: HTMLElement) {
 
 export function setupProfile(container: HTMLElement) {
   loadUserProfile();
+  loadHistory();
   listener2FA(container);
   logout(container);
 

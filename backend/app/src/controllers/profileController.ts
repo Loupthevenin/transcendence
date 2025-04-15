@@ -24,20 +24,20 @@ type UpdateBody = {
 export async function getData(request: FastifyRequest, reply: FastifyReply) {
   const email: string | undefined = request.user?.email;
   if (!email) {
-    return reply.status(401).send({ error: "Invalid Token" });
+    return reply.status(401).send({ message: "Invalid Token" });
   }
 
   const user: User = db
     .prepare("SELECT * FROM users WHERE email = ?")
     .get(email) as User;
   if (!user) {
-    return reply.status(404).send({ error: "User not found" });
+    return reply.status(404).send({ message: "User not found" });
   }
 
   return reply.send({
     name: user.name,
     email: user.email,
-    avatarUrl: user.avatar_url, 
+    avatarUrl: user.avatar_url,
   });
 }
 
