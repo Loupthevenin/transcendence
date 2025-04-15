@@ -37,6 +37,7 @@ export async function getData(request: FastifyRequest, reply: FastifyReply) {
   return reply.send({
     name: user.name,
     email: user.email,
+    avatarUrl: user.avatar_url, 
   });
 }
 
