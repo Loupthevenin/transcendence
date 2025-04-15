@@ -156,6 +156,7 @@ export class Room {
         // Stop the game if one player disconnects
         if (!this.isPlayerAlive(this.player1) || !this.isPlayerAlive(this.player2)) {
           clearInterval(roomMainLoopInterval);
+          this.gameEnded = true;
           const disconnectionMessage: DisconnectionMessage = { type: "disconnection" };
           this.sendMessage(disconnectionMessage);
           this.clear();

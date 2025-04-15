@@ -61,7 +61,7 @@ export function sendMessage<K extends keyof MessageEventMap>(msgEventType: K, da
 
 // Connect the WebSocket to the server
 function connectToServer() : void {
-  if (socket && socket.readyState !== WebSocket.CLOSED) {
+  if (socket && socket.readyState !== WebSocket.CLOSED && socket.readyState !== WebSocket.CONNECTING) {
     return; // Avoid reconnecting if the WebSocket is already active
   }
 
@@ -122,11 +122,10 @@ function connectToServer() : void {
 }
 
 function reconnect() : void {
+  console.log("[WebSocket] reconnecting in 5s ...");
   if (reconnectInterval !== null) {
     return; // Prevent multiple reconnect loops from running
   }
-
-  console.log("[WebSocket] reconnecting in 5s ...");
 
   reconnectInterval = setInterval(() => {
     connectToServer(); // Try to reconnect every 5s
