@@ -50,7 +50,7 @@ export function setupWebSocket() : WebSocketServer {
     console.log(`New player connected: ${player.username} (${playerId})`);
 
     ws.on("message", (message: string) => {
-      console.log('Received data:', JSON.parse(message));
+      //console.log('Received data:', JSON.parse(message));
 
       try {
         const msgData: any = JSON.parse(message);
@@ -86,7 +86,7 @@ export function setupWebSocket() : WebSocketServer {
                   id: data.id,
                   skinId: player.paddleSkinId
                 }
-                player.room.sendMessage(skinChangeMessage, [player.id]);
+                player.room.sendMessage(skinChangeMessage, [playerId]);
               }
             }
           }
@@ -94,9 +94,9 @@ export function setupWebSocket() : WebSocketServer {
         else if (isPaddlePositionMessage(data)) {
           if (player.room) {
             // Update paddle positions
-            if (player.room.player1?.id === player.id) {
+            if (player.room.player1?.id === playerId) {
               player.room.gameData.paddle1Position = data.position;
-            } else if (player.room.player2?.id === player.id) {
+            } else if (player.room.player2?.id === playerId) {
               player.room.gameData.paddle2Position = data.position;
             }
           }

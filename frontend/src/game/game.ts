@@ -366,6 +366,7 @@ function handleGameMessages(data: GameMessageData) : void {
     }
     else if (isDisconnectionMessage(data)) {
       console.log("The other player disconnected !");
+      playerId = -1; // Reset player ID
 
       if (currentGameMode == GameMode.ONLINE) {
         BackToMenu();
