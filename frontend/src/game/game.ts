@@ -477,10 +477,6 @@ export function initGameEnvironment() : void {
 
   ballMesh.material = ballMaterial;
 
-  ///////////////////////////////////////////////////////////////
-  //new BABYLON.AxesViewer(scene, 2);
-  ///////////////////////////////////////////////////////////////
-
   // Create the top score display
   scoreFontTextureTop = new BABYLON.DynamicTexture(
     "scoreFontTextureTop",
@@ -682,3 +678,22 @@ export function OnlineGame() : void {
 (window as any).LocalGame = LocalGame;
 (window as any).OnlineGame = OnlineGame;
 ////////////////////////////////////////////////////////////////
+
+let axesViewer: BABYLON.AxesViewer | null = null;
+
+// Function to enable or disable the AxesViewer
+function ToggleAxesViewer(size: number = 1) : void {
+  if (!scene) {
+    return;
+  }
+  if (axesViewer) {
+    axesViewer.dispose();
+    axesViewer = null;
+    console.log("AxesViewer disabled.");
+  } else {
+    axesViewer = new BABYLON.AxesViewer(scene, size);
+    console.log("AxesViewer enabled.");
+  }
+}
+// Expose the function to the console
+(window as any).ToggleAxesViewer = ToggleAxesViewer;
