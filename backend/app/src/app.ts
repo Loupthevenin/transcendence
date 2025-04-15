@@ -6,10 +6,16 @@ import Fastify, {
 } from "fastify";
 import fastifyStatic from "@fastify/static";
 import fastifyMultipart from "@fastify/multipart";
+import fastifyOauth2 from "@fastify/oauth2";
 import path from "path";
 import { WebSocketServer } from "ws";
 import { setupWebSocket } from "./ws/setupWebSocket";
-import { DOMAIN_NAME, PORT } from "./config";
+import {
+  DOMAIN_NAME,
+  PORT,
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
+} from "./config";
 
 // Create a Fastify serveur
 const app: FastifyInstance = Fastify({
@@ -29,6 +35,21 @@ app.register(fastifyStatic, {
   prefix: "/uploads/",
 });
 
+// Google OAUTH
+app.register(fastifyOauth2, {
+  name: "googleOAuth2",
+  scope: ["profile", "email"],
+  credentials: {
+    client: {
+      id: GOOGLE_CLIENT_ID,
+      secret: GOOGLE_CLIENT_SECRET,
+    },
+    auth: fastifyOauth2.GOOGLE_CONFIGURATION,
+  },
+  startRedirectPath: "/google",
+  callbackUri: `https://${DOMAIN_NAME}:${PORT}/api/auth/google/callback`,
+} as any);
+
 // Routes
 app.register(require("./routes/login"), { prefix: "/api/login" });
 app.register(require("./routes/signup"), { prefix: "/api/signup" });
@@ -39,6 +60,7 @@ app.register(require("./routes/users"), { prefix: "/api/users" });
 app.register(require("./routes/models"), { prefix: "/api/models" });
 app.register(require("./routes/textures"), { prefix: "/api/textures" });
 app.register(require("./routes/profile"), { prefix: "/api/profile" });
+app.register(require("./routes/google"), { prefix: "/api/auth" });
 
 // Error handling
 app.setErrorHandler(
