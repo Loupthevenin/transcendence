@@ -18,50 +18,142 @@ const ballAreaMaxX: number = GAME_CONSTANT.areaMaxX - GAME_CONSTANT.ballRadius;
 const ballPaddleCollisionMarginX: number = GAME_CONSTANT.paddleHalfWidth + GAME_CONSTANT.ballRadius;
 const ballPaddleCollisionMarginY: number = GAME_CONSTANT.paddleHalfDepth + GAME_CONSTANT.ballRadius;
 
-function isCollidingWithPaddle(ballPos: BABYLON.Vector2, paddlePos: BABYLON.Vector2) : boolean {
-  return Math.abs(ballPos.x - paddlePos.x) < ballPaddleCollisionMarginX
-      && Math.abs(ballPos.y - paddlePos.y) < ballPaddleCollisionMarginY;
+type CollisionData = { axis: "x" | "y", time: number };
+
+function calculateCollisionForPaddle(ballPos: BABYLON.Vector2, ballVel: BABYLON.Vector2, paddlePos: BABYLON.Vector2): CollisionData | null {
+  // --- X-Axis Collision ---
+  let collisionTimeX: number = Infinity;
+  // Compute the time t when the ball's x coordinate will hit the paddle's x-boundary.
+  if (ballVel.x !== 0) {
+    let t: number;
+    if (ballVel.x > 0) {
+      // Moving right: collision when ball center reaches paddle's right boundary.
+      t = ((paddlePos.x - ballPaddleCollisionMarginX) - ballPos.x) / (ballVel.x * GAME_CONSTANT.ballSpeed);
+    } else { 
+      // Moving left: collision when ball center reaches paddle's left boundary.
+      t = (ballPos.x - (paddlePos.x + ballPaddleCollisionMarginX)) / (Math.abs(ballVel.x) * GAME_CONSTANT.ballSpeed);
+    }
+    if (t >= 0) {
+      // Predict the ball's y position at collision time.
+      const futureY: number = ballPos.y + ballVel.y * GAME_CONSTANT.ballSpeed * t;
+      // Check if the predicted y position falls within the paddle's vertical bounds.
+      if (futureY >= (paddlePos.y - ballPaddleCollisionMarginY) && futureY <= (paddlePos.y + ballPaddleCollisionMarginY)) {
+        collisionTimeX = t;
+      }
+    }
+  }
+
+  // --- Y-Axis Collision ---
+  let collisionTimeY: number = Infinity;
+  // Compute the time t when the ball's y coordinate will hit the paddle's y-boundary.
+  if (ballVel.y !== 0) {
+    let t: number;
+    if (ballVel.y > 0) {
+      // Moving up: collision when ball center reaches paddle's top boundary.
+      t = ((paddlePos.y - ballPaddleCollisionMarginY) - ballPos.y) / (ballVel.y * GAME_CONSTANT.ballSpeed);
+    } else {
+      // Moving down: collision when ball center reaches paddle's bottom boundary.
+      t = (ballPos.y - (paddlePos.y + ballPaddleCollisionMarginY)) / (Math.abs(ballVel.y) * GAME_CONSTANT.ballSpeed);
+    }
+    if (t >= 0) {
+      // Predict the ball's x position at collision time.
+      const futureX: number = ballPos.x + ballVel.x * GAME_CONSTANT.ballSpeed * t;
+      // Check if the predicted x position falls within the paddle's horizontal bounds.
+      if (futureX >= (paddlePos.x - ballPaddleCollisionMarginX) && futureX <= (paddlePos.x + ballPaddleCollisionMarginX)) {
+        collisionTimeY = t;
+      }
+    }
+  }
+
+  // --- Determine the earliest valid collision ---
+  if (collisionTimeX === Infinity && collisionTimeY === Infinity) {
+    return null; // No collision will occur.
+  } else if (collisionTimeX <= collisionTimeY) {
+    return { axis: "x", time: collisionTimeX };
+  } else {
+    return { axis: "y", time: collisionTimeY };
+  }
+}
+
+function calculateCollisionForWalls(ballPos: BABYLON.Vector2, ballVel: BABYLON.Vector2): CollisionData | null {
+  let collisionTimeX: number | null = null;
+
+  if (ballVel.x < 0 && ballPos.x > ballAreaMinX) {
+    collisionTimeX = (ballPos.x - ballAreaMinX) / (Math.abs(ballVel.x) * GAME_CONSTANT.ballSpeed);
+  } else if (ballVel.x > 0 && ballPos.x < ballAreaMaxX) {
+    collisionTimeX = (ballAreaMaxX - ballPos.x) / (Math.abs(ballVel.x) * GAME_CONSTANT.ballSpeed);
+  }
+
+  if (collisionTimeX !== null) {
+    return { axis: "x", time: collisionTimeX };
+  }
+
+  return null; // No collision
+}
+
+function handleCollision(collision: CollisionData, ballPos: BABYLON.Vector2, ballVel: BABYLON.Vector2): void {
+  // Safe guard to prevent a zero-step collision that will cause an infinite loop
+  if (collision.time <= 1e-6) {
+    collision.time = 1e-6;
+  }
+  // Update position to collision point
+  ballPos.x += ballVel.x * GAME_CONSTANT.ballSpeed * collision.time;
+  ballPos.y += ballVel.y * GAME_CONSTANT.ballSpeed * collision.time;
+
+  // Reverse velocity
+  if (collision.axis === "x") ballVel.x *= -1;
+  else if (collision.axis === "y") ballVel.y *= -1;
 }
 
 // Ball movement logic
-export function updateBallPosition(gameData: GameData, deltaTime: number, ballMesh?: BABYLON.Mesh) : void {
+export function updateBallPosition(gameData: GameData, deltaTime: number, ballMesh?: BABYLON.Mesh): void {
   const ballPos: BABYLON.Vector2 = gameData.ball.position;
   const ballVel: BABYLON.Vector2 = gameData.ball.velocity;
-  const ballNewPos: BABYLON.Vector2 = new BABYLON.Vector2(ballPos.x, ballPos.y);
 
-  // Update ball position
-  ballNewPos.x += ballVel.x * GAME_CONSTANT.ballSpeed * deltaTime;
-  ballNewPos.y += ballVel.y * GAME_CONSTANT.ballSpeed * deltaTime;
+  let remainingTime: number = deltaTime;
+  const allCollisions: (CollisionData | null)[] = [];
 
-  // Handle ball collision with paddles
-  if ((isCollidingWithPaddle(ballNewPos, gameData.paddle1Position)
-        || isCollidingWithPaddle(ballNewPos, gameData.paddle2Position))
-      && !(isCollidingWithPaddle(ballPos, gameData.paddle1Position)
-        || isCollidingWithPaddle(ballPos, gameData.paddle2Position))
-  ) {
-    ballVel.y *= -1; // Reverse direction
-    ballNewPos.y = ballPos.y; // Reset position to prevent getting stuck
-  }
+  while (remainingTime > 1e-6) {
+    allCollisions.length = 0; // Clear the content
 
-  // Handle ball collision with walls
-  if ((ballNewPos.x < ballAreaMinX || ballNewPos.x > ballAreaMaxX) // if new position is out of bounds
-      && !(ballPos.x < ballAreaMinX || ballPos.x > ballAreaMaxX)   // and previous position was in bounds
-  ) {
-    ballVel.x *= -1; // Reverse direction
-    ballNewPos.x = ballPos.x; // Reset position to prevent getting stuck
+    // Check for wall collisions
+    allCollisions.push(calculateCollisionForWalls(ballPos, ballVel));
+
+    // Check for paddle collisions
+    allCollisions.push(calculateCollisionForPaddle(ballPos, ballVel, gameData.paddle1Position));
+    allCollisions.push(calculateCollisionForPaddle(ballPos, ballVel, gameData.paddle2Position));
+
+    // Determine the earliest collision
+    let earliestCollision: CollisionData | null = null;
+    if (allCollisions.length > 0) {
+      // Sort the array by push all null to the end and sorting by croissant order of CollisionData.time
+      allCollisions.sort((colA: CollisionData | null, colB: CollisionData | null) => {
+        if (colA === null) return 1;
+        else if (colB === null)  return -1;
+        return colA.time < colB.time ? -1 : 1;
+      });
+      earliestCollision = allCollisions[0];
+    }
+
+    if (earliestCollision && earliestCollision.time <= remainingTime) {
+      handleCollision(earliestCollision, ballPos, ballVel);
+      // Update remaining time in the frame
+      remainingTime -= earliestCollision.time;
+    } else {
+      // No more collisions, update position normally
+      ballPos.x += ballVel.x * GAME_CONSTANT.ballSpeed * remainingTime;
+      ballPos.y += ballVel.y * GAME_CONSTANT.ballSpeed * remainingTime;
+      break;
+    }
   }
 
   // Handle ball position going out of bounds (score logic)
-  if (ballNewPos.y - GAME_CONSTANT.ballRadius < -GAME_CONSTANT.areaWidth / 2) {
+  if (ballPos.y - GAME_CONSTANT.ballRadius < -GAME_CONSTANT.areaWidth / 2) {
     gameData.p1Score += 1;
     resetBall(gameData.ball);
-  } else if (ballNewPos.y + GAME_CONSTANT.ballRadius > GAME_CONSTANT.areaWidth / 2) {
+  } else if (ballPos.y + GAME_CONSTANT.ballRadius > GAME_CONSTANT.areaWidth / 2) {
     gameData.p2Score += 1;
     resetBall(gameData.ball);
-  } else {
-    // Update ball position with the new position
-    ballPos.x = ballNewPos.x;
-    ballPos.y = ballNewPos.y;
   }
 
   if (ballMesh) {
@@ -71,7 +163,7 @@ export function updateBallPosition(gameData: GameData, deltaTime: number, ballMe
 }
 
 // Reset ball position and velocity
-export function resetBall(ball: Ball) : void {
+export function resetBall(ball: Ball): void {
   ball.position.x = 0;
   ball.position.y = 0;
 
