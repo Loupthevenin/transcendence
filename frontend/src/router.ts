@@ -1,12 +1,17 @@
 import { LoginView } from "./views/login";
 import { SignupView } from "./views/signup";
 import { MainLayout } from "./layout/layout";
+import { ModeLayout } from "./layout/mode";
 import { TwoFAView } from "./views/2fa";
 import { ProfileView } from "./views/profile";
 
 import { initSideBarNavigation } from "./controllers/navbar";
+import { listenerButtonGameMode } from "./controllers/gameMode";
 import { createGameCanvas, initGameEnvironment, BackToMenu } from "./game/game";
-import { createSkinSelectorCanvas, initSkinSelector } from "./game/skinSelector";
+import {
+  createSkinSelectorCanvas,
+  initSkinSelector,
+} from "./game/skinSelector";
 
 type RouteHandler = () => HTMLElement;
 type Route = {
@@ -45,7 +50,7 @@ const routes: Record<string, Route> = {
     },
   },
   "/": {
-    view: () => MainLayout(createGameCanvas()),
+    view: () => MainLayout(createGameCanvas(), ModeLayout()),
     setup: (root: HTMLElement) => {
       document.body.style.overflow = "hidden";
       initSideBarNavigation();
@@ -53,6 +58,8 @@ const routes: Record<string, Route> = {
 
       createSkinSelectorCanvas(root);
       initSkinSelector();
+
+      listenerButtonGameMode();
 
       BackToMenu();
     },
