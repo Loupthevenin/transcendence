@@ -3,7 +3,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { Player } from '../shared/game/gameElements';
 import { Room } from "../shared/game/room";
 import { scoreToWin } from "../shared/game/constants";
-import { SkinChangeMessage, isSkinChangeMessage, isPaddlePositionMessage } from "../shared/game/gameMessage";
+import { SkinChangeMessage, isSkinChangeMessage, isPaddlePositionMessage, isMatchmakingMessage } from "../shared/game/gameMessageTypes";
+import { GameMessageData, isGameMessage } from "../shared/messageType"
 
 const players: Map<string, Player> = new Map();
 const rooms: Map<string, Room> = new Map();
@@ -12,7 +13,7 @@ let roomCounter: number = 1;
 function addPlayerToRoom(player: Player) : Room {
   // Check for an available room
   for (const [, room] of rooms) {
-      if (!room.isFull() && !room.gameLaunched) {
+      if (!room.isFull() && !room.gameLaunched && !room.gameEnded) {
           if (room.addPlayer(player)) {
               return room;
           }
@@ -48,34 +49,56 @@ export function setupWebSocket() : WebSocketServer {
     players.set(playerId, player);
     console.log(`New player connected: ${player.username} (${playerId})`);
 
-    const room: Room = addPlayerToRoom(player);
-
     ws.on("message", (message: string) => {
-      //console.log('Received data:', message);
+      console.log('Received data:', JSON.parse(message));
 
       try {
-        const data: any = JSON.parse(message);
+        const msgData: any = JSON.parse(message);
 
-        if (isSkinChangeMessage(data)) {
-          // Check if the player who send the message is the owner of the paddle
-          if (data.id === room.indexOfPlayer(player)) {
-            player.paddleSkinId = data.skinId;
-            if (room.gameLaunched) {
-              const skinChangeMessage: SkinChangeMessage = {
-                type: "skinId",
-                id: data.id,
-                skinId: player.paddleSkinId
+        if (!isGameMessage(msgData)) {
+          return;
+        }
+        const data: GameMessageData = msgData.data;
+
+        if (isMatchmakingMessage(data)) {
+          console.log(`[Matchmaking] : ${player.username} (${playerId})`);
+          const room: Room = addPlayerToRoom(player);
+
+          // Start the game if room is full
+          if (room.isFull()) {
+            room.startGame().then(() => {
+              console.log(`Game ended in room '${room.id}' with winner ${room.gameData.p1Score >= scoreToWin ? 1 : 2}`);
+            }).catch((error) => {
+              console.error(`Error starting game in room '${room.id}':`, error);
+            }).finally(() => {
+              rooms.delete(room.id);
+            });
+          }
+        }
+        else if (isSkinChangeMessage(data)) {
+          if (player.room) {
+            // Check if the player who send the message is the owner of the paddle
+            if (data.id === player.room.indexOfPlayer(player)) {
+              player.paddleSkinId = data.skinId;
+              if (player.room.gameLaunched) {
+                const skinChangeMessage: SkinChangeMessage = {
+                  type: "skinId",
+                  id: data.id,
+                  skinId: player.paddleSkinId
+                }
+                player.room.sendMessage(skinChangeMessage, [player.id]);
               }
-              room.sendMessage(JSON.stringify(skinChangeMessage), [player.id]);
             }
           }
         }
         else if (isPaddlePositionMessage(data)) {
-          // Update paddle positions
-          if (room.player1?.id === player.id) {
-            room.gameData.paddle1Position = data.position;
-          } else if (room.player2?.id === player.id) {
-            room.gameData.paddle2Position = data.position;
+          if (player.room) {
+            // Update paddle positions
+            if (player.room.player1?.id === player.id) {
+              player.room.gameData.paddle1Position = data.position;
+            } else if (player.room.player2?.id === player.id) {
+              player.room.gameData.paddle2Position = data.position;
+            }
           }
         }
       }
@@ -92,24 +115,10 @@ export function setupWebSocket() : WebSocketServer {
 
     ws.on("close", () => {
       clearInterval(pingInterval); // Clear ping interval on disconnect
-      room.removePlayer(player);
+      player.room?.removePlayer(player);
       players.delete(playerId);
       console.log(`Player disconnected: ${player.username} (${playerId})`);
     });
-
-    // Start the game if room is full
-    if (room.isFull()) {
-      room.startGame().then(() => {
-        console.log(`Game ended in room '${room.id}' with winner ${room.gameData.p1Score >= scoreToWin ? 1 : 2}`);
-      }).catch((error) => {
-        console.error(`Error starting game in room '${room.id}':`, error);
-      }).finally(() => {
-        // disconnect players and remove room from rooms map
-        room.player1?.socket.close();
-        room.player2?.socket.close();
-        rooms.delete(room.id);
-      });
-    }
   });
 
   return wss;
