@@ -114,10 +114,8 @@ function listenerEmail() {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(newEmail)) {
           alert("veuillez entrer une adresse email valide.");
-          input.focus();
-          return;
-        }
-        if (newEmail && newEmail !== currentEmail) {
+          emailElement.textContent = currentEmail;
+        } else if (newEmail && newEmail !== currentEmail) {
           const res = await updateUserProfile({ email: newEmail }, "email");
           if (res && res.success) {
             alert(res.message);
