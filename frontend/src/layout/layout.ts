@@ -1,11 +1,11 @@
 import { Sidebar } from "../components/sidebar";
 
-export function MainLayout(content?: HTMLElement): HTMLElement {
+export function MainLayout(...contents: HTMLElement[]): HTMLElement {
   const container: HTMLElement = Sidebar();
 
-  if (content) {
-    container.appendChild(content);
-  }
+  contents.forEach((el) => {
+    container.appendChild(el);
+  });
 
   return container;
 }
