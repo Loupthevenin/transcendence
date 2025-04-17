@@ -10,7 +10,7 @@ const players: Map<string, Player> = new Map();
 const rooms: Map<string, Room> = new Map();
 let roomCounter: number = 1;
 
-function addPlayerToRoom(player: Player) : Room {
+function addPlayerToRoom(player: Player): Room {
   // Check for an available room
   for (const [, room] of rooms) {
       if (!room.isFull() && !room.gameLaunched && !room.gameEnded) {
@@ -31,7 +31,7 @@ function addPlayerToRoom(player: Player) : Room {
 }
 
 // WebSocket setup
-export function setupWebSocket() : WebSocketServer {
+export function setupWebSocket(): WebSocketServer {
   const wss: WebSocketServer = new WebSocket.Server({ noServer: true });
 
   // WebSocket connection
@@ -43,7 +43,7 @@ export function setupWebSocket() : WebSocketServer {
       username: `Player-${playerId.substring(0, 8)}`,
       socket: ws,
       room: null,
-      paddleSkinId: -1
+      paddleSkinId: ""
     };
 
     players.set(playerId, player);

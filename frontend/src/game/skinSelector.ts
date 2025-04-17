@@ -7,28 +7,37 @@ let scene: BABYLON.Scene;
 let camera: BABYLON.ArcRotateCamera;
 let light: BABYLON.HemisphericLight;
 
-const skinIds: number[] = [0, 1, 2, 3, 4];
+let skinIds: string[] = [];
+let modelsCanBeLoaded: boolean = false;
+
+// Get the list of skin ids from the server
+async function fetchSkinIds(): Promise<void> {
+  try {
+    const response: Response = await fetch("/api/models/paddles_list");
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data: any = await response.json();
+    if (Array.isArray(data)) {
+      skinIds = data; // Ensure the response is an array of strings
+
+      // Start loading models only if the scene has been initialized
+      if (modelsCanBeLoaded) {
+        loadModels();
+      }
+      modelsCanBeLoaded = true;
+    } else {
+      console.error("Unexpected data format received:", data);
+    }
+  } catch (error) {
+    console.error("Error fetching skin IDs:", error);
+  }
+}
+
+fetchSkinIds(); // Retrieve skin IDs immediately
 
 const models: BABYLON.AbstractMesh[] = [];
 let currentIndex: number = 0;
-
-// Mouse control variables
-let isMouseDown: boolean = false;
-let lastMouseX: number = 0;
-
-// Create the canvas
-export function createSkinSelectorCanvas(root: HTMLElement): void {
-  // If a canvas already exists, remove it
-  if (canvas) {
-    canvas.remove();
-    canvas = null;
-  }
-
-  canvas = document.createElement("canvas");
-  canvas.id = "skinSelectorCanvas";
-
-  root.appendChild(canvas);
-}
 
 // Load models dynamically
 async function loadModels(): Promise<void> {
@@ -47,7 +56,7 @@ async function loadModels(): Promise<void> {
   try {
     // Use Promise.all to fetch all models concurrently
     const results: BABYLON.AbstractMesh[] = await Promise.all(
-      skinIds.map((skinId: number) => loadPadddleSkin(skinId, scene))
+      skinIds.map((skinId: string) => loadPadddleSkin(skinId, scene))
     );
 
     // Add all models (or nulls) to the models array
@@ -58,6 +67,20 @@ async function loadModels(): Promise<void> {
   //console.log(models);
 
   smoothUpdateCarousel(1, true); // Initial positioning
+}
+
+// Create the canvas
+export function createSkinSelectorCanvas(root: HTMLElement): void {
+  // If a canvas already exists, remove it
+  if (canvas) {
+    canvas.remove();
+    canvas = null;
+  }
+
+  canvas = document.createElement("canvas");
+  canvas.id = "skinSelectorCanvas";
+
+  root.appendChild(canvas);
 }
 
 const circleRadius: number = 2.5; // Radius of the circle
@@ -128,6 +151,10 @@ function handleKeyDown(event: KeyboardEvent): void {
     rotateCarousel(-1); // Rotate counterclockwise
   }
 }
+
+// Mouse control variables
+let isMouseDown: boolean = false;
+let lastMouseX: number = 0;
 
 // Mouse controls for rotating the current model
 function handleMouseInput(pointerInfo: BABYLON.PointerInfo): void {
@@ -205,8 +232,11 @@ export function initSkinSelector(): void {
     }
   });
 
-  // Start loading models
-  loadModels();
+  // Start loading models only if the skin ids list has been fetched
+  if (modelsCanBeLoaded) {
+    loadModels();
+  }
+  modelsCanBeLoaded = true;
 }
 
 export function showSkinSelector(): void {
@@ -223,6 +253,6 @@ export function hideSkinSelector(): void {
   }
 }
 
-export function getSelectedSkinId(): number {
-  return currentIndex;
+export function getSelectedSkinId(): string {
+  return currentIndex.toString();
 }
