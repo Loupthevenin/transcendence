@@ -47,7 +47,7 @@ export function LoginView(): HTMLElement {
       </form>
 
       <div class="mt-6">
-        <div id="google-signin-button"></div>
+        <div id="google-auth">Se connecter avec Google</div>
       </div>
 
       <div class="mt-4 text-center">

@@ -76,6 +76,10 @@ export function SignupView(): HTMLElement {
         </button>
       </form>
 
+      <div class="mt-6">
+        <div id="google-auth">Se connecter avec Google</div>
+      </div>
+
       <div class="mt-4 text-center">
         <p class="text-sm text-purple-300">
           Vous avez déjà un compte ?

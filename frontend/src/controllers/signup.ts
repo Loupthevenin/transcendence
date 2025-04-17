@@ -1,6 +1,8 @@
 import { navigateTo } from "../router";
+import { handleGoogle } from "./google";
 
 export function setupSignupHandlers(container: HTMLElement) {
+  handleGoogle();
   const signupForm: HTMLFormElement | null = container.querySelector(
     "#signupForm",
   ) as HTMLFormElement | null;
