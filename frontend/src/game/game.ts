@@ -473,7 +473,7 @@ export function handleTournamentGameLaunch(): void {
   }, 50); // Check every 50ms
 }
 
-function handleGameMessages(data: GameMessageData): void {
+export function handleGameMessages(data: GameMessageData): void {
   //console.log("Received:", data);
 
   // Avoid modifying data if not in an online mode
@@ -481,6 +481,7 @@ function handleGameMessages(data: GameMessageData): void {
 
   try {
     if (isGameStartedMessage(data)) {
+      console.log("[GAME] gameStarted message reçu", data);
       playerId = data.id; // Set the player ID based on the server response
       setPaddleSkin(playerId, localSkinId);
       updateCameraMode(camera);
@@ -950,6 +951,7 @@ export async function initGameEnvironment(): Promise<void> {
       loadingScreen.remove(); // Delete the loading screen
     }
     loadingScreen = null;
+    console.log("All loaded, showing canvas") /// debug
     if (canvas) {
       canvas.style.visibility = "visible"; // Show the game canvas
     }
@@ -1035,7 +1037,7 @@ export function OnlineGame(autoMatchmaking: boolean = true): void {
   resetGame();
 
   hideSkinSelector();
-  localSkinId = getSelectedSkinId();
+  localSkinId = getSelectedSkinId() || "1";
   setPaddleSkin(1, localSkinId);
 
   registerToGameMessages();
