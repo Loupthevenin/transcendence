@@ -4,6 +4,7 @@ import { MainLayout } from "./layout/layout";
 import { ModeLayout } from "./layout/mode";
 import { TwoFAView } from "./views/2fa";
 import { ProfileView } from "./views/profile";
+import { ChatView} from "./views/chat";
 
 import { initSideBarNavigation } from "./controllers/navbar";
 import { handleGoogleCallback } from "./controllers/google";
@@ -48,6 +49,14 @@ const routes: Record<string, Route> = {
     setup: async (root: HTMLElement) => {
       const mod = await import("./controllers/2fa");
       mod.setupTwoFAHandlers(root);
+    },
+  },
+  "/chat": {
+    view: ChatView,
+    setup: async (root: HTMLElement) => {
+      const mod = await import("./controllers/chat");
+      initSideBarNavigation();
+      mod.setupChat(root);
     },
   },
   "/callback": {

@@ -36,6 +36,9 @@ async function loadUserProfile() {
     }
     const data = rawData as UserProfile;
 
+    // localStorage.setItem("user-email", data.email);//
+    // localStorage.setItem("display-name", data.name);//
+
     const avatarElement = document.getElementById(
       "user-avatar",
     ) as HTMLImageElement;
