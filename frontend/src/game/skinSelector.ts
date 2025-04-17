@@ -9,7 +9,7 @@ let light: BABYLON.HemisphericLight;
 
 const skinIds: number[] = [0, 1, 2, 3, 4];
 
-const models: (BABYLON.AbstractMesh | null)[] = [];
+const models: BABYLON.AbstractMesh[] = [];
 let currentIndex: number = 0;
 
 // Mouse control variables
@@ -17,7 +17,7 @@ let isMouseDown: boolean = false;
 let lastMouseX: number = 0;
 
 // Create the canvas
-export function createSkinSelectorCanvas(root: HTMLElement) : void {
+export function createSkinSelectorCanvas(root: HTMLElement): void {
   // If a canvas already exists, remove it
   if (canvas) {
     canvas.remove();
@@ -31,9 +31,9 @@ export function createSkinSelectorCanvas(root: HTMLElement) : void {
 }
 
 // Load models dynamically
-async function loadModels() : Promise<void> {
+async function loadModels(): Promise<void> {
   // Remove previous model if always in memory
-  models.forEach((model: BABYLON.AbstractMesh | null) => {
+  models.forEach((model: BABYLON.AbstractMesh) => {
     if (model) {
       model.dispose()
     }
@@ -46,11 +46,8 @@ async function loadModels() : Promise<void> {
 
   try {
     // Use Promise.all to fetch all models concurrently
-    const results: (BABYLON.AbstractMesh | null)[] = await Promise.all(
-      skinIds.map((skinId: number) => loadPadddleSkin(skinId, scene).catch((error) => {
-        console.error(`Failed to load paddle skin with ID ${skinId}:`, error);
-        return null; // Return null on failure to maintain array order
-      }))
+    const results: BABYLON.AbstractMesh[] = await Promise.all(
+      skinIds.map((skinId: number) => loadPadddleSkin(skinId, scene))
     );
 
     // Add all models (or nulls) to the models array
@@ -60,61 +57,80 @@ async function loadModels() : Promise<void> {
   }
   //console.log(models);
 
-  updatePositions(); // Initial positioning
+  smoothUpdateCarousel(1, true); // Initial positioning
 }
 
-function updatePositions() : void {
-  if (models.length === 0) return;
+const circleRadius: number = 2.5; // Radius of the circle
+const angleStep: number = BABYLON.Angle.FromDegrees(25).radians(); // Angular distance between models
+const visibleRange: number = BABYLON.Angle.FromDegrees(55).radians(); // Range within which models are visible
+// const transitionSpeed: number = 2; // Speed of rotation adjustment
+// let targetRotation: number = 0; // Target rotation in radians
+// let currentRotation: number = 0; // Current rotation in radians
 
-  const currentModel: BABYLON.AbstractMesh | null = models[currentIndex];
-  const previousModel: BABYLON.AbstractMesh | null = models[(currentIndex - 1 + models.length) % models.length];
-  const nextModel: BABYLON.AbstractMesh | null = models[(currentIndex + 1) % models.length];
+function smoothUpdateCarousel(deltaTime: number, forceUpdate: boolean = false): void {
+  // const angleDiff: number = targetRotation - currentRotation;
+  // if (Math.abs(angleDiff) < 0.001 && !forceUpdate) {
+  //   return; // Skip updates if the carousel is already aligned
+  // }
 
-  // Position the current model at the center
-  if (currentModel) {
-    currentModel.setEnabled(true);
-    currentModel.position = new BABYLON.Vector3(0, 0, 0);
-  }
+  // // Gradually interpolate toward the target rotation
+  // currentRotation += angleDiff * transitionSpeed * deltaTime;
 
-  // Position the previous model to the left
-  if (previousModel) {
-    previousModel.setEnabled(true);
-    previousModel.position = new BABYLON.Vector3(0, 1, -1);
-  }
+  // // If the interpolated rotation is approximatly the target one, snap to it
+  // if (Math.abs(targetRotation - currentRotation) < 0.001) {
+  //   currentRotation = targetRotation;
+  // }
 
-  // Position the next model to the right
-  if (nextModel) {
-    nextModel.setEnabled(true);
-    nextModel.position = new BABYLON.Vector3(0, 1, 1);
-  }
+  const halfLength: number = Math.floor(models.length / 2);
 
-  // Hide other models
-  models.forEach((model: BABYLON.AbstractMesh | null, index: number) => {
-    if (model) {
-      if (
-        index !== currentIndex &&
-        index !== (currentIndex - 1 + models.length) % models.length &&
-        index !== (currentIndex + 1) % models.length
-      ) {
-        model.setEnabled(false);
-      }
+  models.forEach((model: BABYLON.AbstractMesh, index: number) => {
+    // Calculate relative position, allowing for wrapping around
+    const relativeIndex: number = (currentIndex - index + models.length + halfLength) % models.length;
+
+    // let rotOffset: number = currentRotation;
+    // while (rotOffset > angleStep)
+    //     rotOffset -= angleStep;
+    // while (rotOffset < 0)
+    //     rotOffset += angleStep;
+    // rotOffset -= angleStep / 2;
+
+    const modelAngle: number = angleStep * (relativeIndex - halfLength); //+ rotOffset;
+
+    // if (index == currentIndex) {
+    //   console.log(BABYLON.Angle.FromDegrees(rotOffset).degrees());
+    // }
+
+    // Check if the mesh is within the visible carousel range
+    if (Math.abs(modelAngle) <= visibleRange) {
+        model.setEnabled(true);
+
+        model.position.y = Math.cos(modelAngle) * circleRadius - circleRadius;
+        model.position.z = Math.sin(modelAngle) * circleRadius;
+    } else {
+      model.setEnabled(false); // Hide model if outside visible range
     }
   });
 }
 
+// Function to rotate the carousel to a new index
+function rotateCarousel(deltaRotation: -1 | 1): void {
+  currentIndex = (currentIndex + deltaRotation + models.length) % models.length;
+  // targetRotation += angleStep * deltaRotation;
+  // console.log("currentIndex:", currentIndex);
+  smoothUpdateCarousel(1);
+}
+
 // Keyboard input for navigation
-function handleKeyDown(event: KeyboardEvent) : void {
+function handleKeyDown(event: KeyboardEvent): void {
   if (event.key === "ArrowRight") {
-    currentIndex = (currentIndex + 1) % models.length;
-    updatePositions();
+    rotateCarousel(1); // Rotate clockwise
   } else if (event.key === "ArrowLeft") {
-    currentIndex = (currentIndex - 1 + models.length) % models.length;
-    updatePositions();
+    rotateCarousel(-1); // Rotate counterclockwise
   }
 }
 
 // Mouse controls for rotating the current model
-function handleMouseInput(pointerInfo: BABYLON.PointerInfo) : void {
+function handleMouseInput(pointerInfo: BABYLON.PointerInfo): void {
   switch (pointerInfo.type) {
       case BABYLON.PointerEventTypes.POINTERDOWN:
           isMouseDown = true;
@@ -127,23 +143,20 @@ function handleMouseInput(pointerInfo: BABYLON.PointerInfo) : void {
 
       case BABYLON.PointerEventTypes.POINTERMOVE:
           if (isMouseDown) {
-            const deltaX: number = lastMouseX - pointerInfo.event.clientX;
-            lastMouseX = pointerInfo.event.clientX;
-
-            const currentModel: BABYLON.AbstractMesh | null = models[currentIndex];
+            const currentModel: BABYLON.AbstractMesh = models[currentIndex];
             if (currentModel) {
+              const deltaX: number = lastMouseX - pointerInfo.event.clientX;
               currentModel.rotation.x += deltaX * 0.01;
             }
+            lastMouseX = pointerInfo.event.clientX;
           }
           break;
   }
 }
 
-export function initSkinSelector() : void {
+export function initSkinSelector(): void {
   if (!canvas) {
-    throw new Error(
-      "Canvas element is not created. Call CreateSkinSelectorCanvas() first.",
-    );
+    throw new Error("Canvas element is not created. Call CreateSkinSelectorCanvas() first.");
   }
   if (engine) {
     engine.dispose(); // Dispose of the previous engine if it exists
@@ -152,13 +165,13 @@ export function initSkinSelector() : void {
   engine = new BABYLON.Engine(canvas, true);
   scene = new BABYLON.Scene(engine);
   scene.clearColor = new BABYLON.Color4(0, 0, 0, 0); // transparent skybox
-  //scene.clearColor = new BABYLON.Color4(0, 0, 0, 1);
+  // scene.clearColor = new BABYLON.Color4(0, 0, 0, 1);
 
   camera = new BABYLON.ArcRotateCamera(
     "Camera",
-    0, // Horizontal rotation
-    Math.PI, // Vertical rotation
-    1.5, // Distance from target
+    Math.PI, // Horizontal rotation
+    0, // Vertical rotation
+    2, // Distance from target
     new BABYLON.Vector3(0, 0, 0), // Target position
     scene,
   );
@@ -166,10 +179,10 @@ export function initSkinSelector() : void {
   camera.inputs.clear(); // Delete all default camera's inputs
 
   // Create an hemispheric light
-  light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, -1, 0), scene);
+  light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
   light.intensity = 1.0;
 
-  //new BABYLON.AxesViewer(scene, 2);
+  // new BABYLON.AxesViewer(scene, 1);
 
   // Register input events
   window.removeEventListener("keydown", handleKeyDown); // Remove existing listener (if any) to prevent duplication
@@ -179,6 +192,9 @@ export function initSkinSelector() : void {
 
   // Render loop
   engine.runRenderLoop(() => {
+    // const deltaTime: number = engine.getDeltaTime() / 1000; // Get the delta time as seconds (default milliseconds)
+    // smoothUpdateCarousel(deltaTime);
+
     scene.render();
   });
 
@@ -193,22 +209,20 @@ export function initSkinSelector() : void {
   loadModels();
 }
 
-export function showSkinSelector() : void {
-  if (!canvas) {
-    return;
+export function showSkinSelector(): void {
+  if (canvas) {
+    // Set visibility to 'visible' to show the canvas
+    canvas.style.visibility = "visible";
   }
-  // Set visibility to 'visible' to show the canvas
-  canvas.style.visibility = "visible";
 }
 
-export function hideSkinSelector() : void {
-  if (!canvas) {
-    return;
+export function hideSkinSelector(): void {
+  if (canvas) {
+    // Set visibility to 'hidden' to hide the canvas
+    canvas.style.visibility = "hidden";
   }
-  // Set visibility to 'hidden' to hide the canvas
-  canvas.style.visibility = "hidden";
 }
 
-export function getSelectedSkinId() : number {
+export function getSelectedSkinId(): number {
   return currentIndex;
 }
