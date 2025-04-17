@@ -16,7 +16,43 @@
         "filepath": "Paddle_Yellow.glb"
     },
     "4": {
+        "name": "Paddle Cyan",
+        "filepath": "Paddle_Cyan.glb"
+    },
+    "5": {
+        "name": "Paddle Purple",
+        "filepath": "Paddle_Purple.glb"
+    },
+    "6": {
+        "name": "Paddle White",
+        "filepath": "Paddle_White.glb"
+    },
+    "7": {
+        "name": "Paddle Black",
+        "filepath": "Paddle_Black.glb"
+    },
+    "8": {
+        "name": "Bamboo",
+        "filepath": "Bamboo.glb"
+    },
+    "9": {
         "name": "Baseball Bat",
         "filepath": "Baseball_Bat.glb"
+    },
+    "10": {
+        "name": "Crowbar",
+        "filepath": "Crowbar.glb"
+    },
+    "11": {
+        "name": "Metal Pipe",
+        "filepath": "Metal_Pipe.glb"
+    },
+    "12": {
+        "name": "Metal Beam",
+        "filepath": "Metal_Beam.glb"
+    },
+    "13": {
+        "name": "Sword",
+        "filepath": "Sword.glb"
     }
 }
