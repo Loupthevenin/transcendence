@@ -46,6 +46,10 @@ export function createNewRoom(type: RoomType): Room {
 
 export function addPlayerToMatchmaking(player: Player): void {
   // Check for an available room of type Matchmaking
+  if (player.room) {
+    console.warn(`[addPlayerToMatchmaking] ${player.username} est déjà dans une room (${player.room.getId()})`);
+    return;
+  }
   for (const [, room] of rooms) {
     if (room.getType() === RoomType.Matchmaking && room.isJoinable()) {
       if (room.addPlayer(player)) {
@@ -565,6 +569,8 @@ export class Room {
     if (!this.gameLaunched) {
       throw new Error("Cannot end a game not launched");
     }
+    console.log(`[Room ${this.id}] Fin de partie appelée`);
+
     this.gameEnded = true;
     this.gameStats.gameEndTime = Date.now(); // game end time in milliseconds
 
@@ -601,8 +607,12 @@ export class Room {
     this.gameEndedCallback?.(gameResultMessage);
 
     this.clear();
+    if (this.player1 && this.player1.room === this) this.player1.room = null;
+    if (this.player2 && this.player2.room === this) this.player2.room = null;
+    this.dispose(); // ← suppression de la room
   }
 
+ 
   /**
    * Save the game result in blockchain
    */
@@ -681,3 +691,4 @@ export class Room {
     rooms.delete(this.id);
   }
 }
+

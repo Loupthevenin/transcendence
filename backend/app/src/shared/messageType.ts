@@ -26,7 +26,8 @@ export type GameMessageData =
   | GameMessages.DisconnectionMessage
   | GameMessages.ReconnectionMessage
   | GameMessages.MatchmakingMessage
-  | GameMessages.LeaveGameMessage;
+  | GameMessages.LeaveGameMessage
+  | GameMessages.ReadyToPlayMessage;
 
 export type GameMessage = {
   readonly type: "game";
@@ -42,8 +43,12 @@ export function isGameMessage(data: any): data is GameMessage {
 }
 
 export type ChatMessageData =
-  | ChatMessages.NewMsgReceivedMessage
-  | ChatMessages.NewMsgSendMessage;
+	| ChatMessages.NewMsgReceivedMessage
+	| ChatMessages.NewMsgSendMessage
+  | ChatMessages.RegisterUserMessage
+  | ChatMessages.InviteToGameMessage
+  | ChatMessages.AcceptGameInviteMessage
+  | ChatMessages.StartGameRedirectMessage;
 
 export type ChatMessage = {
   readonly type: "chat";
