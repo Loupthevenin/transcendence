@@ -7,7 +7,7 @@ export function ProfileView(): HTMLElement {
       <h3 class="text-xl font-semibold text-indigo-300 mb-4">Profil</h3>
       <div class="flex items-center space-x-10">
         <div class="relative group">
-          <img src="" alt="Avatar"
+          <img src="https://upload.wikimedia.org/wikipedia/commons/2/2c/Default_pfp.svg" alt="Avatar"
                class="w-24 h-24 rounded-full object-cover border-2 border-indigo-500 shadow-md cursor-pointer hover:opacity-80 transition"
                id="user-avatar">
           <input type="file" accept="image/*" id="avatar-upload" class="sr-only" />
