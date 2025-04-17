@@ -38,7 +38,7 @@ app.register(fastifyStatic, {
 // Google OAUTH
 app.register(fastifyOauth2, {
   name: "googleOAuth2",
-  scope: ["profile", "email"],
+  scope: ["openid", "profile", "email"],
   credentials: {
     client: {
       id: GOOGLE_CLIENT_ID,

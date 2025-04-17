@@ -6,6 +6,7 @@ import { TwoFAView } from "./views/2fa";
 import { ProfileView } from "./views/profile";
 
 import { initSideBarNavigation } from "./controllers/navbar";
+import { handleGoogleCallback } from "./controllers/google";
 import { listenerButtonGameMode } from "./controllers/gameMode";
 import { createGameCanvas, initGameEnvironment, BackToMenu } from "./game/game";
 import {
@@ -49,6 +50,15 @@ const routes: Record<string, Route> = {
       mod.setupTwoFAHandlers(root);
     },
   },
+  "/callback": {
+    view: () => {
+      const div = document.createElement("div");
+      return div;
+    },
+    setup: () => {
+      handleGoogleCallback();
+    },
+  },
   "/": {
     view: () => MainLayout(createGameCanvas(), ModeLayout()),
     setup: (root: HTMLElement) => {
@@ -77,6 +87,7 @@ export async function renderRoute() {
 
   document.body.innerHTML = "";
 
+  console.log("renderRoute");
   if (!route) {
     const el: HTMLDivElement = document.createElement("div");
     el.textContent = "404 - Page non trouvée";

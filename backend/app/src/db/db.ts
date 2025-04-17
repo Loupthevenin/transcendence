@@ -8,11 +8,12 @@ db.exec(`
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	name TEXT NOT NULL,
 	email TEXT NOT NULL UNIQUE,
-	password TEXT NOT NULL NULL,
+	password TEXT,
 	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 	require2FA BOOLEAN DEFAULT FALSE,
 	twofa_secret TEXT,
 	is_verified BOOLEAN DEFAULT FALSE,
+	google_id TEXT,
 	avatar_url TEXT DEFAULT 'https://upload.wikimedia.org/wikipedia/commons/2/2c/Default_pfp.svg'
 )
 `);
