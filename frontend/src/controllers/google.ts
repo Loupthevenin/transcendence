@@ -16,19 +16,18 @@ export function handleGoogle() {
 }
 
 export function handleGoogleCallback() {
-  console.log("handleGoogleCallback");
   const hash = window.location.hash.substring(1);
   const params = new URLSearchParams(hash);
 
   const token = params.get("token");
-  const require2FA = params.get("require2FA") === "true";
+  const require2FA = params.get("require2FA");
 
   if (token) {
-    localStorage.setItem("auth_token", token);
-
-    if (require2FA) {
+    if (require2FA === "1") {
+      localStorage.setItem("temp_token", token);
       navigateTo("/auth/verify-2fa");
     } else {
+      localStorage.setItem("auth_token", token);
       navigateTo("/");
     }
   } else {

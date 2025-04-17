@@ -87,7 +87,6 @@ export async function renderRoute() {
 
   document.body.innerHTML = "";
 
-  console.log("renderRoute");
   if (!route) {
     const el: HTMLDivElement = document.createElement("div");
     el.textContent = "404 - Page non trouvée";
