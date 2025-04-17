@@ -8,7 +8,7 @@ import { ASSETS_PATH } from "../config";
 // path for all models assets
 const assetsModelsPath: string = path.join(ASSETS_PATH, "models");
 
-export async function getModel(request: FastifyRequest, reply: FastifyReply) : Promise<void> {
+export async function getModel(request: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
     const { model } = request.params as { model: string };
 
@@ -43,12 +43,12 @@ const paddleModelReferences: Record<string, PaddleModelInfo> = JSON.parse(
   fs.readFileSync(path.join(assetsPaddlesModelsPath, "model-references.json"), "utf-8")
 );
 
-export async function getPaddleModel(request: FastifyRequest, reply: FastifyReply) : Promise<void> {
+export async function getPaddleModel(request: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
     let { model_id } = request.params as { model_id: string };
 
-    // If the model_id is negative then take a random model
-    if (parseInt(model_id) < 0) {
+    // If the model_id undefined or empty then take a random model
+    if (!model_id || model_id.length === 0) {
       const keys: string[] = Object.keys(paddleModelReferences);
       model_id = keys[Math.floor(Math.random() * keys.length)];
     }
@@ -80,12 +80,20 @@ export async function getPaddleModel(request: FastifyRequest, reply: FastifyRepl
   }
 }
 
+export async function getPaddleModelIdsList(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+  try {
+    reply.type("application/json").send(JSON.stringify(Object.keys(paddleModelReferences)));
+  } catch (error) {
+    reply.status(500).send({ error: "Internal server error" });
+  }
+}
+
 //////////////// TEXTURES ////////////////
 
 // path for all textures assets
 const assetsTexturesPath: string = path.join(ASSETS_PATH, "textures");
 
-export async function getTexture(request: FastifyRequest, reply: FastifyReply) : Promise<void> {
+export async function getTexture(request: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
     const { texture } = request.params as { texture: string };
 

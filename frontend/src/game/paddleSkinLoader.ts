@@ -1,7 +1,7 @@
 import { BABYLON, GAME_CONSTANT, disableSpecularOnMeshes } from "@shared/game/gameElements";
 
 // Create and return the default paddle skin
-export function createDefaultSkin(scene: BABYLON.Scene) : BABYLON.Mesh {
+export function createDefaultSkin(scene: BABYLON.Scene): BABYLON.Mesh {
   const paddleMesh: BABYLON.Mesh = BABYLON.MeshBuilder.CreateBox(
     "defualtPaddle",
     {
@@ -26,13 +26,9 @@ export function createDefaultSkin(scene: BABYLON.Scene) : BABYLON.Mesh {
 }
 
 // Load the paddle skin and return it, return the default paddle skin if an error occured
-// if skinId < 0, load a random skin
-export async function loadPadddleSkin(skinId: number, scene: BABYLON.Scene) : Promise<BABYLON.Mesh> {
+// if skinId is empty, load a random skin
+export async function loadPadddleSkin(skinId: string, scene: BABYLON.Scene): Promise<BABYLON.Mesh> {
   return new Promise<BABYLON.Mesh>(async (resolve) => {
-    if (!Number.isInteger(skinId)) {
-      console.error("Error, invalid skin id given: ", skinId);
-      resolve(createDefaultSkin(scene));
-    }
     try {
       const result: BABYLON.ISceneLoaderAsyncResult =
         await BABYLON.ImportMeshAsync("/api/models/paddles/" + skinId, scene, { pluginExtension: ".glb" });

@@ -17,7 +17,7 @@ let currentGameMode: GameMode = GameMode.MENU;
 
 let canvas: HTMLCanvasElement | null = null;
 
-export function createGameCanvas() : HTMLCanvasElement {
+export function createGameCanvas(): HTMLCanvasElement {
   // If a canvas already exists, remove it
   if (canvas) {
     canvas.remove();
@@ -38,7 +38,7 @@ let camera: BABYLON.ArcRotateCamera;
 let light: BABYLON.HemisphericLight;
 
 // Update camera rotation based on game mode
-function updateCameraRotation(camera: BABYLON.ArcRotateCamera, gameMode: GameMode) : void {
+function updateCameraRotation(camera: BABYLON.ArcRotateCamera, gameMode: GameMode): void {
   if (!camera) {
     return;
   }
@@ -76,8 +76,8 @@ let ballMesh: BABYLON.Mesh;
 let scoreFontTextureTop: BABYLON.DynamicTexture;
 let scoreFontTextureBottom: BABYLON.DynamicTexture;
 
-function updateScoreText() : void {
-  function updateScoreFontTexture(fontTexture: BABYLON.DynamicTexture, leftScore: number, rightScore: number) : void {
+function updateScoreText(): void {
+  function updateScoreFontTexture(fontTexture: BABYLON.DynamicTexture, leftScore: number, rightScore: number): void {
     fontTexture.clear();
   
     const text: string = `${leftScore} : ${rightScore}`;
@@ -171,7 +171,7 @@ let paddle1DraggingData: PaddleDraggingData;
 let paddle2DraggingData: PaddleDraggingData;
 
 // Function to handle player input and update paddle position
-function handlePlayerInput(paddlePosition: BABYLON.Vector2, paddleMesh: BABYLON.Mesh, keyInput: number, draggingData: PaddleDraggingData, deltaTime: number) : void {
+function handlePlayerInput(paddlePosition: BABYLON.Vector2, paddleMesh: BABYLON.Mesh, keyInput: number, draggingData: PaddleDraggingData, deltaTime: number): void {
   if (keyInput === 0 && draggingData.pointerId === -1) {
     return; // No key input, no movement
   }
@@ -201,7 +201,7 @@ function handlePlayerInput(paddlePosition: BABYLON.Vector2, paddleMesh: BABYLON.
 }
 
 // Function to handle player drag input
-function handlePlayerDragInput(pointerInfo: BABYLON.PointerInfo) : void {
+function handlePlayerDragInput(pointerInfo: BABYLON.PointerInfo): void {
   if (!engine || !gameData) {
     return;
   }
@@ -261,7 +261,7 @@ function handlePlayerDragInput(pointerInfo: BABYLON.PointerInfo) : void {
   }
 }
 
-function setPaddleSkin(paddle: 1 | 2, skinId: number) : void {
+function setPaddleSkin(paddle: 1 | 2, skinId: string): void {
   if (paddle === 1) {
     // Create a temporary mesh will waiting for server response if there is no mesh
     if (!paddle1Mesh) {
@@ -293,9 +293,9 @@ function setPaddleSkin(paddle: 1 | 2, skinId: number) : void {
 }
 
 let playerId: -1 | 1 | 2 = -1; // Player ID (1 or 2) to identify which paddle the player controls
-let localSkinId: number = -1;
+let localSkinId: string = "";
 
-function handleGameMessages(data: GameMessageData) : void {
+function handleGameMessages(data: GameMessageData): void {
   //console.log('Received:', data);
   try {
     if (isGameStartedMessage(data)) {
@@ -377,16 +377,16 @@ function handleGameMessages(data: GameMessageData) : void {
   }
 }
 
-function registerToGameMessages() : void {
+function registerToGameMessages(): void {
   subscribeToMessage("game", handleGameMessages);
 }
 
-function unregisterToGameMessages() : void {
+function unregisterToGameMessages(): void {
   unsubscribeToMessage("game", handleGameMessages);
 }
 
 // Reset the game and all position
-function ResetGame() : void {
+function ResetGame(): void {
   gameData = newGameData();
 
   if (ballMesh) {
@@ -407,7 +407,7 @@ function ResetGame() : void {
 }
 
 // Babylon.js setup
-export function initGameEnvironment() : void {
+export function initGameEnvironment(): void {
   if (!canvas) {
     throw new Error("Canvas element is not created. Call CreateGameCanvas() first.");
   }
@@ -457,8 +457,8 @@ export function initGameEnvironment() : void {
   ground.material = groundMaterial;
 
   // Create the paddles
-  setPaddleSkin(1, 0);
-  setPaddleSkin(2, 1);
+  setPaddleSkin(1, "0");
+  setPaddleSkin(2, "1");
 
   // Create the ball
   ballMesh = BABYLON.MeshBuilder.CreateSphere(
@@ -617,7 +617,7 @@ export function initGameEnvironment() : void {
 }
 
 // Quit the game and go back to the menu
-export function BackToMenu() : void {
+export function BackToMenu(): void {
   currentGameMode = GameMode.MENU;
   updateCameraRotation(camera, currentGameMode);
   unregisterToGameMessages();
@@ -625,12 +625,12 @@ export function BackToMenu() : void {
   ResetGame();
 
   showSkinSelector();
-  setPaddleSkin(1, -1);
-  setPaddleSkin(2, -1);
+  setPaddleSkin(1, "");
+  setPaddleSkin(2, "");
 }
 
 // Launch the game in single player against an AI opponent
-export function SinglePlayer() : void {
+export function SinglePlayer(): void {
   currentGameMode = GameMode.SINGLEPLAYER;
   updateCameraRotation(camera, currentGameMode);
   unregisterToGameMessages();
@@ -639,11 +639,11 @@ export function SinglePlayer() : void {
 
   hideSkinSelector();
   setPaddleSkin(1, getSelectedSkinId());
-  setPaddleSkin(2, -1);
+  setPaddleSkin(2, "");
 }
 
 // Launch the game in local 1v1 mode
-export function LocalGame() : void {
+export function LocalGame(): void {
   currentGameMode = GameMode.LOCAL;
   updateCameraRotation(camera, currentGameMode);
   unregisterToGameMessages();
@@ -656,7 +656,7 @@ export function LocalGame() : void {
 }
 
 // Launch the game in online mode against a remote player
-export function OnlineGame() : void {
+export function OnlineGame(): void {
   currentGameMode = GameMode.ONLINE;
   updateCameraRotation(camera, currentGameMode);
 
@@ -682,7 +682,7 @@ export function OnlineGame() : void {
 let axesViewer: BABYLON.AxesViewer | null = null;
 
 // Function to enable or disable the AxesViewer
-function ToggleAxesViewer(size: number = 1) : void {
+function ToggleAxesViewer(size: number = 1): void {
   if (!scene) {
     return;
   }

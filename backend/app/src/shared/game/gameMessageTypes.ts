@@ -3,7 +3,7 @@ import { isVector2, GameData, isGameData } from "./gameElements";
 export type SkinChangeMessage = {
   readonly type: "skinId";
   id: 1 | 2; // The player's index in the room
-  skinId: number; // The player's paddle skin ID
+  skinId: string; // The player's paddle skin ID
 };
 
 export function isSkinChangeMessage(data: any): data is SkinChangeMessage {
@@ -11,7 +11,7 @@ export function isSkinChangeMessage(data: any): data is SkinChangeMessage {
     data &&
     data.type === "skinId" &&
     (data.id === 1 || data.id === 2) &&
-    typeof data.skinId === "number"
+    typeof data.skinId === "string"
   );
 }
 

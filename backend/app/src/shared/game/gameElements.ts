@@ -41,7 +41,7 @@ export function isGameData(data: any): data is GameData {
   );
 }
 
-export function newGameData() : GameData {
+export function newGameData(): GameData {
   return {
       ball: {
         position: new BABYLON.Vector2(0, 0),
@@ -59,7 +59,7 @@ export interface Player {
   username: string;
   socket: WebSocket;
   room: Room | null;
-  paddleSkinId: number;
+  paddleSkinId: string;
 }
 
 // For each model, disable specular from the original material if exist
