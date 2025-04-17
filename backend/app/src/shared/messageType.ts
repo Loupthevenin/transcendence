@@ -1,5 +1,18 @@
 import * as GameMessages from "./game/gameMessageTypes";
 
+export type ErrorMessage = {
+  readonly type: "error";
+  msg: string;
+};
+
+export function isErrorMessage(data: any): data is ErrorMessage {
+  return (
+    data &&
+    data.type === "error" &&
+    typeof data.msg === "string"
+  );
+}
+
 export type GameMessageData = 
   | GameMessages.SkinChangeMessage
   | GameMessages.PaddlePositionMessage

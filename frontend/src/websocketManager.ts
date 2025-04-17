@@ -1,4 +1,4 @@
-import { ChatMessageData, isChatMessage, GameMessageData, isGameMessage } from "@shared/messageType"
+import { isErrorMessage, ChatMessageData, isChatMessage, GameMessageData, isGameMessage } from "@shared/messageType"
 
 let socket: WebSocket | null = null;
 let reconnectInterval: NodeJS.Timeout | null = null;
@@ -16,7 +16,7 @@ type CallbackFunction<T extends keyof MessageEventMap> = (data: MessageEventMap[
 const callbacks: { [K in keyof MessageEventMap]?: Array<CallbackFunction<K>>; } = {};
 
 // Subscribe function
-export function subscribeToMessage<K extends keyof MessageEventMap>(msgEventType: K, callback: CallbackFunction<K>) : void {
+export function subscribeToMessage<K extends keyof MessageEventMap>(msgEventType: K, callback: CallbackFunction<K>): void {
   if (!callbacks[msgEventType]) {
     callbacks[msgEventType] = [];
   }
@@ -24,7 +24,7 @@ export function subscribeToMessage<K extends keyof MessageEventMap>(msgEventType
 }
 
 // Unsubscribe function
-export function unsubscribeToMessage<K extends keyof MessageEventMap>(msgEventType: K, callback: CallbackFunction<K>) : void {
+export function unsubscribeToMessage<K extends keyof MessageEventMap>(msgEventType: K, callback: CallbackFunction<K>): void {
   if (callbacks[msgEventType]) {
     // Find the index of the callback and remove it in place
     const index = callbacks[msgEventType].indexOf(callback);
@@ -35,7 +35,7 @@ export function unsubscribeToMessage<K extends keyof MessageEventMap>(msgEventTy
 }
 
 // Notify function
-function notifySubscribers<K extends keyof MessageEventMap>(msgEventType: K, data: MessageEventMap[K]) : void {
+function notifySubscribers<K extends keyof MessageEventMap>(msgEventType: K, data: MessageEventMap[K]): void {
   if (callbacks[msgEventType]) {
     callbacks[msgEventType]!.forEach((callback) => callback(data));
   }
@@ -48,7 +48,7 @@ function notifySubscribers<K extends keyof MessageEventMap>(msgEventType: K, dat
 // subscribe("chat", (data: GameMessageData) => {}); // should not work (wrong prototype)
 // subscribe("chat", (data: ChatMessageData) => {}); // should work
 
-export function sendMessage<K extends keyof MessageEventMap>(msgEventType: K, data: MessageEventMap[K]) : void {
+export function sendMessage<K extends keyof MessageEventMap>(msgEventType: K, data: MessageEventMap[K]): void {
   if (!socket || socket.readyState !== WebSocket.OPEN) {
     return;
   }
@@ -60,7 +60,13 @@ export function sendMessage<K extends keyof MessageEventMap>(msgEventType: K, da
 }
 
 // Connect the WebSocket to the server
-function connectToServer() : void {
+export function connectToServer(): void {
+  const token: string | null = localStorage.getItem("auth_token");
+  if (!token) {
+    console.error("no JWT token available");
+    return; // Cannot connect to the server without a JWT token
+  }
+
   if (socket && socket.readyState !== WebSocket.CLOSED && socket.readyState !== WebSocket.CONNECTING) {
     return; // Avoid reconnecting if the WebSocket is already active
   }
@@ -70,8 +76,9 @@ function connectToServer() : void {
     const wsProtocol: string = window.location.protocol === "https:" ? "wss://" : "ws://"; // Use 'wss' for secure, 'ws' for non-secure
     const wsHost: string = window.location.host; // Get the domain and port (e.g., "example.com:443" or "localhost:8080")
     const wsPath: string = "/api/"; // The WebSocket endpoint path on the server
+    const wsParams: string = `?token=${token}`; // The WebSocket parameters for the connection to the server
 
-    const wsUrl: string = `${wsProtocol}${wsHost}${wsPath}`;
+    const wsUrl: string = `${wsProtocol}${wsHost}${wsPath}${wsParams}`;
 
     socket = new WebSocket(wsUrl);
 
@@ -96,6 +103,8 @@ function connectToServer() : void {
           notifySubscribers("game", data.data);
         } else if (isChatMessage(data)) {
           notifySubscribers("chat", data.data);
+        } else if (isErrorMessage(data)) {
+          console.error("[WebSocket] Received error:", data.msg);
         } else {
           console.warn("[WebSocket] Unrecognized data type:", data);
         }
@@ -121,7 +130,7 @@ function connectToServer() : void {
   }
 }
 
-function reconnect() : void {
+function reconnect(): void {
   console.log("[WebSocket] reconnecting in 5s ...");
   if (reconnectInterval !== null) {
     return; // Prevent multiple reconnect loops from running

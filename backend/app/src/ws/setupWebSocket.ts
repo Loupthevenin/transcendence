@@ -1,10 +1,16 @@
-import WebSocket, { WebSocketServer } from 'ws';
-import { v4 as uuidv4 } from 'uuid';
-import { Player } from '../shared/game/gameElements';
+import WebSocket, { WebSocketServer } from "ws";
+import { IncomingMessage } from "http";
+import jwt from "jsonwebtoken";
+import { v4 as uuidv4 } from "uuid";
+import { Player } from "../shared/game/gameElements";
 import { Room } from "../shared/game/room";
 import { scoreToWin } from "../shared/game/constants";
 import { SkinChangeMessage, isSkinChangeMessage, isPaddlePositionMessage, isMatchmakingMessage } from "../shared/game/gameMessageTypes";
-import { GameMessageData, isGameMessage } from "../shared/messageType"
+import { ErrorMessage, GameMessageData, isGameMessage } from "../shared/messageType"
+import { JWT_SECRET } from "../config";
+import { UserPayload } from "../types/UserPayload";
+import { User } from "../types/authTypes";
+import db from "../db/db";
 
 const players: Map<string, Player> = new Map();
 const rooms: Map<string, Room> = new Map();
@@ -30,17 +36,63 @@ function addPlayerToRoom(player: Player): Room {
   return newRoom;
 }
 
+function extractUrlParams(request: IncomingMessage): { [key: string]: string } {
+  const fullUrl: string = `${request.headers.origin}${request.url}`;
+  const parsedUrl: URL = new URL(fullUrl);
+
+  const params: { [key: string]: string } = {};
+  for (const [key, value] of parsedUrl.searchParams.entries()) {
+    params[key] = value;
+  }
+
+  return params;
+};
+
 // WebSocket setup
 export function setupWebSocket(): WebSocketServer {
   const wss: WebSocketServer = new WebSocket.Server({ noServer: true });
 
   // WebSocket connection
-  wss.on("connection", (ws: WebSocket) => {
+  wss.on("connection", (ws: WebSocket, request: IncomingMessage) => {
+    let isAuthentificated: boolean = false;
+    const params: { [key: string]: string; } = extractUrlParams(request);
+
+    let playerUsername: string = uuidv4();
+
+    const token: string = params.token;
+    if (token) {
+      try {
+        const decoded: UserPayload = jwt.verify(token, JWT_SECRET) as UserPayload;
+        if (decoded && decoded.email && typeof decoded.email === "string") {
+          console.log(`User connected: ${decoded.email}`);
+
+          const user: User = db
+            .prepare("SELECT * FROM users WHERE email = ?")
+            .get(decoded.email) as User;
+
+          if (user) {
+            isAuthentificated = true;
+            // TODO: get data about user
+            playerUsername = user.name;
+          }
+        }
+      } catch (error) {
+      }
+    }
+
+    // If there is no token or the token is invalid, refuse the connection
+    if (!isAuthentificated) {
+      const errorMsg: ErrorMessage = { type: "error", msg: "Token is missing or invalid" };
+      ws.send(JSON.stringify(errorMsg));
+      ws.close(); // Close the connection after sending the error message
+      return;
+    }
+
     const playerId: string = uuidv4();
 
     const player: Player = {
       id: playerId,
-      username: `Player-${playerId.substring(0, 8)}`,
+      username: playerUsername,
       socket: ws,
       room: null,
       paddleSkinId: ""
@@ -50,7 +102,7 @@ export function setupWebSocket(): WebSocketServer {
     console.log(`New player connected: ${player.username} (${playerId})`);
 
     ws.on("message", (message: string) => {
-      //console.log('Received data:', JSON.parse(message));
+      //console.log("Received data:", JSON.parse(message));
 
       try {
         const msgData: any = JSON.parse(message);
@@ -103,7 +155,7 @@ export function setupWebSocket(): WebSocketServer {
         }
       }
       catch (error) {
-        console.error('An Error occured:', error);
+        console.error("An Error occured:", error);
       }
     });
 
