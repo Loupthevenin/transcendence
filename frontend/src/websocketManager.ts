@@ -1,3 +1,4 @@
+
 import ERROR_TYPE, { ERROR_MSG } from "@shared/errorType";
 import { isReconnectionMessage } from "@shared/game/gameMessageTypes";
 import { isErrorMessage, ChatMessageData, isChatMessage, GameMessageData, isGameMessage, TournamentMessageData, isTournamentMessage } from "@shared/messageType"
@@ -116,58 +117,78 @@ export function connectToServer(): void {
       }
     };
 
-    // Handle incoming messages
     socket.onmessage = (event: MessageEvent) => {
-      //console.log("Received:", JSON.parse(event.data));
       try {
-        const data: any = JSON.parse(event.data);
-
-        if (isGameMessage(data)) {
-          if (isReconnectionMessage(data.data)) {
-            console.log("[WebSocket] Reconnection to game in progress...");
-            if (location.pathname !== "/") {
-              // Go to root if not already there
-              navigateTo("/");
-            }
-            OnlineGame(false);
-            handleGameReconnection(data.data);
-          }
-          notifySubscribers("game", data.data);
-        } else if (isChatMessage(data)) {
-          notifySubscribers("chat", data.data);
-        } else if (isTournamentMessage(data)) {
-          // Handle the received 
-          if (isLaunchMatchMessage(data.data)) {
-            console.log("[WebSocket] Received tournament match launch, preparing game ...");
-            if (location.pathname !== "/") {
-              // Go to root if not already there
-              navigateTo("/");
-            }
-            OnlineGame(false);
-            handleTournamentGameLaunch();
-          }
-          notifySubscribers("tournament", data.data);
-        } else if (isErrorMessage(data)) {
-          if (data.errorType) {
-            console.error(`[WebSocket] Received an error (${data.errorType}):`, data.msg);
-            if (data.errorType === ERROR_TYPE.CONNECTION_REFUSED) {
-              if (data.msg == ERROR_MSG.TOKEN_MISSING_OR_INVALID) {
-                localStorage.removeItem("auth_token");
+        const parsed: { type: string; data: any; [key: string]: any } = JSON.parse(event.data);
+    
+        switch (parsed.type) {
+          case "game":
+            if (isGameMessage(parsed)) {
+              if (isReconnectionMessage(parsed.data)) {
+                console.log("[WebSocket] Reconnection to game in progress...");
+                if (location.pathname !== "/") {
+                  navigateTo("/");// Go to root if not already there
+                }
+                OnlineGame(false);
+                handleGameReconnection(parsed.data);
               }
-              autoReconnectEnabled = false;
+              notifySubscribers("game", parsed.data as GameMessageData);
+            } else {
+              console.warn("[WebSocket] Invalid game message", parsed.data);
             }
-          } else {
-            console.error("[WebSocket] Received an error:", data.msg);
-          }
-        } else {
-          console.warn("[WebSocket] Unrecognized data type:", data);
+            break;
+    
+          case "chat":
+            if (isChatMessage(parsed)) {
+              notifySubscribers("chat", parsed.data);
+            } else {
+              console.warn("[WebSocket] Invalid chat message", parsed.data);
+            }
+            break;
+    
+          case "tournament":
+            if (isTournamentMessage(parsed)) {
+              // Handle the received 
+              if (isLaunchMatchMessage(parsed.data)) {
+                console.log("[WebSocket] Received tournament match launch, preparing game ...");
+                if (location.pathname !== "/") {
+                  navigateTo("/");// Go to root if not already there
+                }
+                OnlineGame(false);
+                handleTournamentGameLaunch();
+              }
+              notifySubscribers("tournament", parsed.data as TournamentMessageData);
+            } else {
+              console.warn("[WebSocket] Invalid tournament message", parsed.data);
+            }
+            break;
+    
+          case "error":
+            if (isErrorMessage(parsed)) {
+              if (parsed.errorType === ERROR_TYPE.CONNECTION_REFUSED) {
+                if (parsed.msg === ERROR_MSG.TOKEN_MISSING_OR_INVALID) {
+                  localStorage.removeItem("auth_token");
+                  console.error("[WebSocket] Invalid token: auth_token removed", parsed.msg);
+                }
+                console.error("[WebSocket] Refused:", parsed.msg);
+                autoReconnectEnabled = false;
+              } else {
+                console.error("[WebSocket] Error:", parsed.msg);
+              }
+            } else {
+              console.error("[WebSocket] Malformed error message:", parsed);
+            }
+            break;
+    
+          default:
+            console.warn("[WebSocket] Unknown message type:", parsed.type);
         }
-      }
-      catch (error: any) {
-        console.error("[WebSocket] An Error occured:", error);
+      } catch (error: any) {
+        console.error("[WebSocket] An error occurred while parsing message:", error);
       }
     };
-
+    
+    
     // Handle close
     socket.onclose = () => {
       socket = null;
@@ -208,3 +229,10 @@ function reconnect(): void {
 }
 
 connectToServer();
+
+
+
+
+
+
+

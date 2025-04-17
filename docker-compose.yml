@@ -31,6 +31,8 @@ services:
       - ./backend/app:/var/app
       - ./frontend:/var/www/html
       - ./blockchain/artifacts/:/var/app/artifacts
+    ports:
+      - "3000:3000"
     networks:
       - transcendance
     env_file:

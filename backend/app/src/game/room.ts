@@ -46,6 +46,10 @@ export function createNewRoom(type: RoomType): Room {
 
 export function addPlayerToMatchmaking(player: Player): void {
   // Check for an available room of type Matchmaking
+  if (player.room) {
+    console.warn(`[addPlayerToMatchmaking] ${player.username} est déjà dans une room (${player.room.getId()})`);
+    return;
+  }
   for (const [, room] of rooms) {
     if (room.getType() === RoomType.Matchmaking && room.isJoinable()) {
       if (room.addPlayer(player)) {
@@ -681,3 +685,5 @@ export class Room {
     rooms.delete(this.id);
   }
 }
+
+export { rooms };

@@ -7,15 +7,14 @@ import { ProfileView } from "./views/profile";
 import { Generate404Page } from "./views/404";
 import { TournamentView, TournamentProgressView } from "./views/tournaments";
 import { ReplayView } from "./views/replay";
-
 import { initSideBarNavigation, isSidebarOpen, toggleSidebar } from "./controllers/navbar";
 import { handleGoogleCallback } from "./controllers/google";
 import { listenerButtonGameMode } from "./controllers/gameMode";
 import { createGameCanvas, initGameEnvironment, BackToMenu, LeaveOnlineGameIfNeeded } from "./game/game";
-import {
-  createSkinSelectorCanvas,
-  initSkinSelector,
-} from "./game/skinSelector";
+import { createSkinSelectorCanvas, initSkinSelector} from "./game/skinSelector";
+import { ChatView} from "./views/chat";
+import { initOnlineGameSession } from "./controllers/InviteGame";
+
 
 type RouteHandler = () => HTMLElement;
 type Route = {
@@ -75,6 +74,23 @@ const routes: Record<string, Route> = {
       const mod = await import("./controllers/replay");
       initSideBarNavigation();
       mod.setupReplay(root);
+    },
+  },
+  "/chat": {
+    view: () => MainLayout(ChatView()),
+    setup: async (root: HTMLElement) => {
+      const mod = await import("./controllers/chat");
+      initSideBarNavigation();
+      mod.setupChat(root);
+    },
+  },
+  "/game": {
+    view: () => MainLayout(createGameCanvas()),
+    setup: async (root: HTMLElement) => {
+      const opponentUuid = localStorage.getItem("opponentUuid");
+      if (opponentUuid) {
+        initOnlineGameSession(opponentUuid);
+      }
     },
   },
   "/callback": {
