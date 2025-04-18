@@ -3,8 +3,7 @@ import { IncomingMessage } from "http";
 import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 import { Player } from "../game/player";
-import { Room } from "../game/room";
-import { scoreToWin } from "../shared/game/constants";
+import { addPlayerToRoom } from "../game/room";
 import { SkinChangeMessage, isSkinChangeMessage, isPaddlePositionMessage, isMatchmakingMessage } from "../shared/game/gameMessageTypes";
 import { ErrorMessage, GameMessageData, isGameMessage } from "../shared/messageType";
 import ERROR_TYPE from "../shared/errorType";
@@ -15,29 +14,6 @@ import db from "../db/db";
 
 // email : Player
 const players: Map<string, Player> = new Map();
-
-const rooms: Map<string, Room> = new Map();
-let roomCounter: number = 1;
-
-function addPlayerToRoom(player: Player): Room {
-  // Check for an available room
-  for (const [, room] of rooms) {
-      if (!room.isFull() && !room.gameLaunched && !room.gameEnded) {
-          if (room.addPlayer(player)) {
-              return room;
-          }
-      }
-  }
-
-  // If no available room, create a new room
-  const newRoomId: string = `room-${roomCounter++}`;
-  const newRoom: Room = new Room(newRoomId);
-  newRoom.addPlayer(player);
-
-  rooms.set(newRoomId, newRoom);
-
-  return newRoom;
-}
 
 // Extract the params from the request
 function extractUrlParams(request: IncomingMessage): { [key: string]: string } {
@@ -133,18 +109,7 @@ export function setupWebSocket(): WebSocketServer {
 
         if (isMatchmakingMessage(data)) {
           console.log(`[Matchmaking] : ${player.username} (${playerEmail})`);
-          const room: Room = addPlayerToRoom(player);
-
-          // Start the game if room is full
-          if (room.isFull()) {
-            room.startGame().then(() => {
-              console.log(`Game ended in room '${room.id}' with winner ${room.gameData.p1Score >= scoreToWin ? 1 : 2}`);
-            }).catch((error) => {
-              console.error(`Error starting game in room '${room.id}':`, error);
-            }).finally(() => {
-              rooms.delete(room.id);
-            });
-          }
+          addPlayerToRoom(player);
         }
         else if (isSkinChangeMessage(data)) {
           if (player.room) {
