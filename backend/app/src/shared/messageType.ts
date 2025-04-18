@@ -1,8 +1,11 @@
+import ERROR_TYPE from "./errorType";
 import * as GameMessages from "./game/gameMessageTypes";
+import * as ChatMessages from "./chat/chatMessageTypes";
 
 export type ErrorMessage = {
   readonly type: "error";
   msg: string;
+  errorType?: ERROR_TYPE;
 };
 
 export function isErrorMessage(data: any): data is ErrorMessage {
@@ -13,7 +16,7 @@ export function isErrorMessage(data: any): data is ErrorMessage {
   );
 }
 
-export type GameMessageData = 
+export type GameMessageData =
   | GameMessages.SkinChangeMessage
   | GameMessages.PaddlePositionMessage
   | GameMessages.GameDataMessage
@@ -35,11 +38,9 @@ export function isGameMessage(data: any): data is GameMessage {
   );
 }
 
-import * as ChatMessages from "./chat/chatMessageTypes";
-
 export type ChatMessageData =
-	| ChatMessages.NewMsgReceivedMessage
-	| ChatMessages.NewMsgSendMessage;
+  | ChatMessages.NewMsgReceivedMessage
+  | ChatMessages.NewMsgSendMessage;
 
 export type ChatMessage = {
   readonly type: "chat";

@@ -19,7 +19,7 @@ export function isVector2(data: any): data is BABYLON.Vector2 {
   );
 }
 
-export interface GameData {
+export type GameData = {
   ball: Ball;
   paddle1Position: BABYLON.Vector2;
   paddle2Position: BABYLON.Vector2;

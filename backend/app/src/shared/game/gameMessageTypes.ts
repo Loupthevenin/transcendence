@@ -15,7 +15,7 @@ export function isSkinChangeMessage(data: any): data is SkinChangeMessage {
   );
 }
 
-export interface PaddlePositionMessage {
+export type PaddlePositionMessage = {
   readonly type: "paddlePosition";
   position: BABYLON.Vector2; // The new position of the paddle
 }
@@ -28,7 +28,7 @@ export function isPaddlePositionMessage(data: any): data is PaddlePositionMessag
   );
 }
 
-export interface GameDataMessage {
+export type GameDataMessage = {
   readonly type: "gameData";
   data: GameData; // The game data
 }
@@ -42,7 +42,7 @@ export function isGameDataMessage(data: any): data is GameDataMessage {
   );
 }
 
-export interface GameStartedMessage {
+export type GameStartedMessage = {
   readonly type: "gameStarted";
   id: 1 | 2; // The player's index in the room to know which paddle to control
 }
