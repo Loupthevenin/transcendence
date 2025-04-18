@@ -1,4 +1,4 @@
-import { BABYLON, GAME_CONSTANT, GameData, newGameData } from "@shared/game/gameElements";
+import { BABYLON, GAME_CONSTANT, GameData, newGameData, disableSpecularOnMeshes } from "@shared/game/gameElements";
 import { updateBallPosition, resetBall } from "@shared/game/ball";
 import { SkinChangeMessage, isSkinChangeMessage, PaddlePositionMessage, isGameStartedMessage, isGameDataMessage, isGameResultMessage, isDisconnectionMessage, MatchmakingMessage } from "@shared/game/gameMessageTypes";
 import { showSkinSelector, hideSkinSelector, getSelectedSkinId } from "./skinSelector";
@@ -435,6 +435,18 @@ export function initGameEnvironment(): void {
   // Create an hemispheric light
   light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
   light.intensity = 1.0;
+
+  // Load the environment scene
+  BABYLON.ImportMeshAsync("/api/models/scene.glb", scene, { pluginExtension: ".glb" }).then((result: BABYLON.ISceneLoaderAsyncResult) => {
+    disableSpecularOnMeshes(result.meshes);
+
+    const sceneMesh: BABYLON.Mesh = result.meshes[0] as BABYLON.Mesh; // Get the root of the model
+    sceneMesh.position = new BABYLON.Vector3(0, 0, 0);
+    sceneMesh.rotation = new BABYLON.Vector3(0, 0, 0);
+
+  }).catch((error) => {
+    console.error("An error occurred while loading model 'scene.glb' :", error);
+  });
 
   // Create the ground
   ground = BABYLON.MeshBuilder.CreateGround(

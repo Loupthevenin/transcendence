@@ -3,7 +3,7 @@ import { BABYLON, GAME_CONSTANT, disableSpecularOnMeshes } from "@shared/game/ga
 // Create and return the default paddle skin
 export function createDefaultSkin(scene: BABYLON.Scene): BABYLON.Mesh {
   const paddleMesh: BABYLON.Mesh = BABYLON.MeshBuilder.CreateBox(
-    "defualtPaddle",
+    "defaultPaddle",
     {
       width: GAME_CONSTANT.paddleWidth,
       height: GAME_CONSTANT.paddleDepth,
@@ -15,7 +15,7 @@ export function createDefaultSkin(scene: BABYLON.Scene): BABYLON.Mesh {
   paddleMesh.rotation = new BABYLON.Vector3(0, 0, 0);
 
   const paddleMaterial: BABYLON.StandardMaterial = new BABYLON.StandardMaterial(
-    "defualtPaddleMaterial",
+    "defaultPaddleMaterial",
     scene,
   );
   paddleMaterial.diffuseColor = BABYLON.Color3.Gray();
@@ -42,7 +42,7 @@ export async function loadPadddleSkin(skinId: string, scene: BABYLON.Scene): Pro
       resolve(paddleMesh);
 
     } catch (error) {
-      console.error("Error occurred while loading models:", error);
+      console.error("An error occurred while loading models:", error);
       resolve(createDefaultSkin(scene));
     }
   })
