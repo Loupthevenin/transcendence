@@ -56,7 +56,7 @@ app.register(require("./routes/signup"), { prefix: "/api/signup" });
 app.register(require("./routes/verifyEmail"), { prefix: "/api/verify-email" });
 app.register(require("./routes/verify2fa"), { prefix: "/api/verify-2fa" });
 app.register(require("./routes/setup2fa"), { prefix: "/api/setup-2fa" });
-app.register(require("./routes/users"), { prefix: "/api/users" });
+app.register(require("./routes/db"), { prefix: "/api/db/" });
 app.register(require("./routes/models"), { prefix: "/api/models" });
 app.register(require("./routes/textures"), { prefix: "/api/textures" });
 app.register(require("./routes/profile"), { prefix: "/api/profile" });
