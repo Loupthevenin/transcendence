@@ -76,9 +76,14 @@ export function SignupView(): HTMLElement {
         </button>
       </form>
 
-      <div class="mt-6">
-        <div id="google-auth">Se connecter avec Google</div>
-      </div>
+<div class="mt-6">
+  <div id="google-auth" class="google-btn">
+    <div class="google-icon-wrapper">
+      <img class="google-icon" src="https://developers.google.com/identity/images/g-logo.png" alt="Google logo">
+    </div>
+    <p class="btn-text"><b>Se connecter avec Google</b></p>
+  </div>
+</div>
 
       <div class="mt-4 text-center">
         <p class="text-sm text-purple-300">
