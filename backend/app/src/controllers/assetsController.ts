@@ -9,6 +9,11 @@ import { ASSETS_PATH } from "../config";
 const assetsModelsPath: string = path.join(ASSETS_PATH, "models");
 
 export async function getModel(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+  if (!request.params || !(request.params as any).model) {
+    reply.status(400).send({ error: "Empty request" });
+    return;
+  }
+
   try {
     const { model } = request.params as { model: string };
 
@@ -17,6 +22,13 @@ export async function getModel(request: FastifyRequest, reply: FastifyReply): Pr
 
     // Check if the file exists
     if (!fs.existsSync(modelFilePath)) {
+      reply.status(404).send({ error: "Model file not found" });
+      return;
+    }
+
+    // Check if the path is a directory
+    const stats = fs.statSync(modelFilePath); // Get file stats
+    if (stats.isDirectory()) {
       reply.status(404).send({ error: "Model file not found" });
       return;
     }
@@ -44,6 +56,11 @@ const paddleModelReferences: Record<string, PaddleModelInfo> = JSON.parse(
 );
 
 export async function getPaddleModel(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+  if (!request.params || !(request.params as any).model_id) {
+    reply.status(400).send({ error: "Empty request" });
+    return;
+  }
+
   try {
     let { model_id } = request.params as { model_id: string };
 
@@ -94,6 +111,11 @@ export async function getPaddleModelIdsList(request: FastifyRequest, reply: Fast
 const assetsTexturesPath: string = path.join(ASSETS_PATH, "textures");
 
 export async function getTexture(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+  if (!request.params || !(request.params as any).texture) {
+    reply.status(400).send({ error: "Empty request" });
+    return;
+  }
+
   try {
     const { texture } = request.params as { texture: string };
 
@@ -102,6 +124,13 @@ export async function getTexture(request: FastifyRequest, reply: FastifyReply): 
 
     // Check if the file exists
     if (!fs.existsSync(textureFilePath)) {
+      reply.status(404).send({ error: "Texture file not found" });
+      return;
+    }
+
+    // Check if the path is a directory
+    const stats = fs.statSync(textureFilePath); // Get file stats
+    if (stats.isDirectory()) {
       reply.status(404).send({ error: "Texture file not found" });
       return;
     }
