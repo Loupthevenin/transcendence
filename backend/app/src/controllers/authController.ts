@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import db from "../db/db";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
+import { v4 as uuidv4 } from "uuid";
 import {
   JWT_SECRET,
   DOMAIN_NAME,
@@ -30,9 +31,9 @@ export async function registerUser(
     const hashedPassword: string = await bcrypt.hash(password, 10);
 
     const insert = db.prepare(
-      "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
+      "INSERT INTO users (uuid, name, email, password) VALUES (?, ?, ?, ?)",
     );
-    insert.run(name, email, hashedPassword);
+    insert.run(uuidv4(), name, email, hashedPassword);
 
     const emailToken: string = jwt.sign({ email: email }, JWT_SECRET, {
       expiresIn: "1d",
@@ -139,7 +140,7 @@ export async function loginUser(
     }
 
     const token: string = jwt.sign(
-      { name: user.name, email: user.email },
+      { uuid: user.uuid, name: user.name, email: user.email },
       JWT_SECRET,
       {
         expiresIn: "2h",
