@@ -3,10 +3,11 @@ import crypto from "crypto";
 import path from "path";
 import db from "../db/db";
 import fs from "fs";
-
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
+
 import { User } from "../types/authTypes";
+import { MatchHistoryRow, MatchHistory } from "../types/profileTypes";
 import {
   DOMAIN_NAME,
   PORT,
@@ -39,6 +40,39 @@ export async function getData(request: FastifyRequest, reply: FastifyReply) {
     email: user.email,
     avatarUrl: user.avatar_url,
   });
+}
+
+export async function getHistory(request: FastifyRequest, reply: FastifyReply) {
+  const uuid: string | undefined = request.user?.uuid;
+  if (!uuid) {
+    return reply.status(401).send({ message: "Invalid Token" });
+  }
+
+  const matches = db
+    .prepare(
+      `
+	SELECT * FROM match_history WHERE player_a_uuid = ? OR player_b_uuid = ? ORDER BY date DESC
+`,
+    )
+    .all(uuid, uuid) as MatchHistoryRow[];
+
+  const history: MatchHistory[] = matches.map((match) => {
+    const isPlayerA = match.player_a_uuid === uuid;
+
+    const myScore = isPlayerA ? match.score_a : match.score_b;
+    const opponentScore = isPlayerA ? match.score_b : match.score_a;
+    const opponentName = isPlayerA ? match.player_b_name : match.player_a_name;
+
+    return {
+      date: match.date,
+      mode: match.mode,
+      opponent: opponentName,
+      result: myScore > opponentScore ? "win" : "lose",
+      score: `${myScore} - ${opponentScore}`,
+    };
+  });
+
+  return reply.send(history);
 }
 
 export async function setName(
