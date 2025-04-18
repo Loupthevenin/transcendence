@@ -37,6 +37,12 @@ export async function handleGoogleCallback(
     .prepare("SELECT * FROM users WHERE email = ?")
     .get(googleUser.email) as User;
 
+  if (user && user.password !== null) {
+    return reply.redirect(
+      `https://${DOMAIN_NAME}:${PORT}/callback#error=Ce%20compte%20utilise%20un%20mot%20de%20passe`,
+    );
+  }
+
   if (!user) {
     db.prepare(
       "INSERT INTO users (uuid, name, email, password, google_id, is_verified, avatar_url) VALUES (?, ?, ?, NULL, ?, 1, ?)",

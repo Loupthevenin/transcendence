@@ -21,8 +21,12 @@ export function handleGoogleCallback() {
 
   const token = params.get("token");
   const require2FA = params.get("require2FA");
+  const error = params.get("error");
 
-  if (token) {
+  if (error) {
+    alert(decodeURIComponent(error));
+    navigateTo("/auth/login");
+  } else if (token) {
     if (require2FA === "1") {
       localStorage.setItem("temp_token", token);
       navigateTo("/auth/verify-2fa");
