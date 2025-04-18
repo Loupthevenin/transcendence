@@ -70,7 +70,7 @@ export async function verify2FA(
   }
 
   const finalToken: string = jwt.sign(
-    { email: user.email, name: user.name },
+    { uuid: user.uuid, email: user.email, name: user.name },
     JWT_SECRET,
     { expiresIn: "7d" },
   );

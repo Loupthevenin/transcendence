@@ -1,6 +1,7 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import jwt from "jsonwebtoken";
 import db from "../db/db";
+import { v4 as uuidv4 } from "uuid";
 
 import { User } from "../types/authTypes";
 import { DOMAIN_NAME, PORT, JWT_SECRET } from "../config";
@@ -38,8 +39,14 @@ export async function handleGoogleCallback(
 
   if (!user) {
     db.prepare(
-      "INSERT INTO users (name, email, password, google_id, is_verified, avatar_url) VALUES (?, ?, NULL, ?, 1, ?)",
-    ).run(googleUser.name, googleUser.email, googleUser.id, googleUser.picture);
+      "INSERT INTO users (uuid, name, email, password, google_id, is_verified, avatar_url) VALUES (?, ?, ?, NULL, ?, 1, ?)",
+    ).run(
+      uuidv4(),
+      googleUser.name,
+      googleUser.email,
+      googleUser.id,
+      googleUser.picture,
+    );
   } else {
     db.prepare("UPDATE users SET name = ?, avatar_url = ? WHERE email = ?").run(
       googleUser.name,
@@ -54,7 +61,7 @@ export async function handleGoogleCallback(
   const require2FA: boolean = updateUser.require2FA;
 
   const token: string = jwt.sign(
-    { name: googleUser.name, email: googleUser.email },
+    { uuid: updateUser.uuid, name: updateUser.name, email: updateUser.email },
     JWT_SECRET,
     { expiresIn: "7d" },
   );
