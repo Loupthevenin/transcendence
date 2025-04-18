@@ -4,32 +4,35 @@ import { GameDataMessage, GameStartedMessage, GameResultMessage, DisconnectionMe
 import { GameMessage, GameMessageData } from "../shared/messageType";
 import { Player } from "./player";
 
+export enum RoomType {
+  Matchmaking,
+  Tournament
+}
+
 const rooms: Map<string, Room> = new Map();
 let roomCounter: number = 1;
 
-export function addPlayerToRoom(player: Player): Room {
-  // Check for an available room
+export function addPlayerToMatchmaking(player: Player): void {
+  // Check for an available room of type Matchmaking
   for (const [, room] of rooms) {
-    if (!room.isFull() && !room.gameLaunched && !room.gameEnded) {
+    if (room.type === RoomType.Matchmaking && !room.isFull() && !room.gameLaunched && !room.gameEnded) {
       if (room.addPlayer(player)) {
-        checkRoomFull(room);
-        return room;
+        startGameIfRoomFull(room);
+        return;
       }
     }
   }
 
   // If no available room, create a new room
   const newRoomId: string = `room-${roomCounter++}`;
-  const newRoom: Room = new Room(newRoomId);
+  const newRoom: Room = new Room(newRoomId, RoomType.Matchmaking);
   newRoom.addPlayer(player);
 
   rooms.set(newRoomId, newRoom);
-
-  return newRoom;
 }
 
 // Start the game if room is full
-function checkRoomFull(room: Room) {
+function startGameIfRoomFull(room: Room) {
   if (room.isFull()) {
     room.startGame().then(() => {
       console.log(`Game started: ${room.id} with p1 '${room.player1?.username}' and p2 '${room.player2?.username}'`);
@@ -42,14 +45,16 @@ function checkRoomFull(room: Room) {
 
 export class Room {
   id: string;
+  type: RoomType;
   player1: Player | null;
   player2: Player | null;
   gameData: GameData;
   gameLaunched: boolean;
   gameEnded: boolean;
 
-  constructor(id: string) {
+  constructor(id: string, type: RoomType) {
     this.id = id;
+    this.type = type;
     this.player1 = null; // Start with no players
     this.player2 = null;
     this.gameData = newGameData();
