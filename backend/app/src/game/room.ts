@@ -1,12 +1,22 @@
-import { GAME_CONSTANT, GameData, newGameData } from "../shared/game/gameElements";
+import {
+  GAME_CONSTANT,
+  GameData,
+  newGameData,
+} from "../shared/game/gameElements";
 import { resetBall, updateBallPosition } from "../shared/game/ball";
-import { GameDataMessage, GameStartedMessage, GameResultMessage, DisconnectionMessage } from "../shared/game/gameMessageTypes";
+import {
+  GameDataMessage,
+  GameStartedMessage,
+  GameResultMessage,
+  DisconnectionMessage,
+} from "../shared/game/gameMessageTypes";
 import { GameMessage, GameMessageData } from "../shared/messageType";
 import { Player } from "./player";
+import db from "../db/db";
 
 export enum RoomType {
   Matchmaking,
-  Tournament
+  Tournament,
 }
 
 const rooms: Map<string, Room> = new Map();
@@ -15,7 +25,12 @@ let roomCounter: number = 1;
 export function addPlayerToMatchmaking(player: Player): void {
   // Check for an available room of type Matchmaking
   for (const [, room] of rooms) {
-    if (room.type === RoomType.Matchmaking && !room.isFull() && !room.gameLaunched && !room.gameEnded) {
+    if (
+      room.type === RoomType.Matchmaking &&
+      !room.isFull() &&
+      !room.gameLaunched &&
+      !room.gameEnded
+    ) {
       if (room.addPlayer(player)) {
         startGameIfRoomFull(room);
         return;
@@ -34,12 +49,17 @@ export function addPlayerToMatchmaking(player: Player): void {
 // Start the game if room is full
 function startGameIfRoomFull(room: Room) {
   if (room.isFull()) {
-    room.startGame().then(() => {
-      console.log(`Game started: ${room.id} with p1 '${room.player1?.username}' and p2 '${room.player2?.username}'`);
-    }).catch((error) => {
-      console.error(`Error starting game in room '${room.id}':`, error);
-      rooms.delete(room.id);
-    });
+    room
+      .startGame()
+      .then(() => {
+        console.log(
+          `Game started: ${room.id} with p1 '${room.player1?.username}' and p2 '${room.player2?.username}'`,
+        );
+      })
+      .catch((error) => {
+        console.error(`Error starting game in room '${room.id}':`, error);
+        rooms.delete(room.id);
+      });
   }
 }
 
@@ -161,9 +181,9 @@ export class Room {
     return new Promise((resolve, reject) => {
       if (this.gameEnded) {
         reject("Game already ended");
-      }else if (this.gameLaunched) {
+      } else if (this.gameLaunched) {
         reject("Game already started");
-      }else if (!this.isFull()) {
+      } else if (!this.isFull()) {
         reject("Room is not full");
       }
 
@@ -176,14 +196,14 @@ export class Room {
       if (this.isPlayerAlive(this.player1)) {
         const gameStartedMessage: GameMessage = {
           type: "game",
-          data: { type: "gameStarted", id: 1 } as GameStartedMessage
+          data: { type: "gameStarted", id: 1 } as GameStartedMessage,
         };
         this.player1?.socket.send(JSON.stringify(gameStartedMessage));
       }
       if (this.isPlayerAlive(this.player2)) {
         const gameStartedMessage: GameMessage = {
           type: "game",
-          data: { type: "gameStarted", id: 2 } as GameStartedMessage
+          data: { type: "gameStarted", id: 2 } as GameStartedMessage,
         };
         this.player2?.socket.send(JSON.stringify(gameStartedMessage));
       }
@@ -202,10 +222,15 @@ export class Room {
 
     roomMainLoopInterval = setInterval(() => {
       // Stop the game if one player disconnects
-      if (!this.isPlayerAlive(this.player1) || !this.isPlayerAlive(this.player2)) {
+      if (
+        !this.isPlayerAlive(this.player1) ||
+        !this.isPlayerAlive(this.player2)
+      ) {
         clearInterval(roomMainLoopInterval);
         this.gameEnded = true;
-        const disconnectionMessage: DisconnectionMessage = { type: "disconnection" };
+        const disconnectionMessage: DisconnectionMessage = {
+          type: "disconnection",
+        };
         this.sendMessage(disconnectionMessage);
         this.clear();
         console.log(`[Room ${this.id}] : A player disconnected midgame`);
@@ -217,12 +242,17 @@ export class Room {
 
       // Use the computed deltaTime to update the ball position
       updateBallPosition(this.gameData, deltaTime);
-      const gameDataMessage: GameDataMessage = { type: "gameData", data: this.gameData };
+      const gameDataMessage: GameDataMessage = {
+        type: "gameData",
+        data: this.gameData,
+      };
       this.sendMessage(gameDataMessage);
 
       // Stop the game if one player reaches enought points
-      if (this.gameData.p1Score >= GAME_CONSTANT.scoreToWin
-        || this.gameData.p2Score >= GAME_CONSTANT.scoreToWin) {
+      if (
+        this.gameData.p1Score >= GAME_CONSTANT.scoreToWin ||
+        this.gameData.p2Score >= GAME_CONSTANT.scoreToWin
+      ) {
         clearInterval(roomMainLoopInterval);
         this.#endGame();
       }
@@ -241,7 +271,7 @@ export class Room {
 
     const gameResultMessage: GameResultMessage = {
       type: "gameResult",
-      winner: this.gameData.p1Score >= GAME_CONSTANT.scoreToWin ? 1 : 2
+      winner: this.gameData.p1Score >= GAME_CONSTANT.scoreToWin ? 1 : 2,
     };
     this.sendMessage(gameResultMessage);
 
@@ -252,10 +282,22 @@ export class Room {
    * Save the game result and data in the database
    */
   #saveGameSessionData(): void {
-    if (!this.gameEnded) {
+    if (!this.gameEnded || !this.player1 || !this.player2) {
       throw new Error("Cannot save the data of a game not ended");
     }
-    // TODO: store the game data in the DB
+    db.prepare(
+      `INSERT INTO match_history (
+		player_a_name, player_b_name, player_a_uuid, player_b_uuid, score_a, score_b, mode
+		) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    ).run(
+      this.player1.username,
+      this.player2.username,
+      this.player1.id,
+      this.player2.id,
+      this.gameData.p1Score,
+      this.gameData.p2Score,
+      this.type,
+    );
   }
 
   /**
@@ -265,14 +307,22 @@ export class Room {
   sendMessage(data: GameMessageData, excludedPlayerId?: string[]): void {
     const message: GameMessage = {
       type: "game",
-      data: data
+      data: data,
     };
     const msg: string = JSON.stringify(message);
 
-    if (this.player1 && this.isPlayerAlive(this.player1) && !(excludedPlayerId?.includes(this.player1.id))) {
+    if (
+      this.player1 &&
+      this.isPlayerAlive(this.player1) &&
+      !excludedPlayerId?.includes(this.player1.id)
+    ) {
       this.player1?.socket.send(msg);
     }
-    if (this.player2 && this.isPlayerAlive(this.player2) && !(excludedPlayerId?.includes(this.player2.id))) {
+    if (
+      this.player2 &&
+      this.isPlayerAlive(this.player2) &&
+      !excludedPlayerId?.includes(this.player2.id)
+    ) {
       this.player2?.socket.send(msg);
     }
   }
@@ -285,3 +335,4 @@ export class Room {
     return player?.socket.readyState === WebSocket.OPEN;
   }
 }
+
