@@ -1,9 +1,6 @@
 import ERROR_TYPE from "@shared/errorType";
 import { isErrorMessage, ChatMessageData, isChatMessage, GameMessageData, isGameMessage } from "@shared/messageType"
 
-let socket: WebSocket | null = null;
-let reconnectInterval: NodeJS.Timeout | null = null;
-
 // Define a mapping between event types and their corresponding data types
 type MessageEventMap = {
   'game': GameMessageData;
@@ -49,15 +46,22 @@ function notifySubscribers<K extends keyof MessageEventMap>(msgEventType: K, dat
 // subscribe("chat", (data: GameMessageData) => {}); // should not work (wrong prototype)
 // subscribe("chat", (data: ChatMessageData) => {}); // should work
 
+let socket: WebSocket | null = null;
+let reconnectInterval: NodeJS.Timeout | null = null;
+
+export function isConnected(): boolean {
+  return socket !== null && socket.readyState === WebSocket.OPEN;
+}
+
 export function sendMessage<K extends keyof MessageEventMap>(msgEventType: K, data: MessageEventMap[K]): void {
-  if (!socket || socket.readyState !== WebSocket.OPEN) {
+  if (!isConnected()) {
     return;
   }
   const message: { type: K; data: MessageEventMap[K]; } = {
     type: msgEventType,
     data: data
   };
-  socket.send(JSON.stringify(message));
+  socket!.send(JSON.stringify(message));
 }
 
 // Connect the WebSocket to the server
@@ -68,7 +72,7 @@ export function connectToServer(): void {
     return; // Cannot connect to the server without a JWT token
   }
 
-  if (socket && socket.readyState !== WebSocket.CLOSED && socket.readyState !== WebSocket.CONNECTING) {
+  if (isConnected() || (socket && socket.readyState === WebSocket.CONNECTING)) {
     return; // Avoid reconnecting if the WebSocket is already active
   }
 
