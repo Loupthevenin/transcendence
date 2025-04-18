@@ -116,6 +116,11 @@ export async function loginUser(
         .send({ message: "Email ou mot de passe incorrect" });
     }
 
+    if (!user.password) {
+      return reply.code(400).send({
+        message: "Ce compte utilise Google. Connecte-toi avec Google.",
+      });
+    }
     const isPasswordValid: boolean = await bcrypt.compare(
       password,
       user.password,
