@@ -3,7 +3,7 @@ import { IncomingMessage } from "http";
 import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 import { Player } from "../game/player";
-import { addPlayerToRoom } from "../game/room";
+import { addPlayerToMatchmaking } from "../game/room";
 import { SkinChangeMessage, isSkinChangeMessage, isPaddlePositionMessage, isMatchmakingMessage } from "../shared/game/gameMessageTypes";
 import { ErrorMessage, GameMessageData, isGameMessage } from "../shared/messageType";
 import ERROR_TYPE from "../shared/errorType";
@@ -109,7 +109,7 @@ export function setupWebSocket(): WebSocketServer {
 
         if (isMatchmakingMessage(data)) {
           console.log(`[Matchmaking] : ${player.username} (${playerEmail})`);
-          addPlayerToRoom(player);
+          addPlayerToMatchmaking(player);
         }
         else if (isSkinChangeMessage(data)) {
           if (player.room) {
