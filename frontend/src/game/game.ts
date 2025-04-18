@@ -3,7 +3,7 @@ import { updateBallPosition, resetBall } from "@shared/game/ball";
 import { SkinChangeMessage, isSkinChangeMessage, PaddlePositionMessage, isGameStartedMessage, isGameDataMessage, isGameResultMessage, isDisconnectionMessage, MatchmakingMessage } from "@shared/game/gameMessageTypes";
 import { showSkinSelector, hideSkinSelector, getSelectedSkinId } from "./skinSelector";
 import { createDefaultSkin, loadPadddleSkin } from "./paddleSkinLoader";
-import { subscribeToMessage, unsubscribeToMessage, sendMessage } from "../websocketManager";
+import { subscribeToMessage, unsubscribeToMessage, isConnected, sendMessage } from "../websocketManager";
 import { GameMessageData } from "@shared/messageType"
 
 enum GameMode {
@@ -657,6 +657,10 @@ export function LocalGame(): void {
 
 // Launch the game in online mode against a remote player
 export function OnlineGame(): void {
+  if (!isConnected()) {
+    console.error("You are not connected to the server, cannot start an online game");
+    return;
+  }
   currentGameMode = GameMode.ONLINE;
   updateCameraRotation(camera, currentGameMode);
 
