@@ -32,7 +32,7 @@ app.register(fastifyMultipart, {
 // Serve Avatars for front
 app.register(fastifyStatic, {
   root: path.join(__dirname, "..", "assets", "avatars"),
-  prefix: "/uploads/",
+  prefix: "/api/uploads/",
 });
 
 // Google OAUTH
