@@ -4,6 +4,42 @@ import { GameDataMessage, GameStartedMessage, GameResultMessage, DisconnectionMe
 import { GameMessage, GameMessageData } from "../shared/messageType";
 import { Player } from "./player";
 
+const rooms: Map<string, Room> = new Map();
+let roomCounter: number = 1;
+
+export function addPlayerToRoom(player: Player): Room {
+  // Check for an available room
+  for (const [, room] of rooms) {
+    if (!room.isFull() && !room.gameLaunched && !room.gameEnded) {
+      if (room.addPlayer(player)) {
+        checkRoomFull(room);
+        return room;
+      }
+    }
+  }
+
+  // If no available room, create a new room
+  const newRoomId: string = `room-${roomCounter++}`;
+  const newRoom: Room = new Room(newRoomId);
+  newRoom.addPlayer(player);
+
+  rooms.set(newRoomId, newRoom);
+
+  return newRoom;
+}
+
+// Start the game if room is full
+function checkRoomFull(room: Room) {
+  if (room.isFull()) {
+    room.startGame().then(() => {
+      console.log(`Game started: ${room.id} with p1 '${room.player1?.username}' and p2 '${room.player2?.username}'`);
+    }).catch((error) => {
+      console.error(`Error starting game in room '${room.id}':`, error);
+      rooms.delete(room.id);
+    });
+  }
+}
+
 export class Room {
   id: string;
   player1: Player | null;
@@ -26,7 +62,7 @@ export class Room {
    * @param player The player to join the room.
    * @returns True if the player was added successfully, otherwise false.
    */
-  addPlayer(player: Player) : boolean {
+  addPlayer(player: Player): boolean {
     if (this.gameLaunched || this.gameEnded) {
       return false; // Cannot add players after the game has started or ended
     }
@@ -34,7 +70,7 @@ export class Room {
       return false; // Player already in the room
     }
 
-    if (!this.player1){
+    if (!this.player1) {
       this.player1 = player;
       player.room = this;
       return true;
@@ -51,7 +87,7 @@ export class Room {
    * Remove a player from the room.
    * @param player The player to remove.
    */
-  removePlayer(player: Player) : void {
+  removePlayer(player: Player): void {
     player.room = null; // Clear the player's room reference
     if (this.player1?.id === player.id) {
       this.player1 = null;
@@ -63,7 +99,7 @@ export class Room {
   /**
    * Removes all players from the room.
    */
-  clear() : void {
+  clear(): void {
     if (this.player1) {
       this.player1.room = null;
       this.player1 = null;
@@ -77,7 +113,7 @@ export class Room {
    * Checks if the room is empty.
    * @returns True if both player1 and player2 are null, otherwise false.
    */
-  isEmpty() : boolean {
+  isEmpty(): boolean {
     return !this.player1 && !this.player2;
   }
 
@@ -85,8 +121,8 @@ export class Room {
    * Checks if the room is full.
    * @returns True if both player1 and player2 are present, otherwise false.
    */
-  isFull() : boolean {
-      return !!this.player1 && !!this.player2;
+  isFull(): boolean {
+    return !!this.player1 && !!this.player2;
   }
 
   /**
@@ -94,7 +130,7 @@ export class Room {
    * @param player The player to check.
    * @returns True if the room contains the player, otherwise false.
    */
-  containsPlayer(player: Player) : boolean {
+  containsPlayer(player: Player): boolean {
     return this.player1?.id === player.id || this.player2?.id === player.id;
   }
 
@@ -103,7 +139,7 @@ export class Room {
    * @param player The player to check.
    * @returns the index of player (p1 = 1, p2 = 2) or -1 if player isn't in this room.
    */
-  indexOfPlayer(player: Player) : -1 | 1 | 2 {
+  indexOfPlayer(player: Player): -1 | 1 | 2 {
     if (this.player1?.id === player.id) {
       return 1;
     } else if (this.player2?.id === player.id) {
@@ -113,86 +149,90 @@ export class Room {
   }
 
   /**
-   * Starts the game by initializing game data and running mainLoop.
-   * @returns A promise that resolves when the game ends.
+   * Start the game by initializing game data.
+   * @returns A promise that resolves when the game successfully started.
    */
-  startGame() : Promise<void> {
-    if (this.gameEnded) {
-      throw new Error("Game already ended");
-    }
-    if (this.gameLaunched) {
-      throw new Error("Game already started");
-    }
-    if (!this.isFull()) {
-      throw new Error("Room is not full");
-    }
+  startGame(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (this.gameEnded) {
+        reject("Game already ended");
+      }else if (this.gameLaunched) {
+        reject("Game already started");
+      }else if (!this.isFull()) {
+        reject("Room is not full");
+      }
 
-    console.log(`Game started: ${this.id} with p1 '${this.player1?.username}' and p2 '${this.player2?.username}'`);
-    this.gameLaunched = true;
+      this.gameLaunched = true;
 
-    // Initialize game data
-    this.gameData = newGameData();
-    resetBall(this.gameData.ball);
+      // Initialize game data
+      this.gameData = newGameData();
+      resetBall(this.gameData.ball);
 
-    if (this.isPlayerAlive(this.player1)) {
-      const gameStartedMessage: GameMessage = {
-        type: "game",
-        data: { type: "gameStarted", id: 1 } as GameStartedMessage
-      };
-      this.player1?.socket.send(JSON.stringify(gameStartedMessage));
-    }
-    if (this.isPlayerAlive(this.player2)) {
-      const gameStartedMessage: GameMessage = {
-        type: "game",
-        data: { type: "gameStarted", id: 2 } as GameStartedMessage
-      };
-      this.player2?.socket.send(JSON.stringify(gameStartedMessage));
-    }
+      if (this.isPlayerAlive(this.player1)) {
+        const gameStartedMessage: GameMessage = {
+          type: "game",
+          data: { type: "gameStarted", id: 1 } as GameStartedMessage
+        };
+        this.player1?.socket.send(JSON.stringify(gameStartedMessage));
+      }
+      if (this.isPlayerAlive(this.player2)) {
+        const gameStartedMessage: GameMessage = {
+          type: "game",
+          data: { type: "gameStarted", id: 2 } as GameStartedMessage
+        };
+        this.player2?.socket.send(JSON.stringify(gameStartedMessage));
+      }
 
+      this.#startMainLoop();
+      resolve();
+    });
+  }
+
+  /**
+   * Start the game main loop.
+   */
+  #startMainLoop(): void {
     let previousTime: number = Date.now();
     let roomMainLoopInterval: NodeJS.Timeout;
 
-    return new Promise((resolve, reject) => {
-      roomMainLoopInterval = setInterval(() => {
-        // Stop the game if one player disconnects
-        if (!this.isPlayerAlive(this.player1) || !this.isPlayerAlive(this.player2)) {
-          clearInterval(roomMainLoopInterval);
-          this.gameEnded = true;
-          const disconnectionMessage: DisconnectionMessage = { type: "disconnection" };
-          this.sendMessage(disconnectionMessage);
-          this.clear();
-          reject("A player disconnected midgame");
-        }
+    roomMainLoopInterval = setInterval(() => {
+      // Stop the game if one player disconnects
+      if (!this.isPlayerAlive(this.player1) || !this.isPlayerAlive(this.player2)) {
+        clearInterval(roomMainLoopInterval);
+        this.gameEnded = true;
+        const disconnectionMessage: DisconnectionMessage = { type: "disconnection" };
+        this.sendMessage(disconnectionMessage);
+        this.clear();
+        console.log(`[Room ${this.id}] : A player disconnected midgame`);
+      }
 
-        const currentTime: number = Date.now(); // Get the current time
-        const deltaTime: number = (currentTime - previousTime) / 1000; // Time elapsed in seconds
-        previousTime = currentTime; // Update the previous time
+      const currentTime: number = Date.now(); // Get the current time
+      const deltaTime: number = (currentTime - previousTime) / 1000; // Time elapsed in seconds
+      previousTime = currentTime; // Update the previous time
 
-        // Use the computed deltaTime to update the ball position
-        updateBallPosition(this.gameData, deltaTime);
-        const gameDataMessage: GameDataMessage = { type: "gameData", data: this.gameData };
-        this.sendMessage(gameDataMessage);
+      // Use the computed deltaTime to update the ball position
+      updateBallPosition(this.gameData, deltaTime);
+      const gameDataMessage: GameDataMessage = { type: "gameData", data: this.gameData };
+      this.sendMessage(gameDataMessage);
 
-        // Stop the game if one player reaches enought points
-        if (this.gameData.p1Score >= GAME_CONSTANT.scoreToWin
-          || this.gameData.p2Score >= GAME_CONSTANT.scoreToWin) {
-          clearInterval(roomMainLoopInterval);
-          this.endGame();
-          resolve();
-        }
-      }, 16.67); // 60 TPS
-    });
+      // Stop the game if one player reaches enought points
+      if (this.gameData.p1Score >= GAME_CONSTANT.scoreToWin
+        || this.gameData.p2Score >= GAME_CONSTANT.scoreToWin) {
+        clearInterval(roomMainLoopInterval);
+        this.#endGame();
+      }
+    }, 16.67); // 60 TPS
   }
 
   /**
    * End the game
    */
-  endGame() : void {
+  #endGame(): void {
     if (!this.gameLaunched) {
-      return;
+      throw new Error("Cannot end a game not launched");
     }
     this.gameEnded = true;
-    // TODO: store the result of the game in the DB
+    this.#saveGameSessionData();
 
     const gameResultMessage: GameResultMessage = {
       type: "gameResult",
@@ -204,10 +244,20 @@ export class Room {
   }
 
   /**
+   * Save the game result and data in the database
+   */
+  #saveGameSessionData(): void {
+    if (!this.gameEnded) {
+      throw new Error("Cannot save the data of a game not ended");
+    }
+    // TODO: store the game data in the DB
+  }
+
+  /**
    * Sends a message to both players.
    * @param message The message to send.
    */
-  sendMessage(data: GameMessageData, excludedPlayerId?: string[]) : void {
+  sendMessage(data: GameMessageData, excludedPlayerId?: string[]): void {
     const message: GameMessage = {
       type: "game",
       data: data
@@ -226,7 +276,7 @@ export class Room {
    * Checks if player is still alive (connected).
    * @returns True if player exist and is still connected, otherwise false.
    */
-  isPlayerAlive(player: Player | null | undefined) : boolean {
+  isPlayerAlive(player: Player | null | undefined): boolean {
     return player?.socket.readyState === WebSocket.OPEN;
   }
 }
