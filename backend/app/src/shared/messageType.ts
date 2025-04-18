@@ -39,8 +39,9 @@ export function isGameMessage(data: any): data is GameMessage {
 }
 
 export type ChatMessageData =
-  | ChatMessages.NewMsgReceivedMessage
-  | ChatMessages.NewMsgSendMessage;
+	| ChatMessages.NewMsgReceivedMessage
+	| ChatMessages.NewMsgSendMessage
+  | ChatMessages.RegisterUserMessage;
 
 export type ChatMessage = {
   readonly type: "chat";

@@ -36,6 +36,7 @@ async function loadUserProfile() {
     }
     const data = rawData as UserProfile;
 
+
     const avatarElement = document.getElementById(
       "user-avatar",
     ) as HTMLImageElement;

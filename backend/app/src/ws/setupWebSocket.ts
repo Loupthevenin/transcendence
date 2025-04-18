@@ -102,6 +102,34 @@ export function setupWebSocket(): WebSocketServer {
       try {
         const msgData: any = JSON.parse(message);
 
+        if (isChatMessage(msgData)) {
+          const chatMsg: ChatMessageData = msgData.data;
+
+          if (chatMsg.type === "registerUsername") {
+            console.log(`[WS] Registering user ${chatMsg.name}`);
+            userSockets.set(chatMsg.email, ws);
+            return;
+          }
+
+          if (chatMsg.type === "newMessageSend") {
+            const { senderEmail, senderName, receiverEmail, msg } = chatMsg;
+            userSockets.set(senderEmail, ws); // associer le socket
+          
+            const recipientSocket = userSockets.get(receiverEmail);
+            if (recipientSocket && recipientSocket.readyState === WebSocket.OPEN) {
+              recipientSocket.send(JSON.stringify({
+                type: "chat",
+                data: {
+                  type: "newMessageReceived",
+                  msg,
+                  sender: senderName, // affichage lisible
+                }
+              }));
+            } else {
+              console.warn(`Receiver ${receiverEmail} is not connected`);
+            }
+          }
+        }
         if (!isGameMessage(msgData)) {
           return;
         }
