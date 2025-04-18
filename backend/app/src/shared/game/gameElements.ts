@@ -1,9 +1,7 @@
-import { WebSocket } from 'ws';
 import * as BABYLON from "babylonjs";
 import { GLTFFileLoader } from "babylonjs-loaders";
 import * as GAME_CONSTANT from "./constants";
 import { Ball, isBall } from "./ball";
-import { Room } from "./room";
 
 export { BABYLON, GAME_CONSTANT };
 
@@ -50,16 +48,8 @@ export function newGameData(): GameData {
       paddle1Position: new BABYLON.Vector2(0, GAME_CONSTANT.paddleDefaultZPosition),
       paddle2Position: new BABYLON.Vector2(0, -GAME_CONSTANT.paddleDefaultZPosition),
       p1Score: 0,
-      p2Score: 0,
+      p2Score: 0
     };
-}
-
-export interface Player {
-  id: string;
-  username: string;
-  socket: WebSocket;
-  room: Room | null;
-  paddleSkinId: string;
 }
 
 // For each model, disable specular from the original material if exist

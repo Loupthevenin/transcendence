@@ -1,7 +1,8 @@
-import { GAME_CONSTANT, GameData, newGameData, Player } from "./gameElements";
-import { resetBall, updateBallPosition } from "./ball";
-import { GameDataMessage, GameStartedMessage, GameResultMessage, DisconnectionMessage } from "./gameMessageTypes";
-import { GameMessage, GameMessageData } from "../messageType"
+import { GAME_CONSTANT, GameData, newGameData } from "../shared/game/gameElements";
+import { resetBall, updateBallPosition } from "../shared/game/ball";
+import { GameDataMessage, GameStartedMessage, GameResultMessage, DisconnectionMessage } from "../shared/game/gameMessageTypes";
+import { GameMessage, GameMessageData } from "../shared/messageType";
+import { Player } from "./player";
 
 export class Room {
   id: string;

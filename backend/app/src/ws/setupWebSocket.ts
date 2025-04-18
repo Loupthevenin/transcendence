@@ -2,17 +2,19 @@ import WebSocket, { WebSocketServer } from "ws";
 import { IncomingMessage } from "http";
 import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
-import { Player } from "../shared/game/gameElements";
-import { Room } from "../shared/game/room";
+import { Player } from "../game/player";
+import { Room } from "../game/room";
 import { scoreToWin } from "../shared/game/constants";
 import { SkinChangeMessage, isSkinChangeMessage, isPaddlePositionMessage, isMatchmakingMessage } from "../shared/game/gameMessageTypes";
-import { ErrorMessage, GameMessageData, isGameMessage } from "../shared/messageType"
+import { ErrorMessage, GameMessageData, isGameMessage } from "../shared/messageType";
 import { JWT_SECRET } from "../config";
 import { UserPayload } from "../types/UserPayload";
 import { User } from "../types/authTypes";
 import db from "../db/db";
 
+// email : Player
 const players: Map<string, Player> = new Map();
+
 const rooms: Map<string, Room> = new Map();
 let roomCounter: number = 1;
 
@@ -36,6 +38,7 @@ function addPlayerToRoom(player: Player): Room {
   return newRoom;
 }
 
+// Extract the params from the request
 function extractUrlParams(request: IncomingMessage): { [key: string]: string } {
   const fullUrl: string = `${request.headers.origin}${request.url}`;
   const parsedUrl: URL = new URL(fullUrl);
@@ -48,6 +51,11 @@ function extractUrlParams(request: IncomingMessage): { [key: string]: string } {
   return params;
 };
 
+export function getPlayersByEmail(email: string): Player | null {
+  const target: Player | undefined = players.get(email);
+  return target ? target : null;
+}
+
 // WebSocket setup
 export function setupWebSocket(): WebSocketServer {
   const wss: WebSocketServer = new WebSocket.Server({ noServer: true });
@@ -57,7 +65,8 @@ export function setupWebSocket(): WebSocketServer {
     let isAuthentificated: boolean = false;
     const params: { [key: string]: string; } = extractUrlParams(request);
 
-    let playerUsername: string = uuidv4();
+    let playerEmail: string = "";
+    let playerUsername: string = "";
 
     const token: string = params.token;
     if (token) {
@@ -72,7 +81,7 @@ export function setupWebSocket(): WebSocketServer {
 
           if (user) {
             isAuthentificated = true;
-            // TODO: get data about user
+            playerEmail = user.email;
             playerUsername = user.name;
           }
         }
@@ -81,8 +90,16 @@ export function setupWebSocket(): WebSocketServer {
     }
 
     // If there is no token or the token is invalid, refuse the connection
-    if (!isAuthentificated) {
+    if (!isAuthentificated || !playerEmail || !playerUsername) {
       const errorMsg: ErrorMessage = { type: "error", msg: "Token is missing or invalid" };
+      ws.send(JSON.stringify(errorMsg));
+      ws.close(); // Close the connection after sending the error message
+      return;
+    }
+
+    // Check if there player is already connected with this account
+    if (getPlayersByEmail(playerEmail) !== null) {
+      const errorMsg: ErrorMessage = { type: "error", msg: "Already connected" };
       ws.send(JSON.stringify(errorMsg));
       ws.close(); // Close the connection after sending the error message
       return;
@@ -92,14 +109,15 @@ export function setupWebSocket(): WebSocketServer {
 
     const player: Player = {
       id: playerId,
+      email: playerEmail,
       username: playerUsername,
       socket: ws,
       room: null,
       paddleSkinId: ""
     };
 
-    players.set(playerId, player);
-    console.log(`New player connected: ${player.username} (${playerId})`);
+    players.set(playerEmail, player);
+    console.log(`New player connected: ${player.username} (${playerEmail})`);
 
     ws.on("message", (message: string) => {
       //console.log("Received data:", JSON.parse(message));
@@ -113,7 +131,7 @@ export function setupWebSocket(): WebSocketServer {
         const data: GameMessageData = msgData.data;
 
         if (isMatchmakingMessage(data)) {
-          console.log(`[Matchmaking] : ${player.username} (${playerId})`);
+          console.log(`[Matchmaking] : ${player.username} (${playerEmail})`);
           const room: Room = addPlayerToRoom(player);
 
           // Start the game if room is full
@@ -168,8 +186,8 @@ export function setupWebSocket(): WebSocketServer {
     ws.on("close", () => {
       clearInterval(pingInterval); // Clear ping interval on disconnect
       player.room?.removePlayer(player);
-      players.delete(playerId);
-      console.log(`Player disconnected: ${player.username} (${playerId})`);
+      players.delete(playerEmail);
+      console.log(`Player disconnected: ${player.username} (${playerEmail})`);
     });
   });
 
