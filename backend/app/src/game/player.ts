@@ -1,7 +1,7 @@
 import { WebSocket } from "ws";
 import { Room } from "./room";
 
-export interface Player {
+export type Player = {
   id: string;
   email: string;
   username: string;

@@ -7,6 +7,7 @@ import { Room } from "../game/room";
 import { scoreToWin } from "../shared/game/constants";
 import { SkinChangeMessage, isSkinChangeMessage, isPaddlePositionMessage, isMatchmakingMessage } from "../shared/game/gameMessageTypes";
 import { ErrorMessage, GameMessageData, isGameMessage } from "../shared/messageType";
+import ERROR_TYPE from "../shared/errorType";
 import { JWT_SECRET } from "../config";
 import { UserPayload } from "../types/UserPayload";
 import { User } from "../types/authTypes";
@@ -91,7 +92,7 @@ export function setupWebSocket(): WebSocketServer {
 
     // If there is no token or the token is invalid, refuse the connection
     if (!isAuthentificated || !playerEmail || !playerUsername) {
-      const errorMsg: ErrorMessage = { type: "error", msg: "Token is missing or invalid" };
+      const errorMsg: ErrorMessage = { type: "error", msg: "Token is missing or invalid", errorType: ERROR_TYPE.CONNECTION_REFUSED };
       ws.send(JSON.stringify(errorMsg));
       ws.close(); // Close the connection after sending the error message
       return;
@@ -99,7 +100,7 @@ export function setupWebSocket(): WebSocketServer {
 
     // Check if there player is already connected with this account
     if (getPlayersByEmail(playerEmail) !== null) {
-      const errorMsg: ErrorMessage = { type: "error", msg: "Already connected" };
+      const errorMsg: ErrorMessage = { type: "error", msg: "Already connected", errorType: ERROR_TYPE.CONNECTION_REFUSED };
       ws.send(JSON.stringify(errorMsg));
       ws.close(); // Close the connection after sending the error message
       return;

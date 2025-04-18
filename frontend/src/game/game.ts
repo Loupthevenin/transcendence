@@ -162,7 +162,7 @@ window.addEventListener("keyup", (event: KeyboardEvent) => {
   }
 });
 
-interface PaddleDraggingData {
+type PaddleDraggingData = {
   pointerId: number,
   targetX: number | null
 }

@@ -1,3 +1,4 @@
+import ERROR_TYPE from "@shared/errorType";
 import { isErrorMessage, ChatMessageData, isChatMessage, GameMessageData, isGameMessage } from "@shared/messageType"
 
 let socket: WebSocket | null = null;
@@ -82,6 +83,8 @@ export function connectToServer(): void {
 
     socket = new WebSocket(wsUrl);
 
+    let autoReconnectEnabled: boolean = true;
+
     // Handle connection open
     socket.onopen = () => {
       console.log("[WebSocket] Connected to ", wsUrl);
@@ -104,7 +107,14 @@ export function connectToServer(): void {
         } else if (isChatMessage(data)) {
           notifySubscribers("chat", data.data);
         } else if (isErrorMessage(data)) {
-          console.error("[WebSocket] Received error:", data.msg);
+          if (data.errorType) {
+            console.error(`[WebSocket] Received an error (${data.errorType}):`, data.msg);
+            if (data.errorType === ERROR_TYPE.CONNECTION_REFUSED) {
+              autoReconnectEnabled = false;
+            }
+          } else {
+            console.error("[WebSocket] Received an error:", data.msg);
+          }
         } else {
           console.warn("[WebSocket] Unrecognized data type:", data);
         }
@@ -118,7 +128,9 @@ export function connectToServer(): void {
     socket.onclose = () => {
       socket = null;
       console.log("[WebSocket] connection closed.");
-      reconnect();
+      if (autoReconnectEnabled) {
+        reconnect();
+      }
     };
 
     // Handle errors
