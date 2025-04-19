@@ -2,11 +2,11 @@ export function ButtonMode(mode: string): HTMLElement {
   const container: HTMLElement = document.createElement("div");
   container.className = `
     inline-block 
-    px-4 py-2 
+    px-6 py-4 
     rounded-full 
     bg-indigo-700 
     text-white 
-    text-sm 
+    text-lg 
     font-semibold 
     shadow 
     hover:bg-indigo-800 
