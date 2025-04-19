@@ -4,15 +4,13 @@ import { MainLayout } from "./layout/layout";
 import { ModeLayout } from "./layout/mode";
 import { TwoFAView } from "./views/2fa";
 import { ProfileView } from "./views/profile";
+import { Generate404Page } from "./views/404";
 
 import { initSideBarNavigation } from "./controllers/navbar";
 import { handleGoogleCallback } from "./controllers/google";
 import { listenerButtonGameMode } from "./controllers/gameMode";
 import { createGameCanvas, initGameEnvironment, BackToMenu } from "./game/game";
-import {
-  createSkinSelectorCanvas,
-  initSkinSelector,
-} from "./game/skinSelector";
+import { createSkinSelectorCanvas, initSkinSelector } from "./game/skinSelector";
 
 type RouteHandler = () => HTMLElement;
 type Route = {
@@ -88,9 +86,7 @@ export async function renderRoute() {
   document.body.innerHTML = "";
 
   if (!route) {
-    const el: HTMLDivElement = document.createElement("div");
-    el.textContent = "404 - Page non trouvée";
-    document.body.appendChild(el);
+    Generate404Page();
     return;
   }
 
