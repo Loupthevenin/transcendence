@@ -1,5 +1,5 @@
 import { BABYLON, GAME_CONSTANT, GameData, newGameData, disableSpecularOnMeshes } from "@shared/game/gameElements";
-import { updateBallPosition, resetBall } from "@shared/game/ball";
+import { Ball, updateBallPosition, resetBall } from "@shared/game/ball";
 import { SkinChangeMessage, isSkinChangeMessage, PaddlePositionMessage, isGameStartedMessage, isGameDataMessage, isGameResultMessage, isDisconnectionMessage, MatchmakingMessage } from "@shared/game/gameMessageTypes";
 import { showSkinSelector, hideSkinSelector, getSelectedSkinId } from "./skinSelector";
 import { createDefaultSkin, loadPadddleSkin } from "./paddleSkinLoader";
@@ -167,8 +167,8 @@ type PaddleDraggingData = {
   targetX: number | null
 }
 
-let paddle1DraggingData: PaddleDraggingData;
-let paddle2DraggingData: PaddleDraggingData;
+const paddle1DraggingData: PaddleDraggingData = { pointerId: -1, targetX: null };
+const paddle2DraggingData: PaddleDraggingData = { pointerId: -1, targetX: null };
 
 // Function to handle player input and update paddle position
 function handlePlayerInput(paddlePosition: BABYLON.Vector2, paddleMesh: BABYLON.Mesh, keyInput: number, draggingData: PaddleDraggingData, deltaTime: number): void {
@@ -261,6 +261,14 @@ function handlePlayerDragInput(pointerInfo: BABYLON.PointerInfo): void {
   }
 }
 
+// Function to handle AI input
+function handleAIInput(paddlePosition: BABYLON.Vector2, paddleMesh: BABYLON.Mesh, ball: Ball, deltaTime: number): void {
+  // TODO: do some weird math to predict the ball position instead of the current one
+  const draggingData: PaddleDraggingData = { pointerId: -2, targetX: ball.position.x };
+  handlePlayerInput(paddlePosition, paddleMesh, 0, draggingData, deltaTime);
+}
+
+// Function to set the skin id of the given paddle
 function setPaddleSkin(paddle: 1 | 2, skinId: string): void {
   if (paddle === 1) {
     // Create a temporary mesh will waiting for server response if there is no mesh
@@ -539,9 +547,6 @@ export function initGameEnvironment(): void {
 
   updateScoreText();
 
-  // Setup up dragging data
-  paddle1DraggingData = { pointerId: -1, targetX: null };
-  paddle2DraggingData = { pointerId: -1, targetX: null };
   scene.onPointerObservable.add(handlePlayerDragInput);
 
   //let lastUpdateTime: number = performance.now(); // For client prediction timing
@@ -552,6 +557,20 @@ export function initGameEnvironment(): void {
 
     switch (currentGameMode) {
       case GameMode.MENU:
+        handleAIInput(
+          gameData.paddle1Position,
+          paddle1Mesh,
+          gameData.ball,
+          deltaTime
+        );
+
+        handleAIInput(
+          gameData.paddle2Position,
+          paddle2Mesh,
+          gameData.ball,
+          deltaTime
+        );
+
         camera.alpha += GAME_CONSTANT.cameraRotationSpeed * deltaTime;
         updateBallPosition(gameData, deltaTime, ballMesh);
         updateScoreText();
@@ -566,7 +585,12 @@ export function initGameEnvironment(): void {
           deltaTime
         )
 
-        // TODO: AI paddle
+        handleAIInput(
+          gameData.paddle2Position,
+          paddle2Mesh,
+          gameData.ball,
+          deltaTime
+        );
 
         updateBallPosition(gameData, deltaTime, ballMesh);
         updateScoreText();
@@ -690,10 +714,13 @@ export function OnlineGame(): void {
 //// TO DELETE //// TO DELETE //// TO DELETE //// TO DELETE ////
 ////////////////////////////////////////////////////////////////
 (window as any).BackToMenu = BackToMenu;
-(window as any).SinglePlayer = SinglePlayer;
-(window as any).LocalGame = LocalGame;
-(window as any).OnlineGame = OnlineGame;
+// (window as any).SinglePlayer = SinglePlayer;
+// (window as any).LocalGame = LocalGame;
+// (window as any).OnlineGame = OnlineGame;
 ////////////////////////////////////////////////////////////////
+
+
+//////// DEBUG ONLY
 
 let axesViewer: BABYLON.AxesViewer | null = null;
 
