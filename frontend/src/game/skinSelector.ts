@@ -261,5 +261,5 @@ export function hideSkinSelector(): void {
 }
 
 export function getSelectedSkinId(): string {
-  return currentIndex.toString();
+  return skinIds[currentIndex];
 }
