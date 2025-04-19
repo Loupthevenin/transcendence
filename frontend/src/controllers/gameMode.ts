@@ -1,10 +1,6 @@
 import { SinglePlayer, LocalGame, OnlineGame } from "../game/game";
 import { ButtonMode } from "../components/buttonMode";
-import { navigateTo } from "../router";
-
-function isAuthenticated(): boolean {
-  return !!localStorage.getItem("auth_token");
-}
+import { navigateTo, isAuthenticated } from "../router";
 
 export function listenerButtonGameMode() {
   const modes = ["singleplayer", "local", "online"];

@@ -79,6 +79,10 @@ const routes: Record<string, Route> = {
   },
 };
 
+export function isAuthenticated(): boolean {
+  return !!localStorage.getItem("auth_token");
+}
+
 export async function navigateTo(path: string) {
   history.pushState(null, "", path);
   await renderRoute();
@@ -92,6 +96,14 @@ export async function renderRoute() {
 
   if (!route) {
     Generate404Page();
+    return;
+  }
+
+  if (
+    isAuthenticated() &&
+    (path === "/auth/login" || path === "/auth/signup")
+  ) {
+    navigateTo("/");
     return;
   }
 
