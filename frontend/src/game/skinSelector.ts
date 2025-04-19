@@ -155,6 +155,7 @@ function handleKeyDown(event: KeyboardEvent): void {
 // Mouse control variables
 let isMouseDown: boolean = false;
 let lastMouseX: number = 0;
+let lastMouseY: number = 0;
 
 // Mouse controls for rotating the current model
 function handleMouseInput(pointerInfo: BABYLON.PointerInfo): void {
@@ -162,6 +163,7 @@ function handleMouseInput(pointerInfo: BABYLON.PointerInfo): void {
       case BABYLON.PointerEventTypes.POINTERDOWN:
           isMouseDown = true;
           lastMouseX = pointerInfo.event.clientX;
+          lastMouseY = pointerInfo.event.clientY;
           break;
 
       case BABYLON.PointerEventTypes.POINTERUP:
@@ -173,9 +175,14 @@ function handleMouseInput(pointerInfo: BABYLON.PointerInfo): void {
             const currentModel: BABYLON.AbstractMesh = models[currentIndex];
             if (currentModel) {
               const deltaX: number = lastMouseX - pointerInfo.event.clientX;
-              currentModel.rotation.x += deltaX * 0.01;
+              const deltaY: number = lastMouseY - pointerInfo.event.clientY;
+
+              // Adjust rotation relative to world axes
+              currentModel.rotate(BABYLON.Axis.X, deltaX * 0.01, BABYLON.Space.WORLD);
+              currentModel.rotate(BABYLON.Axis.Z, deltaY * -0.01, BABYLON.Space.WORLD);
             }
             lastMouseX = pointerInfo.event.clientX;
+            lastMouseY = pointerInfo.event.clientY;
           }
           break;
   }
@@ -191,7 +198,7 @@ export function initSkinSelector(): void {
 
   engine = new BABYLON.Engine(canvas, true);
   scene = new BABYLON.Scene(engine);
-  scene.clearColor = new BABYLON.Color4(0, 0, 0, 0); // transparent skybox
+  scene.clearColor = new BABYLON.Color4(0.05, 0.05, 0.075, 0.4); // half-transparent skybox
   // scene.clearColor = new BABYLON.Color4(0, 0, 0, 1);
 
   camera = new BABYLON.ArcRotateCamera(
