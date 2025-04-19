@@ -56,11 +56,6 @@ const paddleModelReferences: Record<string, PaddleModelInfo> = JSON.parse(
 );
 
 export async function getPaddleModel(request: FastifyRequest, reply: FastifyReply): Promise<void> {
-  if (!request.params || !(request.params as any).model_id) {
-    reply.status(400).send({ error: "Empty request" });
-    return;
-  }
-
   try {
     let { model_id } = request.params as { model_id: string };
 
