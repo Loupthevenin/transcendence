@@ -296,7 +296,7 @@ export class Room {
       this.player2.id,
       this.gameData.p1Score,
       this.gameData.p2Score,
-      this.type,
+      RoomType[this.type],
     );
   }
 
@@ -335,4 +335,3 @@ export class Room {
     return player?.socket.readyState === WebSocket.OPEN;
   }
 }
-

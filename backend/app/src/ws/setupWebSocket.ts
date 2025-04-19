@@ -1,11 +1,19 @@
 import WebSocket, { WebSocketServer } from "ws";
 import { IncomingMessage } from "http";
 import jwt from "jsonwebtoken";
-import { v4 as uuidv4 } from "uuid";
 import { Player } from "../game/player";
 import { addPlayerToMatchmaking } from "../game/room";
-import { SkinChangeMessage, isSkinChangeMessage, isPaddlePositionMessage, isMatchmakingMessage } from "../shared/game/gameMessageTypes";
-import { ErrorMessage, GameMessageData, isGameMessage } from "../shared/messageType";
+import {
+  SkinChangeMessage,
+  isSkinChangeMessage,
+  isPaddlePositionMessage,
+  isMatchmakingMessage,
+} from "../shared/game/gameMessageTypes";
+import {
+  ErrorMessage,
+  GameMessageData,
+  isGameMessage,
+} from "../shared/messageType";
 import ERROR_TYPE from "../shared/errorType";
 import { JWT_SECRET } from "../config";
 import { UserPayload } from "../types/UserPayload";
@@ -26,7 +34,7 @@ function extractUrlParams(request: IncomingMessage): { [key: string]: string } {
   }
 
   return params;
-};
+}
 
 export function getPlayersByEmail(email: string): Player | null {
   const target: Player | undefined = players.get(email);
@@ -40,15 +48,16 @@ export function setupWebSocket(): WebSocketServer {
   // WebSocket connection
   wss.on("connection", (ws: WebSocket, request: IncomingMessage) => {
     let isAuthentificated: boolean = false;
-    const params: { [key: string]: string; } = extractUrlParams(request);
+    const params: { [key: string]: string } = extractUrlParams(request);
 
     let playerEmail: string = "";
     let playerUsername: string = "";
 
     const token: string = params.token;
+    let decoded: UserPayload | null = null;
     if (token) {
       try {
-        const decoded: UserPayload = jwt.verify(token, JWT_SECRET) as UserPayload;
+        decoded = jwt.verify(token, JWT_SECRET) as UserPayload;
         if (decoded && decoded.email && typeof decoded.email === "string") {
           console.log(`User connected: ${decoded.email}`);
 
@@ -62,13 +71,16 @@ export function setupWebSocket(): WebSocketServer {
             playerUsername = user.name;
           }
         }
-      } catch (error) {
-      }
+      } catch (error) {}
     }
 
     // If there is no token or the token is invalid, refuse the connection
     if (!isAuthentificated || !playerEmail || !playerUsername) {
-      const errorMsg: ErrorMessage = { type: "error", msg: "Token is missing or invalid", errorType: ERROR_TYPE.CONNECTION_REFUSED };
+      const errorMsg: ErrorMessage = {
+        type: "error",
+        msg: "Token is missing or invalid",
+        errorType: ERROR_TYPE.CONNECTION_REFUSED,
+      };
       ws.send(JSON.stringify(errorMsg));
       ws.close(); // Close the connection after sending the error message
       return;
@@ -76,13 +88,22 @@ export function setupWebSocket(): WebSocketServer {
 
     // Check if there player is already connected with this account
     if (getPlayersByEmail(playerEmail) !== null) {
-      const errorMsg: ErrorMessage = { type: "error", msg: "Already connected", errorType: ERROR_TYPE.CONNECTION_REFUSED };
+      const errorMsg: ErrorMessage = {
+        type: "error",
+        msg: "Already connected",
+        errorType: ERROR_TYPE.CONNECTION_REFUSED,
+      };
       ws.send(JSON.stringify(errorMsg));
       ws.close(); // Close the connection after sending the error message
       return;
     }
 
-    const playerId: string = uuidv4();
+    if (!decoded) {
+      console.error("decoded is null");
+      ws.close();
+      return;
+    }
+    const playerId: string = decoded.uuid;
 
     const player: Player = {
       id: playerId,
@@ -90,7 +111,7 @@ export function setupWebSocket(): WebSocketServer {
       username: playerUsername,
       socket: ws,
       room: null,
-      paddleSkinId: ""
+      paddleSkinId: "",
     };
 
     players.set(playerEmail, player);
@@ -110,8 +131,7 @@ export function setupWebSocket(): WebSocketServer {
         if (isMatchmakingMessage(data)) {
           console.log(`[Matchmaking] : ${player.username} (${playerEmail})`);
           addPlayerToMatchmaking(player);
-        }
-        else if (isSkinChangeMessage(data)) {
+        } else if (isSkinChangeMessage(data)) {
           if (player.room) {
             // Check if the player who send the message is the owner of the paddle
             if (data.id === player.room.indexOfPlayer(player)) {
@@ -120,14 +140,13 @@ export function setupWebSocket(): WebSocketServer {
                 const skinChangeMessage: SkinChangeMessage = {
                   type: "skinId",
                   id: data.id,
-                  skinId: player.paddleSkinId
-                }
+                  skinId: player.paddleSkinId,
+                };
                 player.room.sendMessage(skinChangeMessage, [playerId]);
               }
             }
           }
-        }
-        else if (isPaddlePositionMessage(data)) {
+        } else if (isPaddlePositionMessage(data)) {
           if (player.room) {
             // Update paddle positions
             if (player.room.player1?.id === playerId) {
@@ -137,15 +156,14 @@ export function setupWebSocket(): WebSocketServer {
             }
           }
         }
-      }
-      catch (error) {
+      } catch (error) {
         console.error("An Error occured:", error);
       }
     });
 
     const pingInterval: NodeJS.Timeout = setInterval(() => {
       if (ws.readyState === WebSocket.OPEN) {
-          ws.ping();
+        ws.ping();
       }
     }, 30000);
 
