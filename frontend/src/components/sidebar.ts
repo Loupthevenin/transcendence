@@ -6,6 +6,8 @@ interface SidebarItem {
 }
 
 function getSidebarItems(): SidebarItem[] {
+  let items: SidebarItem[];
+
   if (isAuthenticated()) {
     items = [
       { label: "Accueil", route: "/" },
