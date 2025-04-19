@@ -32,6 +32,9 @@ async function loadUserProfile() {
     if (!res.ok) {
       const errorMsg = rawData?.message || "Erreur chargement profile";
       alert(errorMsg);
+      if (res.status === 401 || res.status === 403) {
+        localStorage.removeItem("auth_token");
+      }
       return;
     }
     const data = rawData as UserProfile;
@@ -229,6 +232,9 @@ async function loadHistory() {
     if (!res.ok) {
       const errorMsg = rawData?.message || "Erreur chargement historique";
       alert(errorMsg);
+      if (res.status === 401 || res.status === 403) {
+        localStorage.removeItem("auth_token");
+      }
       return;
     }
     const data = rawData as MatchHistory[];
