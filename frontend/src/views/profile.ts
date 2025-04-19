@@ -29,67 +29,27 @@ export function ProfileView(): HTMLElement {
       </div>
     </div>
 
+<!-- Win Rate -->
+<div class="bg-[#1e1b4b] p-6 rounded-xl shadow-lg text-white">
+  <h3 class="text-xl font-semibold text-indigo-300 mb-4">Statistiques</h3>
+  <div class="flex items-center justify-between">
+    <div>
+      <p class="text-sm text-purple-300 mb-1">Win Rate</p>
+      <div id="win-rate-container" class="text-2xl font-bold text-green-400"></div>
+    </div>
+    <div class="flex-shrink-0 ml-6">
+      <div id="pie-chart" class="pie-chart"></div>
+    </div>
+  </div>
+</div>
+
 <!-- Historique des matchs -->
     <div class="bg-[#1e1b4b] p-6 rounded-xl shadow-lg text-white">
       <h3 class="text-xl font-semibold text-indigo-300 mb-4">Historique des matchs</h3>
       <ul id="match-history" class="space-y-3">
         <!-- Matchs insérés dynamiquement -->
-<li class="p-4 rounded-lg bg-[#2a255c] shadow border-l-4 border-green-400">
-      <div class="flex justify-between items-center">
-        <div>
-          <p class="text-sm text-purple-300 mb-1">13/04/2025</p>
-          <p class="font-semibold">Online vs Alice</p>
-          <p class="text-sm">✅ Victoire</p>
-        </div>
-        <div class="text-xl font-bold text-green-400">11 - 8</div>
-      </div>
-    </li>
-
-    <li class="p-4 rounded-lg bg-[#2a255c] shadow border-l-4 border-red-400">
-      <div class="flex justify-between items-center">
-        <div>
-          <p class="text-sm text-purple-300 mb-1">11/04/2025</p>
-          <p class="font-semibold">Tournament vs Bob</p>
-          <p class="text-sm">❌ Défaite</p>
-        </div>
-        <div class="text-xl font-bold text-red-400">9 - 11</div>
-      </div>
-    </li>
-
-    <li class="p-4 rounded-lg bg-[#2a255c] shadow border-l-4 border-green-400">
-      <div class="flex justify-between items-center">
-        <div>
-          <p class="text-sm text-purple-300 mb-1">09/04/2025</p>
-          <p class="font-semibold">Local vs Charlie</p>
-          <p class="text-sm">✅ Victoire</p>
-        </div>
-        <div class="text-xl font-bold text-green-400">11 - 6</div>
-      </div>
-    </li>
-
-    <li class="p-4 rounded-lg bg-[#2a255c] shadow border-l-4 border-green-400">
-      <div class="flex justify-between items-center">
-        <div>
-          <p class="text-sm text-purple-300 mb-1">07/04/2025</p>
-          <p class="font-semibold">Singleplayer vs Bot</p>
-          <p class="text-sm">✅ Victoire</p>
-        </div>
-        <div class="text-xl font-bold text-green-400">11 - 4</div>
-      </div>
-    </li>
-
-    <li class="p-4 rounded-lg bg-[#2a255c] shadow border-l-4 border-red-400">
-      <div class="flex justify-between items-center">
-        <div>
-          <p class="text-sm text-purple-300 mb-1">04/04/2025</p>
-          <p class="font-semibold">Online vs Eve</p>
-          <p class="text-sm">❌ Défaite</p>
-        </div>
-        <div class="text-xl font-bold text-red-400">10 - 12</div>
-      </div>
-    </li>
-      </ul>
-    </div>
+	  </ul>
+	</div>
 
 	<!-- 2FA -->
 <div class="mt-8 bg-[#1e1b4b] p-6 rounded-xl shadow-lg">

@@ -214,6 +214,25 @@ function formatDate(dateStr: string): string {
   });
 }
 
+function updateWinRate(winRate: number) {
+  const winRateContainer: HTMLElement | null =
+    document.getElementById("win-rate-container");
+  const pieChart: HTMLElement | null = document.getElementById("pie-chart");
+
+  if (winRateContainer && pieChart) {
+    winRateContainer.textContent = `${winRate.toFixed(2)}%`;
+    if (winRate >= 50) {
+      winRateContainer.classList.remove("text-red-400");
+      winRateContainer.classList.add("text-green-400");
+    } else {
+      winRateContainer.classList.remove("text-green-400");
+      winRateContainer.classList.add("text-red-400");
+    }
+
+    pieChart.style.background = `conic-gradient(#4caf50 0% ${winRate}%, #f44336 ${winRate}% 100%)`;
+  }
+}
+
 async function loadHistory() {
   const token: string | null = localStorage.getItem("auth_token");
   if (!token) {
@@ -239,6 +258,9 @@ async function loadHistory() {
     }
     const data = rawData as MatchHistory[];
 
+    let wins: number = 0;
+    let totalMatches: number = 0;
+
     const historyList = document.getElementById("match-history");
     if (!historyList) return;
 
@@ -250,6 +272,11 @@ async function loadHistory() {
       const borderColor = isWin ? "border-green-400" : "border-red-400";
       const scoreColor = isWin ? "text-green-400" : "text-red-400";
       const resultText = isWin ? "✅ Victoire" : "❌ Défaite";
+
+      if (isWin) {
+        wins++;
+      }
+      totalMatches++;
 
       li.className = `p-4 rounded-lg bg-[#2a255c] shadow border-l-4 ${borderColor}`;
       li.innerHTML = `
@@ -264,6 +291,9 @@ async function loadHistory() {
 	`;
       historyList.appendChild(li);
     });
+
+    const winRate = totalMatches > 0 ? (wins / totalMatches) * 100 : 0;
+    updateWinRate(winRate);
   } catch (err) {
     console.error("Error history : ", err);
     alert("impossible de charger l'historique");

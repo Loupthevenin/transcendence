@@ -24,3 +24,19 @@ canvas {
   z-index: 50;
   display: block;
 }
+
+.pie-chart {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+}
+
+.pie-chart::after {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+}
