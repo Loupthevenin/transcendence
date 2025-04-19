@@ -1,6 +1,4 @@
-// function isAuthenticated(): boolean {
-//   return !!localStorage.getItem("auth_token");
-// }
+import { isAuthenticated } from "../router";
 
 interface SidebarItem {
   label: string;
@@ -8,30 +6,19 @@ interface SidebarItem {
 }
 
 function getSidebarItems(): SidebarItem[] {
-  const items: SidebarItem[] = [
-    { label: "Accueil", route: "/" },
-    { label: "Pong", route: "/pong" },
-    { label: "Chat", route: "/chat" },
-    { label: "Connexion", route: "/auth/login" },
-    { label: "Inscription", route: "/auth/signup" },
-    { label: "Profil", route: "/profile" },
-  ];
-
-  // if (isAuthenticated()) {
-  //   items = [
-  // { label: "Accueil", route: "/" },
-  //     { label: "Pong", route: "/pong" },
-  //     { label: "Chat", route: "/chat" },
-  //     { label: "Profil", route: "/profile" },
-  //   ];
-  // } else {
-  //   items = [
-  // { label: "Accueil", route: "/" },
-  //     { label: "Pong", route: "/pong" },
-  //     { label: "Connexion", route: "/auth/login" },
-  //     { label: "Inscription", route: "/auth/signup" },
-  //   ];
-  // }
+  if (isAuthenticated()) {
+    items = [
+      { label: "Accueil", route: "/" },
+      { label: "Chat", route: "/chat" },
+      { label: "Profil", route: "/profile" },
+    ];
+  } else {
+    items = [
+      { label: "Accueil", route: "/" },
+      { label: "Connexion", route: "/auth/login" },
+      { label: "Inscription", route: "/auth/signup" },
+    ];
+  }
   return items;
 }
 
