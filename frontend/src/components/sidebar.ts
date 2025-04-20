@@ -12,6 +12,7 @@ function getSidebarItems(): SidebarItem[] {
     items = [
       { label: "Accueil", route: "/" },
       { label: "Chat", route: "/chat" },
+      { label: "Tournaments", route: "/tournaments" },
       { label: "Profil", route: "/profile" },
     ];
   } else {
