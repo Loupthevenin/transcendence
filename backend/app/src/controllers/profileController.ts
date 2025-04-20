@@ -1,4 +1,5 @@
 import { FastifyRequest, FastifyReply } from "fastify";
+import { MultipartFile } from "@fastify/multipart";
 import crypto from "crypto";
 import path from "path";
 import db from "../db/db";
@@ -35,11 +36,12 @@ export async function getData(request: FastifyRequest, reply: FastifyReply) {
     return reply.status(404).send({ message: "User not found" });
   }
 
-  return reply.send({
+  const updateBody: UpdateBody = {
     name: user.name,
     email: user.email,
-    avatarUrl: user.avatar_url,
-  });
+    avatarUrl: user.avatar_url
+  };
+  return reply.send(updateBody);
 }
 
 export async function getHistory(request: FastifyRequest, reply: FastifyReply) {
@@ -48,28 +50,25 @@ export async function getHistory(request: FastifyRequest, reply: FastifyReply) {
     return reply.status(401).send({ message: "Invalid Token" });
   }
 
-  const matches = db
-    .prepare(
-      `
-	SELECT * FROM match_history WHERE player_a_uuid = ? OR player_b_uuid = ? ORDER BY date DESC
-`,
-    )
+  const matches: MatchHistoryRow[] = db
+    .prepare(`SELECT * FROM match_history WHERE player_a_uuid = ? OR player_b_uuid = ? ORDER BY date DESC`)
     .all(uuid, uuid) as MatchHistoryRow[];
 
-  const history: MatchHistory[] = matches.map((match) => {
-    const isPlayerA = match.player_a_uuid === uuid;
+  const history: MatchHistory[] = matches.map((match: MatchHistoryRow) => {
+    const isPlayerA: boolean = match.player_a_uuid === uuid;
 
-    const myScore = isPlayerA ? match.score_a : match.score_b;
-    const opponentScore = isPlayerA ? match.score_b : match.score_a;
-    const opponentName = isPlayerA ? match.player_b_name : match.player_a_name;
+    const myScore: number = isPlayerA ? match.score_a : match.score_b;
+    const opponentScore: number = isPlayerA ? match.score_b : match.score_a;
+    const opponentName: string = isPlayerA ? match.player_b_name : match.player_a_name;
 
-    return {
+    const matchHistory: MatchHistory = {
       date: match.date,
       mode: match.mode,
       opponent: opponentName,
       result: myScore > opponentScore ? "win" : "lose",
       score: `${myScore} - ${opponentScore}`,
     };
+    return matchHistory;
   });
 
   return reply.send(history);
@@ -89,7 +88,7 @@ export async function setName(
     return reply.status(400).send({ error: "Invalid Name" });
   }
 
-  const cleanName = name.trim();
+  const cleanName: string = name.trim();
   try {
     db.prepare(`UPDATE users SET name = ? WHERE email = ?`).run(
       cleanName,
@@ -130,7 +129,7 @@ export async function setEmail(
   const verificationLink: string = `https://${DOMAIN_NAME}:${PORT}/api/verify-email?token=${emailToken}`;
 
   // ENVOI MAIL
-  const transporter = nodemailer.createTransport({
+  const transporter: nodemailer.Transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
       user: EMAIL_USER,
@@ -162,15 +161,15 @@ export async function setAvatar(request: FastifyRequest, reply: FastifyReply) {
     return reply.status(404).send({ error: "Invalid Token" });
   }
 
-  const data = await request.file();
+  const data: MultipartFile | undefined = await request.file();
   if (!data) {
     return reply.status(400).send({ error: "Fichier manquant" });
   }
 
-  const ext = path.extname(data.filename);
-  const hashedEmail = crypto.createHash("sha256").update(email).digest("hex");
-  const filename = `${hashedEmail}${ext}`;
-  const uploadPath = path.join(
+  const ext: string = path.extname(data.filename);
+  const hashedEmail: string = crypto.createHash("sha256").update(email).digest("hex");
+  const filename: string = `${hashedEmail}${ext}`;
+  const uploadPath: string = path.join(
     __dirname,
     "..",
     "..",
@@ -179,10 +178,10 @@ export async function setAvatar(request: FastifyRequest, reply: FastifyReply) {
     filename,
   );
 
-  const writeStream = fs.createWriteStream(uploadPath);
+  const writeStream: fs.WriteStream = fs.createWriteStream(uploadPath);
   await data.file.pipe(writeStream);
 
-  const avatarUrl = `https://${DOMAIN_NAME}:${PORT}/api/uploads/${filename}`;
+  const avatarUrl: string = `https://${DOMAIN_NAME}:${PORT}/api/uploads/${filename}`;
 
   db.prepare("UPDATE users SET avatar_url = ? WHERE email = ?").run(
     avatarUrl,

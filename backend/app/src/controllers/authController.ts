@@ -1,5 +1,6 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import bcrypt from "bcrypt";
+import { Statement } from "better-sqlite3";
 import db from "../db/db";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
@@ -30,7 +31,7 @@ export async function registerUser(
 
     const hashedPassword: string = await bcrypt.hash(password, 10);
 
-    const insert = db.prepare(
+    const insert: Statement = db.prepare(
       "INSERT INTO users (uuid, name, email, password) VALUES (?, ?, ?, ?)",
     );
     insert.run(uuidv4(), name, email, hashedPassword);
@@ -41,7 +42,7 @@ export async function registerUser(
     const verificationLink: string = `https://${DOMAIN_NAME}:${PORT}/api/verify-email?token=${emailToken}`;
 
     // ENVOI MAIL
-    const transporter = nodemailer.createTransport({
+    const transporter: nodemailer.Transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
         user: EMAIL_USER,

@@ -53,4 +53,12 @@ re: fclean all
 
 .PHONY: all up start stop restart logs down status ps clean fclean re
 
-#delete all cache : docker system prune -a
+# delete all cache : docker system prune -a
+
+# usefull regex :
+#  - typeless variable
+#      const\s+([a-zA-Z_$][0-9a-zA-Z_$]*)\s*=\s*[^;]+|let\s+([a-zA-Z_$][0-9a-zA-Z_$]*)\s*=\s*[^;]+|var\s+([a-zA-Z_$][0-9a-zA-Z_$]*)\s*=\s*[^;]+
+#  - typeless arrow function argument
+#      \(\s*([a-zA-Z_$][0-9a-zA-Z_$]*)\s*\)\s*=>\s*\{
+#  - typeless function return
+#      function\s+([a-zA-Z_$][0-9a-zA-Z_$]*)\s*\([^)]*\)\s*(?!:)\s*\{

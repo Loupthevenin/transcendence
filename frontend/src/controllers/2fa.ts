@@ -1,6 +1,6 @@
 import { navigateTo } from "../router";
 
-export function setupTwoFAHandlers(container: HTMLElement) {
+export function setupTwoFAHandlers(container: HTMLElement): void {
   const twoFaForm: HTMLFormElement = document.getElementById(
     "2FAForm",
   ) as HTMLFormElement;
@@ -30,7 +30,7 @@ export function setupTwoFAHandlers(container: HTMLElement) {
 
         const data: any = await res.json();
         if (!res.ok) {
-          const errorMsg = data?.message || data?.error || "Code invalid";
+          const errorMsg: string = data?.message || data?.error || "Code invalid";
           alert(errorMsg);
           return;
         }
