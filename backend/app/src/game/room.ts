@@ -323,7 +323,9 @@ export class Room {
 
     const gameResultMessage: GameResultMessage = {
       type: "gameResult",
-      winner: this.gameData.p1Score >= GAME_CONSTANT.scoreToWin ? 1 : 2,
+      p1Score: this.gameData.p1Score,
+      p2Score: this.gameData.p2Score,
+      winner: this.gameData.p1Score >= GAME_CONSTANT.scoreToWin ? 1 : 2
     };
     this.sendMessage(gameResultMessage);
 

@@ -57,6 +57,8 @@ export function isGameStartedMessage(data: any): data is GameStartedMessage {
 
 export type GameResultMessage = {
   readonly type: "gameResult";
+  p1Score: number; // The score of the player 1
+  p2Score: number; // The score of the player 2
   winner: 1 | 2; // The winner's index in the room
 };
 
@@ -64,6 +66,8 @@ export function isGameResultMessage(data: any): data is GameResultMessage {
   return (
     data &&
     data.type === "gameResult" &&
+    typeof data.p1Score === "number" &&
+    typeof data.p2Score === "number" &&
     (data.winner === 1 || data.winner === 2)
   );
 }
