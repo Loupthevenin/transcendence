@@ -5,6 +5,7 @@ import { showSkinSelector, hideSkinSelector, getSelectedSkinId } from "./skinSel
 import { createDefaultSkin, loadPadddleSkin } from "./paddleSkinLoader";
 import { subscribeToMessage, unsubscribeToMessage, isConnected, sendMessage } from "../websocketManager";
 import { GameMessageData } from "@shared/messageType"
+import { LoadingHandler } from "./loadingHandler";
 
 enum GameMode {
   MENU,         // Player is in the menu
@@ -15,19 +16,59 @@ enum GameMode {
 
 let currentGameMode: GameMode = GameMode.MENU;
 
+const loadingHandler: LoadingHandler = new LoadingHandler();
+
+let loadingScreen: HTMLDivElement | null = null;
 let canvas: HTMLCanvasElement | null = null;
 
+// Create the loading screen div
+function createLoadingScreen(): void {
+  // If the loading screen already exists, remove it
+  if (loadingScreen) {
+    loadingScreen.remove();
+  }
+
+  // Create the loading screen container
+  loadingScreen = document.createElement("div");
+  loadingScreen.id = "gameLoadingScreen";
+  loadingScreen.className = "fixed inset-0 flex justify-center items-end z-11";
+
+  // Create the outer container for the loading bar
+  const loadingBarContainer: HTMLDivElement = document.createElement("div");
+  loadingBarContainer.className = "w-1/2 bg-gray-700 rounded-md mx-4 mb-4";
+
+  // Create the inner loading bar
+  const loadingBar: HTMLDivElement = document.createElement("div");
+  loadingBar.id = "gameLoadingBar";
+  loadingBar.className = "h-4 bg-blue-500 rounded-md";
+  loadingBar.style.width = "0"; // Initial width
+
+  loadingBarContainer.appendChild(loadingBar);
+  loadingScreen.appendChild(loadingBarContainer);
+  document.body.appendChild(loadingScreen);
+}
+
+// Update the loading bar
+function updateLoadingBar(proportion: number): void {
+  const loadingBar: HTMLElement | null = document.getElementById("gameLoadingBar");
+  if (loadingBar) {
+    loadingBar.style.width = `${proportion * 100}%`; // Adjust width based on proportion (0 to 1)
+  }
+}
+
+// Create the game canvas used by Babylon to render the game
 export function createGameCanvas(): HTMLCanvasElement {
   // If a canvas already exists, remove it
   if (canvas) {
     canvas.remove();
-    canvas = null;
   }
 
   canvas = document.createElement("canvas");
   canvas.id = "renderCanvas";
-
   canvas.className = "absolute top-0 left-0 w-full h-full z-10";
+  canvas.style.visibility = "hidden";
+
+  createLoadingScreen();
 
   return canvas;
 }
@@ -445,6 +486,8 @@ export function initGameEnvironment(): void {
   light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
   light.intensity = 1.0;
 
+  const environmentSceneLoadingStateIndex: number = loadingHandler.addLoadingState();
+
   // Load the environment scene
   BABYLON.ImportMeshAsync("/api/models/scene.glb", scene, { pluginExtension: ".glb" }).then((result: BABYLON.ISceneLoaderAsyncResult) => {
     disableSpecularOnMeshes(result.meshes);
@@ -452,10 +495,9 @@ export function initGameEnvironment(): void {
     const sceneMesh: BABYLON.Mesh = result.meshes[0] as BABYLON.Mesh; // Get the root of the model
     sceneMesh.position = new BABYLON.Vector3(0, 0, 0);
     sceneMesh.rotation = new BABYLON.Vector3(0, 0, 0);
-
   }).catch((error) => {
     console.error("An error occurred while loading model 'scene.glb' :", error);
-  });
+  }).finally(() => loadingHandler.setLoaded(environmentSceneLoadingStateIndex));
 
   // Create the ground
   ground = BABYLON.MeshBuilder.CreateGround(
@@ -465,6 +507,9 @@ export function initGameEnvironment(): void {
   );
   ground.rotation.y = Math.PI / 2;
 
+  const groundTextureLoadingStateIndex: number = loadingHandler.addLoadingState();
+  const groundTextureLoadedCallback = () => loadingHandler.setLoaded(groundTextureLoadingStateIndex);
+
   const groundMaterial: BABYLON.StandardMaterial = new BABYLON.StandardMaterial(
     "groundMaterial",
     scene,
@@ -473,7 +518,11 @@ export function initGameEnvironment(): void {
   groundMaterial.diffuseTexture = new BABYLON.Texture(
     "/api/textures/tennis_court.svg",
     scene,
-    { samplingMode: BABYLON.Texture.NEAREST_SAMPLINGMODE },
+    {
+      samplingMode: BABYLON.Texture.NEAREST_SAMPLINGMODE,
+      onLoad: groundTextureLoadedCallback,
+      onError: groundTextureLoadedCallback,
+    }
   );
   ground.material = groundMaterial;
 
@@ -635,6 +684,27 @@ export function initGameEnvironment(): void {
       engine.resize();
     }
   });
+
+  // Anonymous function to wait until the game environment is loaded to show the canvas
+  new Promise<void>((resolve) => {
+    const interval: NodeJS.Timeout = setInterval(() => {
+      updateLoadingBar(loadingHandler.getLoadedProportion());
+      if (loadingHandler.isAllLoaded()) {
+        clearInterval(interval); // Stop checking once loaded
+        resolve(); // All the condition are met, we can resolve
+      }
+    }, 50); // Check every 50ms
+  }).then(() => {
+    if (loadingScreen) {
+      loadingScreen.remove(); // Delete the loading screen
+    }
+    loadingScreen = null;
+    if (canvas) {
+      canvas.style.visibility = "visible"; // Show the game canvas
+    }
+    loadingHandler.clear();
+  });
+
 }
 
 // Quit the game and go back to the menu
