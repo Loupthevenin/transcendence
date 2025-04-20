@@ -59,7 +59,7 @@ export type GameResultMessage = {
   readonly type: "gameResult";
   p1Score: number; // The score of the player 1
   p2Score: number; // The score of the player 2
-  winner: 1 | 2; // The winner's index in the room
+  winner: string; // The winner's nickname
 };
 
 export function isGameResultMessage(data: any): data is GameResultMessage {
@@ -68,13 +68,13 @@ export function isGameResultMessage(data: any): data is GameResultMessage {
     data.type === "gameResult" &&
     typeof data.p1Score === "number" &&
     typeof data.p2Score === "number" &&
-    (data.winner === 1 || data.winner === 2)
+    typeof data.winner === "string"
   );
 }
 
 export type DisconnectionMessage = {
   readonly type: "disconnection";
-  //id: 1 | 2; // The player's index in the room of the disconnected player
+  id: 1 | 2; // The player's index in the room of the disconnected player
 };
 
 export function isDisconnectionMessage(data: any): data is DisconnectionMessage {

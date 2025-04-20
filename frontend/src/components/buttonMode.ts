@@ -1,6 +1,6 @@
 export function ButtonMode(mode: string): HTMLElement {
-  const container: HTMLElement = document.createElement("div");
-  container.className = `
+  const button: HTMLElement = document.createElement("div");
+  button.className = `
     inline-block 
     px-6 py-4 
     rounded-full 
@@ -12,11 +12,11 @@ export function ButtonMode(mode: string): HTMLElement {
     hover:bg-indigo-800 
     transition 
     cursor-pointer 
-	select-none 
-	text-center 
-	capitalize
+    select-none 
+    text-center 
+    capitalize
   `;
-  container.id = `${mode}`;
-  container.textContent = mode;
-  return container;
+  button.id = mode;
+  button.textContent = mode;
+  return button;
 }

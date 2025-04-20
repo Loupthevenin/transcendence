@@ -1,11 +1,20 @@
 import { BABYLON, GAME_CONSTANT, GameData, newGameData, disableSpecularOnMeshes } from "@shared/game/gameElements";
 import { Ball, updateBallPosition, resetBall } from "@shared/game/ball";
-import { SkinChangeMessage, isSkinChangeMessage, PaddlePositionMessage, isGameStartedMessage, isGameDataMessage, isGameResultMessage, isDisconnectionMessage, MatchmakingMessage } from "@shared/game/gameMessageTypes";
+import {
+  SkinChangeMessage,    isSkinChangeMessage,
+  PaddlePositionMessage,
+                        isGameStartedMessage,
+                        isGameDataMessage,
+  GameResultMessage,    isGameResultMessage,
+  DisconnectionMessage, isDisconnectionMessage,
+  MatchmakingMessage
+} from "@shared/game/gameMessageTypes";
 import { showSkinSelector, hideSkinSelector, getSelectedSkinId } from "./skinSelector";
 import { createDefaultSkin, loadPadddleSkin } from "./paddleSkinLoader";
 import { subscribeToMessage, unsubscribeToMessage, isConnected, sendMessage } from "../websocketManager";
 import { GameMessageData } from "@shared/messageType"
 import { LoadingHandler } from "./loadingHandler";
+import { showMenu, showInGameMenu } from "../controllers/gameMode";
 
 enum GameMode {
   MENU,         // Player is in the menu
@@ -363,9 +372,8 @@ function handleGameMessages(data: GameMessageData): void {
       sendMessage("game", skinChangeMessage);
     }
     else if (isSkinChangeMessage(data)) {
-      const otherPlayerId: 1 | 2 = data.id;
-      if (playerId !== otherPlayerId) {
-        setPaddleSkin(otherPlayerId, data.skinId);
+      if (playerId !== data.id) {
+        setPaddleSkin(data.id, data.skinId);
       }
     }
     else if (isGameDataMessage(data)) {
@@ -403,26 +411,13 @@ function handleGameMessages(data: GameMessageData): void {
       //lastUpdateTime = performance.now();
     }
     else if (isGameResultMessage(data)) {
-      // TODO: display a beautiful game result screen, showing final score and the winner's nickname
-      console.log(`Game result: ${data.p1Score} / ${data.p2Score}`);
-      if (data.winner === playerId) {
-        console.log("You win!");
-      } else {
-        console.log("You lose!");
-      }
       playerId = -1; // Reset player ID
-
-      if (currentGameMode == GameMode.ONLINE) {
-        BackToMenu();
-      }
+      displayGameResult(data);
     }
     else if (isDisconnectionMessage(data)) {
-      console.log("The other player disconnected !");
+      console.log(`Player ${data.id} disconnected !`);
       playerId = -1; // Reset player ID
-
-      if (currentGameMode == GameMode.ONLINE) {
-        BackToMenu();
-      }
+      displayGameError(data);
     }
   } catch (error) {
     console.error("An Error occured:", error);
@@ -435,6 +430,26 @@ function registerToGameMessages(): void {
 
 function unregisterToGameMessages(): void {
   unsubscribeToMessage("game", handleGameMessages);
+}
+
+function displayGameResult(gameResult: GameResultMessage) {
+  // TODO: display a beautiful game result screen, showing final score
+  //       and the winner's nickname with a 'Back to menu' button
+  console.log(`Game result: ${gameResult.p1Score} / ${gameResult.p2Score}`);
+  console.log(`The winner is '${gameResult.winner}'`);
+
+  BackToMenu();
+}
+
+function displayGameError(errorMessage: DisconnectionMessage) {
+  // TODO: display a screen with {error_type} and a 'Back to menu' button
+  if (isDisconnectionMessage(errorMessage)) {
+    // error_type : 'the opponent disconnected'
+  } /*else if () {
+    // other error types
+  }*/
+
+  BackToMenu();
 }
 
 // Reset the game and all position
@@ -456,6 +471,31 @@ function resetGame(): void {
 
   resetBall(gameData.ball);
   updateScoreText();
+}
+
+// The function handling the local game loop
+function gameLoop(deltaTime: number): void {
+  const previousP1Score: number = gameData.p1Score;
+  const previousP2Score: number = gameData.p2Score;
+  updateBallPosition(gameData, deltaTime, ballMesh);
+
+  if ( previousP1Score !== gameData.p1Score
+    || previousP2Score !== gameData.p2Score) {
+    updateScoreText();
+  }
+
+  if (currentGameMode !== GameMode.MENU && currentGameMode !== GameMode.ONLINE) {
+    if ( gameData.p1Score >= GAME_CONSTANT.scoreToWin
+      || gameData.p2Score >= GAME_CONSTANT.scoreToWin) {
+      const gameResult: GameResultMessage = {
+        type: "gameResult",
+        p1Score: gameData.p1Score,
+        p2Score: gameData.p2Score,
+        winner: gameData.p1Score >= GAME_CONSTANT.scoreToWin ? "Player 1" : "Player 2"
+      };
+      displayGameResult(gameResult);
+    }
+  }
 }
 
 // Babylon.js setup
@@ -570,7 +610,7 @@ export function initGameEnvironment(): void {
     );
     const side: -1 | 1 = suffix === "Bottom" ? -1 : 1;
     scorePlane.position = new BABYLON.Vector3(3.6 * side, 0, 0);
-    scorePlane.rotation = new BABYLON.Vector3(Math.PI / 2, -Math.PI / 2 * side, 0);
+    scorePlane.rotation = new BABYLON.Vector3(Math.PI / 2, Math.PI / 2 * side, 0);
 
     const scoreMaterial: BABYLON.StandardMaterial = new BABYLON.StandardMaterial("scoreMaterial" + suffix, scene);
     scoreMaterial.specularColor = BABYLON.Color3.Black();
@@ -613,8 +653,7 @@ export function initGameEnvironment(): void {
         );
 
         camera.alpha += GAME_CONSTANT.cameraRotationSpeed * deltaTime;
-        updateBallPosition(gameData, deltaTime, ballMesh);
-        updateScoreText();
+        gameLoop(deltaTime);
         break;
 
       case GameMode.SINGLEPLAYER:
@@ -633,8 +672,7 @@ export function initGameEnvironment(): void {
           deltaTime
         );
 
-        updateBallPosition(gameData, deltaTime, ballMesh);
-        updateScoreText();
+        gameLoop(deltaTime);
         break;
 
       case GameMode.LOCAL:
@@ -654,8 +692,7 @@ export function initGameEnvironment(): void {
           deltaTime
         )
 
-        updateBallPosition(gameData, deltaTime, ballMesh);
-        updateScoreText();
+        gameLoop(deltaTime);
         break;
 
       case GameMode.ONLINE:
@@ -711,7 +748,6 @@ export function initGameEnvironment(): void {
     }
     loadingHandler.clear();
   });
-
 }
 
 // Quit the game and go back to the menu
@@ -719,6 +755,7 @@ export function BackToMenu(): void {
   currentGameMode = GameMode.MENU;
   updateCameraRotation(camera, currentGameMode);
   unregisterToGameMessages();
+  showMenu();
 
   resetGame();
 
@@ -732,6 +769,7 @@ export function SinglePlayer(): void {
   currentGameMode = GameMode.SINGLEPLAYER;
   updateCameraRotation(camera, currentGameMode);
   unregisterToGameMessages();
+  showInGameMenu();
 
   resetGame();
 
@@ -745,6 +783,7 @@ export function LocalGame(): void {
   currentGameMode = GameMode.LOCAL;
   updateCameraRotation(camera, currentGameMode);
   unregisterToGameMessages();
+  showInGameMenu();
 
   resetGame();
 
@@ -761,6 +800,7 @@ export function OnlineGame(): void {
   }
   currentGameMode = GameMode.ONLINE;
   updateCameraRotation(camera, currentGameMode);
+  showInGameMenu();
 
   resetGame();
 
@@ -769,7 +809,10 @@ export function OnlineGame(): void {
   setPaddleSkin(1, localSkinId);
 
   registerToGameMessages();
-  const matchmakingMessage: MatchmakingMessage = { type: "matchmaking", username: `Player-${localSkinId}` };
+  const matchmakingMessage: MatchmakingMessage = {
+    type: "matchmaking",
+    username: `Player-${localSkinId}`
+  };
   sendMessage("game", matchmakingMessage);
 }
 
