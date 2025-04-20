@@ -136,7 +136,7 @@ export function setupWebSocket(): WebSocketServer {
             // Check if the player who send the message is the owner of the paddle
             if (data.id === player.room.indexOfPlayer(player)) {
               player.paddleSkinId = data.skinId;
-              if (player.room.gameLaunched) {
+              if (player.room.isGameLaunched()) {
                 const skinChangeMessage: SkinChangeMessage = {
                   type: "skinId",
                   id: data.id,
@@ -147,12 +147,11 @@ export function setupWebSocket(): WebSocketServer {
             }
           }
         } else if (isPaddlePositionMessage(data)) {
+          // Update paddle positions if condition meeted
           if (player.room) {
-            // Update paddle positions
-            if (player.room.player1?.id === playerId) {
-              player.room.gameData.paddle1Position = data.position;
-            } else if (player.room.player2?.id === playerId) {
-              player.room.gameData.paddle2Position = data.position;
+            const index: -1 | 1 | 2 = player.room.indexOfPlayer(player);
+            if (index !== -1) {
+              player.room.setPaddlePosition(index, data.position);
             }
           }
         }

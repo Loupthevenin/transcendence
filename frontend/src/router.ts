@@ -10,11 +10,7 @@ import { initSideBarNavigation } from "./controllers/navbar";
 import { handleGoogleCallback } from "./controllers/google";
 import { listenerButtonGameMode } from "./controllers/gameMode";
 import { createGameCanvas, initGameEnvironment, BackToMenu } from "./game/game";
-import {
-  createSkinSelectorCanvas,
-  initSkinSelector,
-} from "./game/skinSelector";
-import { connectToServer } from "./websocketManager";
+import { createSkinSelectorCanvas, initSkinSelector } from "./game/skinSelector";
 
 type RouteHandler = () => HTMLElement;
 type Route = {
