@@ -59,7 +59,7 @@ const routes: Record<string, Route> = {
   },
   "/callback": {
     view: () => {
-      const div = document.createElement("div");
+      const div: HTMLDivElement = document.createElement("div");
       return div;
     },
     setup: () => {
@@ -87,12 +87,12 @@ export function isAuthenticated(): boolean {
   return !!localStorage.getItem("auth_token");
 }
 
-export async function navigateTo(path: string) {
+export async function navigateTo(path: string): Promise<void> {
   history.pushState(null, "", path);
   await renderRoute();
 }
 
-export async function renderRoute() {
+export async function renderRoute(): Promise<void> {
   const path: string = location.pathname;
   const route: Route = routes[path];
 

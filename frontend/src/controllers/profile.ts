@@ -14,7 +14,7 @@ interface MatchHistory {
   score: string;
 }
 
-async function loadUserProfile() {
+async function loadUserProfile(): Promise<void> {
   const token: string | null = localStorage.getItem("auth_token");
   if (!token) {
     alert("Pas de token !");
@@ -30,26 +30,26 @@ async function loadUserProfile() {
 
     const rawData: any = await res.json();
     if (!res.ok) {
-      const errorMsg = rawData?.message || "Erreur chargement profile";
+      const errorMsg: string = rawData?.message || "Erreur chargement profile";
       alert(errorMsg);
       if (res.status === 401 || res.status === 403) {
         localStorage.removeItem("auth_token");
       }
       return;
     }
-    const data = rawData as UserProfile;
+    const data: UserProfile = rawData as UserProfile;
 
-    const avatarElement = document.getElementById(
+    const avatarElement: HTMLImageElement = document.getElementById(
       "user-avatar",
     ) as HTMLImageElement;
     if (avatarElement && data.avatarUrl) {
       avatarElement.src = data.avatarUrl;
     }
-    const nameElement = document.getElementById("display-name") as HTMLElement;
+    const nameElement: HTMLElement = document.getElementById("display-name") as HTMLElement;
     if (nameElement && data.name) {
       nameElement.textContent = data.name;
     }
-    const emailElement = document.getElementById("user-email") as HTMLElement;
+    const emailElement: HTMLElement = document.getElementById("user-email") as HTMLElement;
     if (emailElement && data.email) {
       emailElement.textContent = data.email;
     }
@@ -59,7 +59,7 @@ async function loadUserProfile() {
   }
 }
 
-async function updateUserProfile(updatedData: any, request: string) {
+async function updateUserProfile(updatedData: any, request: string): Promise<any> {
   const token: string | null = localStorage.getItem("auth_token");
   if (!token) {
     alert("Pas de token !");
@@ -83,8 +83,8 @@ async function updateUserProfile(updatedData: any, request: string) {
   }
 }
 
-function listenerName() {
-  const displayName = document.getElementById("display-name");
+function listenerName(): void {
+  const displayName: HTMLElement | null = document.getElementById("display-name");
   if (displayName) {
     displayName.addEventListener("click", () => {
       let currentName: string = displayName.textContent || "";
@@ -96,7 +96,7 @@ function listenerName() {
         "bg-[#2a255c] text-white border border-indigo-500 rounded px-2 py-1";
 
       input.addEventListener("blur", async () => {
-        const newName = input.value.trim();
+        const newName: string = input.value.trim();
         if (newName && newName !== currentName) {
           await updateUserProfile({ name: newName }, "name");
           displayName.textContent = newName;
@@ -114,8 +114,8 @@ function listenerName() {
   }
 }
 
-function listenerEmail() {
-  const emailElement = document.getElementById("user-email");
+function listenerEmail(): void {
+  const emailElement: HTMLElement | null = document.getElementById("user-email");
 
   if (emailElement) {
     emailElement.addEventListener("click", () => {
@@ -123,11 +123,10 @@ function listenerEmail() {
       const input: HTMLInputElement = document.createElement("input");
       input.type = "email";
       input.value = currentEmail;
-      input.className =
-        "bg-[#2a255c] text-white border border-indigo-500 rounded px-2 py-1";
+      input.className = "bg-[#2a255c] text-white border border-indigo-500 rounded px-2 py-1";
       input.addEventListener("blur", async () => {
-        const newEmail = input.value.trim();
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const newEmail: string = input.value.trim();
+        const emailRegex: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(newEmail)) {
           alert("veuillez entrer une adresse email valide.");
           emailElement.textContent = currentEmail;
@@ -154,12 +153,12 @@ function listenerEmail() {
   }
 }
 
-function listenerAvatar() {
-  const avatarInput = document.getElementById(
+function listenerAvatar(): void {
+  const avatarInput: HTMLInputElement = document.getElementById(
     "avatar-upload",
   ) as HTMLInputElement;
-  const avatarWrapper = document.querySelector(".group") as HTMLDivElement;
-  const avatarImg = document.getElementById("user-avatar") as HTMLImageElement;
+  const avatarWrapper: HTMLDivElement = document.querySelector(".group") as HTMLDivElement;
+  const avatarImg: HTMLImageElement = document.getElementById("user-avatar") as HTMLImageElement;
 
   if (!avatarInput || !avatarImg || !avatarWrapper) return;
 
@@ -170,8 +169,8 @@ function listenerAvatar() {
   avatarInput.addEventListener("change", async () => {
     if (!avatarInput.files || avatarInput.files.length === 0) return;
 
-    const file = avatarInput.files[0];
-    const formData = new FormData();
+    const file: File = avatarInput.files[0];
+    const formData: FormData = new FormData();
     formData.append("avatar", file);
 
     const token: string | null = localStorage.getItem("auth_token");
@@ -190,7 +189,7 @@ function listenerAvatar() {
 
       const data: any = await res.json();
       if (!res.ok) {
-        const errorMsg = data?.message || data?.error || "Error update Avatar";
+        const errorMsg: string = data?.message || data?.error || "Error update Avatar";
         alert(errorMsg);
         return;
       }
@@ -206,7 +205,7 @@ function listenerAvatar() {
 }
 
 function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
+  const date: Date = new Date(dateStr);
   return date.toLocaleDateString("fr-FR", {
     day: "2-digit",
     month: "2-digit",
@@ -214,7 +213,7 @@ function formatDate(dateStr: string): string {
   });
 }
 
-function updateWinRate(winRate: number) {
+function updateWinRate(winRate: number): void {
   const winRateContainer: HTMLElement | null =
     document.getElementById("win-rate-container");
   const pieChart: HTMLElement | null = document.getElementById("pie-chart");
@@ -233,7 +232,7 @@ function updateWinRate(winRate: number) {
   }
 }
 
-async function loadHistory() {
+async function loadHistory(): Promise<void> {
   const token: string | null = localStorage.getItem("auth_token");
   if (!token) {
     alert("Pas de token !");
@@ -249,29 +248,29 @@ async function loadHistory() {
 
     const rawData: any = await res.json();
     if (!res.ok) {
-      const errorMsg = rawData?.message || "Erreur chargement historique";
+      const errorMsg: string = rawData?.message || "Erreur chargement historique";
       alert(errorMsg);
       if (res.status === 401 || res.status === 403) {
         localStorage.removeItem("auth_token");
       }
       return;
     }
-    const data = rawData as MatchHistory[];
+    const data: MatchHistory[] = rawData as MatchHistory[];
 
     let wins: number = 0;
     let totalMatches: number = 0;
 
-    const historyList = document.getElementById("match-history");
+    const historyList: HTMLElement | null = document.getElementById("match-history");
     if (!historyList) return;
 
     historyList.innerHTML = "";
 
-    data.forEach((match) => {
-      const li = document.createElement("li");
-      const isWin = match.result === "win";
-      const borderColor = isWin ? "border-green-400" : "border-red-400";
-      const scoreColor = isWin ? "text-green-400" : "text-red-400";
-      const resultText = isWin ? "✅ Victoire" : "❌ Défaite";
+    data.forEach((match: MatchHistory) => {
+      const li: HTMLLIElement = document.createElement("li");
+      const isWin: boolean = match.result === "win";
+      const borderColor: string = isWin ? "border-green-400" : "border-red-400";
+      const scoreColor: string = isWin ? "text-green-400" : "text-red-400";
+      const resultText: string = isWin ? "✅ Victoire" : "❌ Défaite";
 
       if (isWin) {
         wins++;
@@ -292,7 +291,7 @@ async function loadHistory() {
       historyList.appendChild(li);
     });
 
-    const winRate = totalMatches > 0 ? (wins / totalMatches) * 100 : 0;
+    const winRate: number = totalMatches > 0 ? (wins / totalMatches) * 100 : 0;
     updateWinRate(winRate);
   } catch (err) {
     console.error("Error history : ", err);
@@ -300,7 +299,7 @@ async function loadHistory() {
   }
 }
 
-function listener2FA(container: HTMLElement) {
+function listener2FA(container: HTMLElement): void {
   const button2FA: HTMLElement = container.querySelector(
     "#activate-2fa",
   ) as HTMLElement;
@@ -322,8 +321,7 @@ function listener2FA(container: HTMLElement) {
 
         const data: any = await res.json();
         if (!res.ok) {
-          const errorMsg =
-            data?.message || data?.error || "Error activation 2FA";
+          const errorMsg: string = data?.message || data?.error || "Error activation 2FA";
           alert(errorMsg);
           return;
         }
@@ -347,8 +345,8 @@ function listener2FA(container: HTMLElement) {
   }
 }
 
-function logout(container: HTMLElement) {
-  const buttonLogout = container.querySelector("#logout-button") as HTMLElement;
+function logout(container: HTMLElement): void {
+  const buttonLogout: HTMLElement = container.querySelector("#logout-button") as HTMLElement;
   if (buttonLogout) {
     buttonLogout.addEventListener("click", () => {
       const token: string | null = localStorage.getItem("auth_token");
@@ -362,7 +360,7 @@ function logout(container: HTMLElement) {
   }
 }
 
-export function setupProfile(container: HTMLElement) {
+export function setupProfile(container: HTMLElement): void {
   loadUserProfile();
   loadHistory();
   listener2FA(container);

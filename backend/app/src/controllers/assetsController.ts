@@ -27,7 +27,7 @@ export async function getModel(request: FastifyRequest, reply: FastifyReply): Pr
     }
 
     // Check if the path is a directory
-    const stats = fs.statSync(modelFilePath); // Get file stats
+    const stats: fs.Stats = fs.statSync(modelFilePath); // Get file stats
     if (stats.isDirectory()) {
       reply.status(404).send({ error: "Model file not found" });
       return;
@@ -124,7 +124,7 @@ export async function getTexture(request: FastifyRequest, reply: FastifyReply): 
     }
 
     // Check if the path is a directory
-    const stats = fs.statSync(textureFilePath); // Get file stats
+    const stats: fs.Stats = fs.statSync(textureFilePath); // Get file stats
     if (stats.isDirectory()) {
       reply.status(404).send({ error: "Texture file not found" });
       return;

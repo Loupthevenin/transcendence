@@ -491,15 +491,20 @@ export function initGameEnvironment(): void {
   const environmentSceneLoadingStateIndex: number = loadingHandler.addLoadingState();
 
   // Load the environment scene
-  BABYLON.ImportMeshAsync("/api/models/scene.glb", scene, { pluginExtension: ".glb" }).then((result: BABYLON.ISceneLoaderAsyncResult) => {
-    disableSpecularOnMeshes(result.meshes);
+  try {
+    BABYLON.ImportMeshAsync("/api/models/scene.glb", scene, { pluginExtension: ".glb" }).then((result: BABYLON.ISceneLoaderAsyncResult) => {
+      disableSpecularOnMeshes(result.meshes);
 
-    const sceneMesh: BABYLON.Mesh = result.meshes[0] as BABYLON.Mesh; // Get the root of the model
-    sceneMesh.position = new BABYLON.Vector3(0, 0, 0);
-    sceneMesh.rotation = new BABYLON.Vector3(0, 0, 0);
-  }).catch((error) => {
+      const sceneMesh: BABYLON.Mesh = result.meshes[0] as BABYLON.Mesh; // Get the root of the model
+      sceneMesh.position = new BABYLON.Vector3(0, 0, 0);
+      sceneMesh.rotation = new BABYLON.Vector3(0, 0, 0);
+    }).catch((error) => {
+      console.error("An error occurred while loading model 'scene.glb' :", error);
+    }).finally(() => loadingHandler.setLoaded(environmentSceneLoadingStateIndex));
+  } catch (error) {
     console.error("An error occurred while loading model 'scene.glb' :", error);
-  }).finally(() => loadingHandler.setLoaded(environmentSceneLoadingStateIndex));
+    loadingHandler.setLoaded(environmentSceneLoadingStateIndex);
+  }
 
   // Create the ground
   ground = BABYLON.MeshBuilder.CreateGround(
@@ -510,7 +515,7 @@ export function initGameEnvironment(): void {
   ground.rotation.y = Math.PI / 2;
 
   const groundTextureLoadingStateIndex: number = loadingHandler.addLoadingState();
-  const groundTextureLoadedCallback = () => loadingHandler.setLoaded(groundTextureLoadingStateIndex);
+  const groundTextureLoadedCallback: () => void = () => loadingHandler.setLoaded(groundTextureLoadingStateIndex);
 
   const groundMaterial: BABYLON.StandardMaterial = new BABYLON.StandardMaterial(
     "groundMaterial",
@@ -551,7 +556,7 @@ export function initGameEnvironment(): void {
 
   // Helper function to create the both score display
   function createScoreDisplay(suffix: "Top" | "Bottom"): BABYLON.DynamicTexture {
-    const scoreFontTexture = new BABYLON.DynamicTexture(
+    const scoreFontTexture: BABYLON.DynamicTexture = new BABYLON.DynamicTexture(
       "scoreFontTexture" + suffix,
       { width: 512, height: 128 },
       scene,

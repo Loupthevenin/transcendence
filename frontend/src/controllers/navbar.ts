@@ -5,7 +5,7 @@ export function initSideBarNavigation(): void {
 
   if (!sidebar || !sidebarToggle) return;
 
-  let isAnimate = false;
+  let isAnimate: boolean = false;
 
   sidebarToggle.addEventListener("click", () => {
     if (isAnimate) return;

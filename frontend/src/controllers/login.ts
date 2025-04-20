@@ -1,7 +1,7 @@
 import { navigateTo } from "../router";
 import { handleGoogle } from "./google";
 
-export function setupLoginHandlers(container: HTMLElement) {
+export function setupLoginHandlers(container: HTMLElement): void {
   handleGoogle();
   const loginForm: HTMLFormElement | null = container.querySelector(
     "#loginForm",
@@ -28,7 +28,7 @@ export function setupLoginHandlers(container: HTMLElement) {
 
         const data: any = await res.json();
         if (!res.ok) {
-          const errorMsg = data?.message || data?.error || "Error login";
+          const errorMsg: string = data?.message || data?.error || "Error login";
           alert(errorMsg);
           return;
         }

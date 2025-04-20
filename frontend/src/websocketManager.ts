@@ -25,7 +25,7 @@ export function subscribeToMessage<K extends keyof MessageEventMap>(msgEventType
 export function unsubscribeToMessage<K extends keyof MessageEventMap>(msgEventType: K, callback: CallbackFunction<K>): void {
   if (callbacks[msgEventType]) {
     // Find the index of the callback and remove it in place
-    const index = callbacks[msgEventType].indexOf(callback);
+    const index: number = callbacks[msgEventType].indexOf(callback);
     if (index > -1) {
       callbacks[msgEventType].splice(index, 1); // Removes the callback at the specified index
     }

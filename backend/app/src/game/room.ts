@@ -47,10 +47,9 @@ export function addPlayerToMatchmaking(player: Player): void {
 }
 
 // Start the game if room is full
-function startGameIfRoomFull(room: Room) {
+function startGameIfRoomFull(room: Room): void {
   if (room.isFull()) {
-    room
-      .startGame()
+    room.startGame()
       .then(() => {
         console.log(
           `Game started: ${room.getId()} with p1 '${room.getPlayer(1)?.username}' and p2 '${room.getPlayer(2)?.username}'`,

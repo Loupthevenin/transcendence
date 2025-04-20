@@ -2,13 +2,13 @@ import { SinglePlayer, LocalGame, OnlineGame } from "../game/game";
 import { ButtonMode } from "../components/buttonMode";
 import { navigateTo, isAuthenticated } from "../router";
 
-export function listenerButtonGameMode() {
-  const modes = ["singleplayer", "local", "online"];
+export function listenerButtonGameMode(): void {
+  const modes: string[] = ["singleplayer", "local", "online"];
   const menu: HTMLElement | null = document.getElementById("menu-mode");
   if (!menu) return;
 
-  modes.forEach((mode) => {
-    const button = document.getElementById(mode);
+  modes.forEach((mode: string) => {
+    const button: HTMLElement | null = document.getElementById(mode);
     if (button) {
       if (mode === "online" && !isAuthenticated()) {
         button.classList.add(

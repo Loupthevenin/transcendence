@@ -1,6 +1,6 @@
 import { navigateTo } from "../router";
 
-export function handleGoogle() {
+export function handleGoogle(): void {
   const googleAuth: HTMLElement | null = document.getElementById("google-auth");
 
   if (googleAuth) {
@@ -15,13 +15,13 @@ export function handleGoogle() {
   }
 }
 
-export function handleGoogleCallback() {
-  const hash = window.location.hash.substring(1);
-  const params = new URLSearchParams(hash);
+export function handleGoogleCallback(): void {
+  const hash: string = window.location.hash.substring(1);
+  const params: URLSearchParams = new URLSearchParams(hash);
 
-  const token = params.get("token");
-  const require2FA = params.get("require2FA");
-  const error = params.get("error");
+  const token: string | null = params.get("token");
+  const require2FA: string | null = params.get("require2FA");
+  const error: string | null = params.get("error");
 
   if (error) {
     alert(decodeURIComponent(error));

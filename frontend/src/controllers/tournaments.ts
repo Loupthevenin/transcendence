@@ -1,1 +1,1 @@
-export function tournamentsHandlers(container: HTMLElement) {}
+export function tournamentsHandlers(container: HTMLElement): void {}
