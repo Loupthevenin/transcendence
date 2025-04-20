@@ -5,6 +5,7 @@ import { ModeLayout } from "./layout/mode";
 import { TwoFAView } from "./views/2fa";
 import { ProfileView } from "./views/profile";
 import { Generate404Page } from "./views/404";
+import { TournamentView } from "./views/tournaments";
 
 import { initSideBarNavigation } from "./controllers/navbar";
 import { handleGoogleCallback } from "./controllers/google";
@@ -39,6 +40,14 @@ const routes: Record<string, Route> = {
       const mod = await import("./controllers/profile");
       initSideBarNavigation();
       mod.setupProfile(root);
+    },
+  },
+  "/tournaments": {
+    view: () => MainLayout(TournamentView()),
+    setup: async (root: HTMLElement) => {
+      const mod = await import("./controllers/tournaments");
+      initSideBarNavigation();
+      mod.tournamentsHandlers(root);
     },
   },
   "/auth/verify-2fa": {
