@@ -403,6 +403,8 @@ function handleGameMessages(data: GameMessageData): void {
       //lastUpdateTime = performance.now();
     }
     else if (isGameResultMessage(data)) {
+      // TODO: display a beautiful game result screen, showing final score and the winner's nickname
+      console.log(`Game result: ${data.p1Score} / ${data.p2Score}`);
       if (data.winner === playerId) {
         console.log("You win!");
       } else {
