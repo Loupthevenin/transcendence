@@ -26,10 +26,10 @@ export function addPlayerToMatchmaking(player: Player): void {
   // Check for an available room of type Matchmaking
   for (const [, room] of rooms) {
     if (
-      room.type === RoomType.Matchmaking &&
+      room.getType() === RoomType.Matchmaking &&
       !room.isFull() &&
-      !room.gameLaunched &&
-      !room.gameEnded
+      !room.isGameLaunched() &&
+      !room.isGameEnded()
     ) {
       if (room.addPlayer(player)) {
         startGameIfRoomFull(room);
@@ -53,26 +53,26 @@ function startGameIfRoomFull(room: Room) {
       .startGame()
       .then(() => {
         console.log(
-          `Game started: ${room.id} with p1 '${room.player1?.username}' and p2 '${room.player2?.username}'`,
+          `Game started: ${room.getId()} with p1 '${room.getPlayer(1)?.username}' and p2 '${room.getPlayer(2)?.username}'`,
         );
       })
       .catch((error) => {
-        console.error(`Error starting game in room '${room.id}':`, error);
-        rooms.delete(room.id);
+        console.error(`Error starting game in room '${room.getId()}':`, error);
+        rooms.delete(room.getId());
       });
   }
 }
 
 export class Room {
-  id: string;
-  type: RoomType;
-  player1: Player | null;
-  player2: Player | null;
-  gameData: GameData;
-  gameLaunched: boolean;
-  gameEnded: boolean;
+  private id: string;
+  private type: RoomType;
+  private player1: Player | null;
+  private player2: Player | null;
+  private gameData: GameData;
+  private gameLaunched: boolean;
+  private gameEnded: boolean;
 
-  constructor(id: string, type: RoomType) {
+  public constructor(id: string, type: RoomType) {
     this.id = id;
     this.type = type;
     this.player1 = null; // Start with no players
@@ -83,11 +83,63 @@ export class Room {
   }
 
   /**
+   * @returns 'id' of the room.
+   */
+  public getId(): string {
+    return this.id;
+  }
+
+  /**
+   * @returns 'type' of the room.
+   */
+  public getType(): RoomType {
+    return this.type;
+  }
+
+  /**
+   * @param index The index of the player.
+   * @returns player of index N of the room.
+   */
+  public getPlayer(index: 1 | 2): Player | null {
+    if (index === 1) {
+      return this.player1;
+    } else if (index === 2) {
+      return this.player2;
+    }
+    return null;
+  }
+
+  /**
+   * @returns True if the game is launched, else False.
+   */
+  public isGameLaunched(): boolean {
+    return this.gameLaunched;
+  }
+
+  /**
+   * @returns True if the game is ended, else False.
+   */
+  public isGameEnded(): boolean {
+    return this.gameEnded;
+  }
+
+  /**
+   * @param index The index of the owner of the paddle.
+   */
+  public setPaddlePosition(index: 1 | 2, pos: BABYLON.Vector2): void {
+    if (index === 1) {
+      this.gameData.paddle1Position = pos;
+    } else if (index === 2) {
+      this.gameData.paddle2Position = pos;
+    }
+  }
+
+  /**
    * Add a player to the room.
    * @param player The player to join the room.
    * @returns True if the player was added successfully, otherwise false.
    */
-  addPlayer(player: Player): boolean {
+  public addPlayer(player: Player): boolean {
     if (this.gameLaunched || this.gameEnded) {
       return false; // Cannot add players after the game has started or ended
     }
@@ -112,7 +164,7 @@ export class Room {
    * Remove a player from the room.
    * @param player The player to remove.
    */
-  removePlayer(player: Player): void {
+  public removePlayer(player: Player): void {
     player.room = null; // Clear the player's room reference
     if (this.player1?.id === player.id) {
       this.player1 = null;
@@ -124,7 +176,7 @@ export class Room {
   /**
    * Removes all players from the room.
    */
-  clear(): void {
+  private clear(): void {
     if (this.player1) {
       this.player1.room = null;
       this.player1 = null;
@@ -138,7 +190,7 @@ export class Room {
    * Checks if the room is empty.
    * @returns True if both player1 and player2 are null, otherwise false.
    */
-  isEmpty(): boolean {
+  public isEmpty(): boolean {
     return !this.player1 && !this.player2;
   }
 
@@ -146,7 +198,7 @@ export class Room {
    * Checks if the room is full.
    * @returns True if both player1 and player2 are present, otherwise false.
    */
-  isFull(): boolean {
+  public isFull(): boolean {
     return !!this.player1 && !!this.player2;
   }
 
@@ -155,7 +207,7 @@ export class Room {
    * @param player The player to check.
    * @returns True if the room contains the player, otherwise false.
    */
-  containsPlayer(player: Player): boolean {
+  public containsPlayer(player: Player): boolean {
     return this.player1?.id === player.id || this.player2?.id === player.id;
   }
 
@@ -164,7 +216,7 @@ export class Room {
    * @param player The player to check.
    * @returns the index of player (p1 = 1, p2 = 2) or -1 if player isn't in this room.
    */
-  indexOfPlayer(player: Player): -1 | 1 | 2 {
+  public indexOfPlayer(player: Player): -1 | 1 | 2 {
     if (this.player1?.id === player.id) {
       return 1;
     } else if (this.player2?.id === player.id) {
@@ -177,7 +229,7 @@ export class Room {
    * Start the game by initializing game data.
    * @returns A promise that resolves when the game successfully started.
    */
-  startGame(): Promise<void> {
+  public startGame(): Promise<void> {
     return new Promise((resolve, reject) => {
       if (this.gameEnded) {
         reject("Game already ended");
@@ -208,7 +260,7 @@ export class Room {
         this.player2?.socket.send(JSON.stringify(gameStartedMessage));
       }
 
-      this.#startMainLoop();
+      this.startMainLoop();
       resolve();
     });
   }
@@ -216,7 +268,7 @@ export class Room {
   /**
    * Start the game main loop.
    */
-  #startMainLoop(): void {
+  private startMainLoop(): void {
     let previousTime: number = Date.now();
     let roomMainLoopInterval: NodeJS.Timeout;
 
@@ -254,7 +306,7 @@ export class Room {
         this.gameData.p2Score >= GAME_CONSTANT.scoreToWin
       ) {
         clearInterval(roomMainLoopInterval);
-        this.#endGame();
+        this.endGame();
       }
     }, 16.67); // 60 TPS
   }
@@ -262,12 +314,12 @@ export class Room {
   /**
    * End the game
    */
-  #endGame(): void {
+  private endGame(): void {
     if (!this.gameLaunched) {
       throw new Error("Cannot end a game not launched");
     }
     this.gameEnded = true;
-    this.#saveGameSessionData();
+    this.saveGameSessionData();
 
     const gameResultMessage: GameResultMessage = {
       type: "gameResult",
@@ -281,14 +333,14 @@ export class Room {
   /**
    * Save the game result and data in the database
    */
-  #saveGameSessionData(): void {
+  private saveGameSessionData(): void {
     if (!this.gameEnded || !this.player1 || !this.player2) {
       throw new Error("Cannot save the data of a game not ended");
     }
     db.prepare(
       `INSERT INTO match_history (
-		player_a_name, player_b_name, player_a_uuid, player_b_uuid, score_a, score_b, mode
-		) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      player_a_name, player_b_name, player_a_uuid, player_b_uuid, score_a, score_b, mode
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
     ).run(
       this.player1.username,
       this.player2.username,
@@ -304,7 +356,7 @@ export class Room {
    * Sends a message to both players.
    * @param message The message to send.
    */
-  sendMessage(data: GameMessageData, excludedPlayerId?: string[]): void {
+  public sendMessage(data: GameMessageData, excludedPlayerId?: string[]): void {
     const message: GameMessage = {
       type: "game",
       data: data,
@@ -331,7 +383,7 @@ export class Room {
    * Checks if player is still alive (connected).
    * @returns True if player exist and is still connected, otherwise false.
    */
-  isPlayerAlive(player: Player | null | undefined): boolean {
+  public isPlayerAlive(player: Player | null | undefined): boolean {
     return player?.socket.readyState === WebSocket.OPEN;
   }
 }
