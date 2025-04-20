@@ -281,6 +281,7 @@ export class Room {
         this.gameEnded = true;
         const disconnectionMessage: DisconnectionMessage = {
           type: "disconnection",
+          id: this.isPlayerAlive(this.player1) ? 2 : 1
         };
         this.sendMessage(disconnectionMessage);
         this.clear();
@@ -324,7 +325,7 @@ export class Room {
       type: "gameResult",
       p1Score: this.gameData.p1Score,
       p2Score: this.gameData.p2Score,
-      winner: this.gameData.p1Score >= GAME_CONSTANT.scoreToWin ? 1 : 2
+      winner: this.getPlayer(this.gameData.p1Score >= GAME_CONSTANT.scoreToWin ? 1 : 2)?.username ?? ""
     };
     this.sendMessage(gameResultMessage);
 

@@ -1,11 +1,45 @@
-import { SinglePlayer, LocalGame, OnlineGame } from "../game/game";
-import { ButtonMode } from "../components/buttonMode";
-import { navigateTo, isAuthenticated } from "../router";
+import { BackToMenu, SinglePlayer, LocalGame, OnlineGame } from "../game/game";
+import { isAuthenticated } from "../router";
+
+const menuDisplayConfig: Record<string, Record<string, string>> = {
+  "showMenu": {
+    "back to menu": "none",
+    "singleplayer": "inline-block",
+    "local": "inline-block",
+    "online": "inline-block"
+  },
+  "showInGameMenu": {
+    "back to menu": "inline-block",
+    "singleplayer": "none",
+    "local": "none",
+    "online": "none"
+  }
+};
+
+function applyButtonConfig(config: Record<string, string>): void {
+  Object.entries(config).forEach(([id, display] : [string, string]) => {
+    const button: HTMLElement | null = document.getElementById(id);
+    if (button) {
+      button.style.display = display;
+    }
+  });
+}
+
+export function showMenu(): void {
+  applyButtonConfig(menuDisplayConfig["showMenu"]);
+}
+
+export function showInGameMenu(): void {
+  applyButtonConfig(menuDisplayConfig["showInGameMenu"]);
+}
 
 export function listenerButtonGameMode(): void {
-  const modes: string[] = ["singleplayer", "local", "online"];
-  const menu: HTMLElement | null = document.getElementById("menu-mode");
-  if (!menu) return;
+  const modes: string[] = [
+    "back to menu",
+    "singleplayer",
+    "local",
+    "online"
+  ];
 
   modes.forEach((mode: string) => {
     const button: HTMLElement | null = document.getElementById(mode);
@@ -18,31 +52,32 @@ export function listenerButtonGameMode(): void {
         );
         button.classList.remove("bg-indigo-700", "hover:bg-indigo-800");
       }
+
       button.addEventListener("click", () => {
-        if (mode === "online" && !isAuthenticated()) {
-          alert("Vous devez être authentifié pour jouer en ligne.");
-          return;
-        }
-
-        menu.innerHTML = "";
-        const backMenu: HTMLElement = ButtonMode("back to menu");
-        menu.appendChild(backMenu);
-        backMenu.addEventListener("click", () => {
-          navigateTo("/");
-        });
-
         switch (mode) {
+          case "back to menu":
+            BackToMenu();
+            break;
+
           case "singleplayer":
             SinglePlayer();
             break;
+
           case "local":
             LocalGame();
             break;
+
           case "online":
-            OnlineGame();
+            if (isAuthenticated()) {
+              OnlineGame();
+            } else {
+              alert("Vous devez être authentifié pour jouer en ligne.");
+            }
             break;
         }
       });
     }
   });
+
+  showMenu();
 }
