@@ -50,6 +50,7 @@ function updateCameraRotation(camera: BABYLON.ArcRotateCamera, gameMode: GameMod
       break;
     case GameMode.ONLINE:
       // If the player control the 2e paddle, rotate the camera to get the correct view
+      // else do the same as SINGLEPLAYER and LOCAL
       if (playerId === 2) {
         camera.alpha = BABYLON.Tools.ToRadians(0); // Horizontal rotation
         camera.beta = BABYLON.Tools.ToRadians(0); // Vertical rotation
@@ -170,36 +171,6 @@ type PaddleDraggingData = {
 const paddle1DraggingData: PaddleDraggingData = { pointerId: -1, targetX: null };
 const paddle2DraggingData: PaddleDraggingData = { pointerId: -1, targetX: null };
 
-// Function to handle player input and update paddle position
-function handlePlayerInput(paddlePosition: BABYLON.Vector2, paddleMesh: BABYLON.Mesh, keyInput: number, draggingData: PaddleDraggingData, deltaTime: number): void {
-  if (keyInput === 0 && draggingData.pointerId === -1) {
-    return; // No key input, no movement
-  }
-
-  let deltaX: number = 0;
-  if (draggingData.pointerId !== -1) {
-    if (draggingData.targetX !== null) {
-      const computedDelta: number = (draggingData.targetX - paddlePosition.x) * GAME_CONSTANT.paddleSpeed * deltaTime;
-      deltaX = Math.min(Math.max(computedDelta, -1), 1);
-    }
-  } else {
-    deltaX = ((keyInput & 0b1) - ((keyInput >> 1) & 0b1)) * GAME_CONSTANT.paddleSpeed * deltaTime;
-  }
-
-  if (deltaX === 0) {
-    return; // No delta, no movement
-  }
-
-  // Update and clamp paddle positions to prevent them from going out of bounds
-  paddlePosition.x = Math.min(
-    Math.max(paddlePosition.x + deltaX, GAME_CONSTANT.areaMinX + GAME_CONSTANT.paddleHalfWidth),
-    GAME_CONSTANT.areaMaxX - GAME_CONSTANT.paddleHalfWidth,
-  );
-
-  // Update paddle mesh positions
-  paddleMesh.position.x = paddlePosition.x;
-}
-
 // Function to handle player drag input
 function handlePlayerDragInput(pointerInfo: BABYLON.PointerInfo): void {
   if (!engine || !gameData) {
@@ -261,6 +232,36 @@ function handlePlayerDragInput(pointerInfo: BABYLON.PointerInfo): void {
   }
 }
 
+// Function to handle player input and update paddle position
+function handlePlayerInput(paddlePosition: BABYLON.Vector2, paddleMesh: BABYLON.Mesh, keyInput: number, draggingData: PaddleDraggingData, deltaTime: number): void {
+  if (keyInput === 0 && draggingData.pointerId === -1) {
+    return; // No key input, no movement
+  }
+
+  let deltaX: number = 0;
+  if (draggingData.pointerId !== -1) {
+    if (draggingData.targetX !== null) {
+      const computedDelta: number = (draggingData.targetX - paddlePosition.x) * GAME_CONSTANT.paddleSpeed * deltaTime;
+      deltaX = Math.min(Math.max(computedDelta, -1), 1);
+    }
+  } else {
+    deltaX = ((keyInput & 0b1) - ((keyInput >> 1) & 0b1)) * GAME_CONSTANT.paddleSpeed * deltaTime;
+  }
+
+  if (deltaX === 0) {
+    return; // No delta, no movement
+  }
+
+  // Update and clamp paddle positions to prevent them from going out of bounds
+  paddlePosition.x = Math.min(
+    Math.max(paddlePosition.x + deltaX, GAME_CONSTANT.areaMinX + GAME_CONSTANT.paddleHalfWidth),
+    GAME_CONSTANT.areaMaxX - GAME_CONSTANT.paddleHalfWidth,
+  );
+
+  // Update paddle mesh positions
+  paddleMesh.position.x = paddlePosition.x;
+}
+
 // Function to handle AI input
 function handleAIInput(paddlePosition: BABYLON.Vector2, paddleMesh: BABYLON.Mesh, ball: Ball, deltaTime: number): void {
   // TODO: do some weird math to predict the ball position instead of the current one
@@ -277,7 +278,7 @@ function setPaddleSkin(paddle: 1 | 2, skinId: string): void {
     }
     loadPadddleSkin(skinId, scene).then((mesh: BABYLON.Mesh) => {
       if (paddle1Mesh) {
-        paddle1Mesh.dispose(); // Delete the temporary mesh
+        paddle1Mesh.dispose(); // Delete the current mesh
       }
       paddle1Mesh = mesh;
       mesh.position = new BABYLON.Vector3(0, GAME_CONSTANT.paddleDepth / 2, GAME_CONSTANT.paddleDefaultZPosition);
@@ -291,7 +292,7 @@ function setPaddleSkin(paddle: 1 | 2, skinId: string): void {
     }
     loadPadddleSkin(skinId, scene).then((mesh: BABYLON.Mesh) => {
       if (paddle2Mesh) {
-        paddle2Mesh.dispose(); // Delete the temporary mesh
+        paddle2Mesh.dispose(); // Delete the current mesh
       }
       paddle2Mesh = mesh;
       mesh.position = new BABYLON.Vector3(0, GAME_CONSTANT.paddleDepth / 2, -GAME_CONSTANT.paddleDefaultZPosition);
@@ -304,7 +305,7 @@ let playerId: -1 | 1 | 2 = -1; // Player ID (1 or 2) to identify which paddle th
 let localSkinId: string = "";
 
 function handleGameMessages(data: GameMessageData): void {
-  //console.log('Received:', data);
+  //console.log("Received:", data);
   try {
     if (isGameStartedMessage(data)) {
       playerId = data.id; // Set the player ID based on the server response
@@ -381,7 +382,7 @@ function handleGameMessages(data: GameMessageData): void {
       }
     }
   } catch (error) {
-    console.error('An Error occured:', error);
+    console.error("An Error occured:", error);
   }
 }
 
@@ -394,7 +395,7 @@ function unregisterToGameMessages(): void {
 }
 
 // Reset the game and all position
-function ResetGame(): void {
+function resetGame(): void {
   gameData = newGameData();
 
   if (ballMesh) {
@@ -497,53 +498,37 @@ export function initGameEnvironment(): void {
 
   ballMesh.material = ballMaterial;
 
-  // Create the top score display
-  scoreFontTextureTop = new BABYLON.DynamicTexture(
-    "scoreFontTextureTop",
-    { width: 512, height: 128 },
-    scene,
-    true,
-  );
+  // Helper function to create the both score display
+  function createScoreDisplay(suffix: "Top" | "Bottom"): BABYLON.DynamicTexture {
+    const scoreFontTexture = new BABYLON.DynamicTexture(
+      "scoreFontTexture" + suffix,
+      { width: 512, height: 128 },
+      scene,
+      true,
+    );
 
-  const scorePlaneTop: BABYLON.Mesh = BABYLON.MeshBuilder.CreatePlane(
-    "scorePlaneTop",
-    { width: 4, height: 1 },
-    scene
-  );
-  scorePlaneTop.position = new BABYLON.Vector3(3.6, 0, 0);
-  scorePlaneTop.rotation = new BABYLON.Vector3(Math.PI / 2, Math.PI / 2, 0);
+    const scorePlane: BABYLON.Mesh = BABYLON.MeshBuilder.CreatePlane(
+      "scorePlane" + suffix,
+      { width: 4, height: 1 },
+      scene
+    );
+    const side: -1 | 1 = suffix === "Bottom" ? -1 : 1;
+    scorePlane.position = new BABYLON.Vector3(3.6 * side, 0, 0);
+    scorePlane.rotation = new BABYLON.Vector3(Math.PI / 2, -Math.PI / 2 * side, 0);
 
-  const scoreMaterialTop: BABYLON.StandardMaterial = new BABYLON.StandardMaterial("scoreMaterialTop", scene);
-  scoreMaterialTop.specularColor = BABYLON.Color3.Black();
-  scoreMaterialTop.diffuseTexture = scoreFontTextureTop;
-  scoreMaterialTop.opacityTexture = scoreFontTextureTop; // Enable transparency
-  scoreMaterialTop.alpha = 1;
+    const scoreMaterial: BABYLON.StandardMaterial = new BABYLON.StandardMaterial("scoreMaterial" + suffix, scene);
+    scoreMaterial.specularColor = BABYLON.Color3.Black();
+    scoreMaterial.diffuseTexture = scoreFontTexture;
+    scoreMaterial.opacityTexture = scoreFontTexture; // Enable transparency
+    scoreMaterial.alpha = 1;
 
-  scorePlaneTop.material = scoreMaterialTop;
+    scorePlane.material = scoreMaterial;
+    return scoreFontTexture;
+  }
 
-  // Create the bottom score display
-  scoreFontTextureBottom = new BABYLON.DynamicTexture(
-    "scoreFontTextureBottom",
-    { width: 512, height: 128 },
-    scene,
-    true,
-  );
-
-  const scorePlaneBottom: BABYLON.Mesh = BABYLON.MeshBuilder.CreatePlane(
-    "scorePlaneBottom",
-    { width: 4, height: 1 },
-    scene
-  );
-  scorePlaneBottom.position = new BABYLON.Vector3(-3.6, 0, 0);
-  scorePlaneBottom.rotation = new BABYLON.Vector3(Math.PI / 2, -Math.PI / 2, 0);
-
-  const scoreMaterialBottom: BABYLON.StandardMaterial = new BABYLON.StandardMaterial("scoreMaterialBottom", scene);
-  scoreMaterialBottom.specularColor = BABYLON.Color3.Black();
-  scoreMaterialBottom.diffuseTexture = scoreFontTextureBottom;
-  scoreMaterialBottom.opacityTexture = scoreFontTextureBottom; // Enable transparency
-  scoreMaterialBottom.alpha = 1;
-
-  scorePlaneBottom.material = scoreMaterialBottom;
+  // Create the score display
+  scoreFontTextureTop = createScoreDisplay("Top");
+  scoreFontTextureBottom = createScoreDisplay("Bottom");
 
   updateScoreText();
 
@@ -658,7 +643,7 @@ export function BackToMenu(): void {
   updateCameraRotation(camera, currentGameMode);
   unregisterToGameMessages();
 
-  ResetGame();
+  resetGame();
 
   showSkinSelector();
   setPaddleSkin(1, "");
@@ -671,7 +656,7 @@ export function SinglePlayer(): void {
   updateCameraRotation(camera, currentGameMode);
   unregisterToGameMessages();
 
-  ResetGame();
+  resetGame();
 
   hideSkinSelector();
   setPaddleSkin(1, getSelectedSkinId());
@@ -684,7 +669,7 @@ export function LocalGame(): void {
   updateCameraRotation(camera, currentGameMode);
   unregisterToGameMessages();
 
-  ResetGame();
+  resetGame();
 
   hideSkinSelector();
   setPaddleSkin(1, getSelectedSkinId());
@@ -700,7 +685,7 @@ export function OnlineGame(): void {
   currentGameMode = GameMode.ONLINE;
   updateCameraRotation(camera, currentGameMode);
 
-  ResetGame();
+  resetGame();
 
   hideSkinSelector();
   localSkinId = getSelectedSkinId();

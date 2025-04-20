@@ -74,7 +74,6 @@ const routes: Record<string, Route> = {
       listenerButtonGameMode();
 
       BackToMenu();
-      connectToServer();
     },
   },
 };
