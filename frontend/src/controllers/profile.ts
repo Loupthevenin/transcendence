@@ -45,11 +45,15 @@ async function loadUserProfile(): Promise<void> {
     if (avatarElement && data.avatarUrl) {
       avatarElement.src = data.avatarUrl;
     }
-    const nameElement: HTMLElement = document.getElementById("display-name") as HTMLElement;
+    const nameElement: HTMLElement = document.getElementById(
+      "display-name",
+    ) as HTMLElement;
     if (nameElement && data.name) {
       nameElement.textContent = data.name;
     }
-    const emailElement: HTMLElement = document.getElementById("user-email") as HTMLElement;
+    const emailElement: HTMLElement = document.getElementById(
+      "user-email",
+    ) as HTMLElement;
     if (emailElement && data.email) {
       emailElement.textContent = data.email;
     }
@@ -59,7 +63,10 @@ async function loadUserProfile(): Promise<void> {
   }
 }
 
-async function updateUserProfile(updatedData: any, request: string): Promise<any> {
+async function updateUserProfile(
+  updatedData: any,
+  request: string,
+): Promise<any> {
   const token: string | null = localStorage.getItem("auth_token");
   if (!token) {
     alert("Pas de token !");
@@ -84,81 +91,86 @@ async function updateUserProfile(updatedData: any, request: string): Promise<any
 }
 
 function listenerName(): void {
-  const displayName: HTMLElement | null = document.getElementById("display-name");
-  if (displayName) {
-    displayName.addEventListener("click", () => {
-      let currentName: string = displayName.textContent || "";
+  const displayName: HTMLElement | null =
+    document.getElementById("display-name");
+  if (!displayName) return;
+  displayName.addEventListener("click", () => {
+    let currentName: string = displayName.textContent || "";
 
-      const input: HTMLInputElement = document.createElement("input");
-      input.type = "text";
-      input.value = currentName;
-      input.className =
-        "bg-[#2a255c] text-white border border-indigo-500 rounded px-2 py-1";
+    const input: HTMLInputElement = document.createElement("input");
+    input.type = "text";
+    input.value = currentName;
+    input.className =
+      "bg-[#2a255c] text-white border border-indigo-500 rounded px-2 py-1";
 
-      input.addEventListener("blur", async () => {
-        const newName: string = input.value.trim();
-        if (newName && newName !== currentName) {
-          await updateUserProfile({ name: newName }, "name");
-          displayName.textContent = newName;
-        }
-        displayName.classList.remove("hidden");
-        input.remove();
-      });
-
-      displayName.classList.add("hidden");
-      if (displayName.parentNode) {
-        displayName.parentNode.appendChild(input);
+    input.addEventListener("blur", async () => {
+      const newName: string = input.value.trim();
+      if (newName && newName !== currentName) {
+        await updateUserProfile({ name: newName }, "name");
+        displayName.textContent = newName;
       }
-      input.focus();
+      displayName.classList.remove("hidden");
+      input.remove();
     });
-  }
+
+    displayName.classList.add("hidden");
+    if (displayName.parentNode) {
+      displayName.parentNode.appendChild(input);
+    }
+    input.focus();
+  });
 }
 
 function listenerEmail(): void {
-  const emailElement: HTMLElement | null = document.getElementById("user-email");
+  const emailElement: HTMLElement | null =
+    document.getElementById("user-email");
+  if (!emailElement) return;
 
-  if (emailElement) {
-    emailElement.addEventListener("click", () => {
-      const currentEmail: string = emailElement.textContent || "";
-      const input: HTMLInputElement = document.createElement("input");
-      input.type = "email";
-      input.value = currentEmail;
-      input.className = "bg-[#2a255c] text-white border border-indigo-500 rounded px-2 py-1";
-      input.addEventListener("blur", async () => {
-        const newEmail: string = input.value.trim();
-        const emailRegex: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(newEmail)) {
-          alert("veuillez entrer une adresse email valide.");
+  emailElement.addEventListener("click", () => {
+    const currentEmail: string = emailElement.textContent || "";
+    const input: HTMLInputElement = document.createElement("input");
+    input.type = "email";
+    input.value = currentEmail;
+    input.className =
+      "bg-[#2a255c] text-white border border-indigo-500 rounded px-2 py-1";
+    input.addEventListener("blur", async () => {
+      const newEmail: string = input.value.trim();
+      const emailRegex: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(newEmail)) {
+        alert("veuillez entrer une adresse email valide.");
+        emailElement.textContent = currentEmail;
+      } else if (newEmail && newEmail !== currentEmail) {
+        const res = await updateUserProfile({ email: newEmail }, "email");
+        if (res && res.success) {
+          alert(res.message);
+          localStorage.removeItem("auth_token");
+          setTimeout(() => {
+            navigateTo("/auth/login");
+          }, 1500);
+        } else {
+          alert(res?.error);
           emailElement.textContent = currentEmail;
-        } else if (newEmail && newEmail !== currentEmail) {
-          const res = await updateUserProfile({ email: newEmail }, "email");
-          if (res && res.success) {
-            alert(res.message);
-            localStorage.removeItem("auth_token");
-            setTimeout(() => {
-              navigateTo("/auth/login");
-            }, 1500);
-          } else {
-            alert(res?.error);
-            emailElement.textContent = currentEmail;
-          }
         }
-        emailElement.classList.remove("hidden");
-        input.remove();
-      });
-      emailElement.classList.add("hidden");
-      emailElement.parentNode?.appendChild(input);
-      input.focus;
+      }
+      emailElement.classList.remove("hidden");
+      input.remove();
     });
-  }
+    emailElement.classList.add("hidden");
+    emailElement.parentNode?.appendChild(input);
+    input.focus;
+  });
 }
 
 function listenerAvatar(): void {
   const avatarInput: HTMLInputElement = document.getElementById(
     "avatar-upload",
   ) as HTMLInputElement;
-  const avatarWrapper: HTMLDivElement = document.querySelector(".group") as HTMLDivElement;
-  const avatarImg: HTMLImageElement = document.getElementById("user-avatar") as HTMLImageElement;
+  const avatarWrapper: HTMLDivElement = document.querySelector(
+    ".group",
+  ) as HTMLDivElement;
+  const avatarImg: HTMLImageElement = document.getElementById(
+    "user-avatar",
+  ) as HTMLImageElement;
 
   if (!avatarInput || !avatarImg || !avatarWrapper) return;
 
@@ -189,7 +201,8 @@ function listenerAvatar(): void {
 
       const data: any = await res.json();
       if (!res.ok) {
-        const errorMsg: string = data?.message || data?.error || "Error update Avatar";
+        const errorMsg: string =
+          data?.message || data?.error || "Error update Avatar";
         alert(errorMsg);
         return;
       }
@@ -217,19 +230,18 @@ function updateWinRate(winRate: number): void {
   const winRateContainer: HTMLElement | null =
     document.getElementById("win-rate-container");
   const pieChart: HTMLElement | null = document.getElementById("pie-chart");
+  if (!winRateContainer || !pieChart) return;
 
-  if (winRateContainer && pieChart) {
-    winRateContainer.textContent = `${winRate.toFixed(2)}%`;
-    if (winRate >= 50) {
-      winRateContainer.classList.remove("text-red-400");
-      winRateContainer.classList.add("text-green-400");
-    } else {
-      winRateContainer.classList.remove("text-green-400");
-      winRateContainer.classList.add("text-red-400");
-    }
-
-    pieChart.style.background = `conic-gradient(#4caf50 0% ${winRate}%, #f44336 ${winRate}% 100%)`;
+  winRateContainer.textContent = `${winRate.toFixed(2)}%`;
+  if (winRate >= 50) {
+    winRateContainer.classList.remove("text-red-400");
+    winRateContainer.classList.add("text-green-400");
+  } else {
+    winRateContainer.classList.remove("text-green-400");
+    winRateContainer.classList.add("text-red-400");
   }
+
+  pieChart.style.background = `conic-gradient(#4caf50 0% ${winRate}%, #f44336 ${winRate}% 100%)`;
 }
 
 async function loadHistory(): Promise<void> {
@@ -248,7 +260,8 @@ async function loadHistory(): Promise<void> {
 
     const rawData: any = await res.json();
     if (!res.ok) {
-      const errorMsg: string = rawData?.message || "Erreur chargement historique";
+      const errorMsg: string =
+        rawData?.message || "Erreur chargement historique";
       alert(errorMsg);
       if (res.status === 401 || res.status === 403) {
         localStorage.removeItem("auth_token");
@@ -260,7 +273,8 @@ async function loadHistory(): Promise<void> {
     let wins: number = 0;
     let totalMatches: number = 0;
 
-    const historyList: HTMLElement | null = document.getElementById("match-history");
+    const historyList: HTMLElement | null =
+      document.getElementById("match-history");
     if (!historyList) return;
 
     historyList.innerHTML = "";
@@ -300,64 +314,66 @@ async function loadHistory(): Promise<void> {
 }
 
 function listener2FA(container: HTMLElement): void {
-  const button2FA: HTMLElement = container.querySelector(
+  const button2FA: HTMLElement | null = container.querySelector(
     "#activate-2fa",
   ) as HTMLElement;
+  if (!button2FA) return;
 
-  if (button2FA) {
-    button2FA.addEventListener("click", async () => {
-      const token: string | null = localStorage.getItem("auth_token");
-      if (!token) {
-        alert("Pas de token !");
+  button2FA.addEventListener("click", async () => {
+    const token: string | null = localStorage.getItem("auth_token");
+    if (!token) {
+      alert("Pas de token !");
+      return;
+    }
+    try {
+      const res: Response = await fetch("/api/setup-2fa", {
+        method: "GET",
+        headers: {
+          authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data: any = await res.json();
+      if (!res.ok) {
+        const errorMsg: string =
+          data?.message || data?.error || "Error activation 2FA";
+        alert(errorMsg);
         return;
       }
-      try {
-        const res: Response = await fetch("/api/setup-2fa", {
-          method: "GET",
-          headers: {
-            authorization: `Bearer ${token}`,
-          },
-        });
 
-        const data: any = await res.json();
-        if (!res.ok) {
-          const errorMsg: string = data?.message || data?.error || "Error activation 2FA";
-          alert(errorMsg);
-          return;
+      const qrCodeDataURL: any = data.qrCodeDataURL;
+
+      if (qrCodeDataURL) {
+        const qrCodeContainer: Element | null =
+          container.querySelector("#qr-code-container");
+        if (qrCodeContainer) {
+          qrCodeContainer.innerHTML = `<img src="${qrCodeDataURL}" alt="QR Code 2FA" />`;
         }
-
-        const qrCodeDataURL: any = data.qrCodeDataURL;
-
-        if (qrCodeDataURL) {
-          const qrCodeContainer: Element | null =
-            container.querySelector("#qr-code-container");
-          if (qrCodeContainer) {
-            qrCodeContainer.innerHTML = `<img src="${qrCodeDataURL}" alt="QR Code 2FA" />`;
-          }
-        } else {
-          alert("Erreur : QR code non reçu.");
-        }
-      } catch (err) {
-        alert("Erreur lors de l'activation 2FA");
-        console.error(err);
+      } else {
+        alert("Erreur : QR code non reçu.");
       }
-    });
-  }
+    } catch (err) {
+      alert("Erreur lors de l'activation 2FA");
+      console.error(err);
+    }
+  });
 }
 
 function logout(container: HTMLElement): void {
-  const buttonLogout: HTMLElement = container.querySelector("#logout-button") as HTMLElement;
-  if (buttonLogout) {
-    buttonLogout.addEventListener("click", () => {
-      const token: string | null = localStorage.getItem("auth_token");
-      if (!token) {
-        alert("Pas de token !");
-        return;
-      }
-      localStorage.removeItem("auth_token");
-      navigateTo("/");
-    });
-  }
+  const buttonLogout: HTMLElement | null = container.querySelector(
+    "#logout-button",
+  ) as HTMLElement;
+  if (!buttonLogout) return;
+
+  buttonLogout.addEventListener("click", () => {
+    const token: string | null = localStorage.getItem("auth_token");
+    if (!token) {
+      alert("Pas de token !");
+      return;
+    }
+    localStorage.removeItem("auth_token");
+    navigateTo("/");
+  });
 }
 
 export function setupProfile(container: HTMLElement): void {

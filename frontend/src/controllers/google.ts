@@ -2,17 +2,16 @@ import { navigateTo } from "../router";
 
 export function handleGoogle(): void {
   const googleAuth: HTMLElement | null = document.getElementById("google-auth");
+  if (!googleAuth) return;
 
-  if (googleAuth) {
-    googleAuth.addEventListener("click", () => {
-      try {
-        window.location.href = "/api/auth/google";
-      } catch (err) {
-        console.error("Erreur google auth : ", err);
-        alert("Erreur Google OAUTH2");
-      }
-    });
-  }
+  googleAuth.addEventListener("click", () => {
+    try {
+      window.location.href = "/api/auth/google";
+    } catch (err) {
+      console.error("Erreur google auth : ", err);
+      alert("Erreur Google OAUTH2");
+    }
+  });
 }
 
 export function handleGoogleCallback(): void {
