@@ -1,4 +1,4 @@
-import { BABYLON, GAME_CONSTANT, isVector2, GameData } from "./gameElements";
+import { BABYLON, GAME_CONSTANT, isVector2, GameData, GameStats } from "./gameElements";
 
 export interface Ball {
   position: BABYLON.Vector2;
@@ -106,7 +106,7 @@ function handleCollision(collision: CollisionData, ballPos: BABYLON.Vector2, bal
 }
 
 // Ball movement logic
-export function updateBallPosition(gameData: GameData, deltaTime: number, ballMesh?: BABYLON.Mesh): void {
+export function updateBallPosition(gameData: GameData, gameStats: GameStats, deltaTime: number, ballMesh?: BABYLON.Mesh): void {
   const ballPos: BABYLON.Vector2 = gameData.ball.position;
   const ballVel: BABYLON.Vector2 = gameData.ball.velocity;
 
@@ -129,7 +129,7 @@ export function updateBallPosition(gameData: GameData, deltaTime: number, ballMe
       // Sort the array by push all null to the end and sorting by croissant order of CollisionData.time
       allCollisions.sort((colA: CollisionData | null, colB: CollisionData | null) => {
         if (colA === null) return 1;
-        else if (colB === null)  return -1;
+        else if (colB === null) return -1;
         return colA.time < colB.time ? -1 : 1;
       });
       earliestCollision = allCollisions[0];
@@ -137,6 +137,7 @@ export function updateBallPosition(gameData: GameData, deltaTime: number, ballMe
 
     if (earliestCollision && earliestCollision.time <= remainingTime) {
       handleCollision(earliestCollision, ballPos, ballVel);
+      gameStats.ballCollisionsCount++;
       // Update remaining time in the frame
       remainingTime -= earliestCollision.time;
     } else {

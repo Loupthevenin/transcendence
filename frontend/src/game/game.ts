@@ -1,4 +1,10 @@
-import { BABYLON, GAME_CONSTANT, GameData, newGameData, disableSpecularOnMeshes } from "@shared/game/gameElements";
+import {
+  BABYLON,
+  GAME_CONSTANT,
+  GameData, newGameData,
+  GameStats, newGameStats,
+  disableSpecularOnMeshes
+} from "@shared/game/gameElements";
 import { Ball, updateBallPosition, resetBall } from "@shared/game/ball";
 import {
   SkinChangeMessage,    isSkinChangeMessage,
@@ -115,6 +121,7 @@ function updateCameraRotation(camera: BABYLON.ArcRotateCamera, gameMode: GameMod
 }
 
 let gameData: GameData = newGameData();
+let gameStats: GameStats = newGameStats();
 
 // environment
 let ground: BABYLON.GroundMesh;
@@ -432,16 +439,18 @@ function unregisterToGameMessages(): void {
   unsubscribeToMessage("game", handleGameMessages);
 }
 
-function displayGameResult(gameResult: GameResultMessage) {
+function displayGameResult(gameResult: GameResultMessage): void {
   // TODO: display a beautiful game result screen, showing final score
   //       and the winner's nickname with a 'Back to menu' button
+  //       also display the game stats
   console.log(`Game result: ${gameResult.p1Score} / ${gameResult.p2Score}`);
   console.log(`The winner is '${gameResult.winner}'`);
+  console.log("Game Stats :", gameResult.gameStats);
 
   BackToMenu();
 }
 
-function displayGameError(errorMessage: DisconnectionMessage) {
+function displayGameError(errorMessage: DisconnectionMessage): void {
   // TODO: display a screen with {error_type} and a 'Back to menu' button
   if (isDisconnectionMessage(errorMessage)) {
     // error_type : 'the opponent disconnected'
@@ -455,6 +464,7 @@ function displayGameError(errorMessage: DisconnectionMessage) {
 // Reset the game and all position
 function resetGame(): void {
   gameData = newGameData();
+  gameStats = newGameStats();
 
   if (ballMesh) {
     ballMesh.position.x = gameData.ball.position.x;
@@ -477,7 +487,7 @@ function resetGame(): void {
 function gameLoop(deltaTime: number): void {
   const previousP1Score: number = gameData.p1Score;
   const previousP2Score: number = gameData.p2Score;
-  updateBallPosition(gameData, deltaTime, ballMesh);
+  updateBallPosition(gameData, gameStats, deltaTime, ballMesh);
 
   if ( previousP1Score !== gameData.p1Score
     || previousP2Score !== gameData.p2Score) {
@@ -491,7 +501,8 @@ function gameLoop(deltaTime: number): void {
         type: "gameResult",
         p1Score: gameData.p1Score,
         p2Score: gameData.p2Score,
-        winner: gameData.p1Score >= GAME_CONSTANT.scoreToWin ? "Player 1" : "Player 2"
+        winner: gameData.p1Score >= GAME_CONSTANT.scoreToWin ? "Player 1" : "Player 2",
+        gameStats: gameStats
       };
       displayGameResult(gameResult);
     }
