@@ -52,6 +52,35 @@ export function newGameData(): GameData {
     };
 }
 
+export type GameStats = {
+  gameStartTime: number;
+  gameEndTime: number;
+  ballCollisionsCount: number;
+  paddle1DistanceTravelled: number;
+  paddle2DistanceTravelled: number;
+}
+
+export function isGameStats(data: any): data is GameStats {
+  return (
+    data &&
+    typeof data.gameStartTime === "number" &&
+    typeof data.gameEndTime === "number" &&
+    typeof data.ballCollisionsCount === "number" &&
+    typeof data.paddle1DistanceTravelled === "number" &&
+    typeof data.paddle2DistanceTravelled === "number"
+  );
+}
+
+export function newGameStats(): GameStats {
+  return {
+    gameStartTime: 0,
+    gameEndTime: 0,
+    ballCollisionsCount: 0,
+    paddle1DistanceTravelled: 0,
+    paddle2DistanceTravelled: 0
+  };
+}
+
 // For each model, disable specular from the original material if exist
 export function disableSpecularOnMeshes(meshes: BABYLON.AbstractMesh[]): void {
   for (const mesh of meshes) {

@@ -2,6 +2,8 @@ import {
   GAME_CONSTANT,
   GameData,
   newGameData,
+  GameStats,
+  newGameStats,
 } from "../shared/game/gameElements";
 import { resetBall, updateBallPosition } from "../shared/game/ball";
 import {
@@ -25,12 +27,7 @@ let roomCounter: number = 1;
 export function addPlayerToMatchmaking(player: Player): void {
   // Check for an available room of type Matchmaking
   for (const [, room] of rooms) {
-    if (
-      room.getType() === RoomType.Matchmaking &&
-      !room.isFull() &&
-      !room.isGameLaunched() &&
-      !room.isGameEnded()
-    ) {
+    if (room.getType() === RoomType.Matchmaking && room.isJoinable()) {
       if (room.addPlayer(player)) {
         startGameIfRoomFull(room);
         return;
@@ -68,6 +65,7 @@ export class Room {
   private player1: Player | null;
   private player2: Player | null;
   private gameData: GameData;
+  private gameStats: GameStats;
   private gameLaunched: boolean;
   private gameEnded: boolean;
 
@@ -77,6 +75,7 @@ export class Room {
     this.player1 = null; // Start with no players
     this.player2 = null;
     this.gameData = newGameData();
+    this.gameStats = newGameStats();
     this.gameLaunched = false;
     this.gameEnded = false;
   }
@@ -123,6 +122,13 @@ export class Room {
   }
 
   /**
+   * @returns True if the game is joinable, else False.
+   */
+  public isJoinable(): boolean {
+    return !this.isFull() && !this.isGameLaunched() && !this.isGameEnded();
+  }
+
+  /**
    * @param index The index of the owner of the paddle.
    */
   public setPaddlePosition(index: 1 | 2, pos: BABYLON.Vector2): void {
@@ -139,7 +145,7 @@ export class Room {
    * @returns True if the player was added successfully, otherwise false.
    */
   public addPlayer(player: Player): boolean {
-    if (this.gameLaunched || this.gameEnded) {
+    if (!this.isJoinable()) {
       return false; // Cannot add players after the game has started or ended
     }
     if (this.containsPlayer(player)) {
@@ -164,10 +170,13 @@ export class Room {
    * @param player The player to remove.
    */
   public removePlayer(player: Player): void {
+    if (!this.containsPlayer(player)) {
+      return; // Do nothing if the player is not in the room
+    }
     player.room = null; // Clear the player's room reference
-    if (this.player1?.id === player.id) {
+    if (this.player1?.uuid === player.uuid) {
       this.player1 = null;
-    } else if (this.player2?.id === player.id) {
+    } else if (this.player2?.uuid === player.uuid) {
       this.player2 = null;
     }
   }
@@ -207,7 +216,7 @@ export class Room {
    * @returns True if the room contains the player, otherwise false.
    */
   public containsPlayer(player: Player): boolean {
-    return this.player1?.id === player.id || this.player2?.id === player.id;
+    return this.player1?.uuid === player.uuid || this.player2?.uuid === player.uuid;
   }
 
   /**
@@ -216,12 +225,55 @@ export class Room {
    * @returns the index of player (p1 = 1, p2 = 2) or -1 if player isn't in this room.
    */
   public indexOfPlayer(player: Player): -1 | 1 | 2 {
-    if (this.player1?.id === player.id) {
+    if (this.player1?.uuid === player.uuid) {
       return 1;
-    } else if (this.player2?.id === player.id) {
+    } else if (this.player2?.uuid === player.uuid) {
       return 2;
     }
     return -1;
+  }
+
+  /**
+   * Checks if player is still alive (connected).
+   * @returns True if player exist and is still connected, otherwise false.
+   */
+  public isPlayerAlive(player: Player | null | undefined): boolean {
+    return player?.socket?.readyState === WebSocket.OPEN;
+  }
+
+  /**
+   * Notify the room about the player reconnection.
+   */
+  public notifyReconnection(player: Player): void {
+    // TODO: send all message the player didn't receive cause of its disconnection
+  }
+
+  /**
+   * Sends a message to both players.
+   * @param message The message to send.
+   */
+  public sendMessage(data: GameMessageData, excludedPlayerId?: string[]): void {
+    const message: GameMessage = {
+      type: "game",
+      data: data,
+    };
+    const msg: string = JSON.stringify(message);
+
+    if (
+      this.player1 &&
+      this.isPlayerAlive(this.player1) &&
+      !excludedPlayerId?.includes(this.player1.uuid)
+    ) {
+      this.player1!.socket!.send(msg);
+    }
+
+    if (
+      this.player2 &&
+      this.isPlayerAlive(this.player2) &&
+      !excludedPlayerId?.includes(this.player2.uuid)
+    ) {
+      this.player2!.socket!.send(msg);
+    }
   }
 
   /**
@@ -230,34 +282,31 @@ export class Room {
    */
   public startGame(): Promise<void> {
     return new Promise((resolve, reject) => {
-      if (this.gameEnded) {
-        reject("Game already ended");
-      } else if (this.gameLaunched) {
-        reject("Game already started");
-      } else if (!this.isFull()) {
-        reject("Room is not full");
-      }
+      if (this.gameEnded) return reject("Game already ended");
+      if (this.gameLaunched) return reject("Game already started");
+      if (!this.isFull()) return reject("Room is not full");
+      if (!this.isPlayerAlive(this.player1)) return reject("Somehow the player 1 disconnected");
+      if (!this.isPlayerAlive(this.player2)) return reject("Somehow the player 2 disconnected");
 
       this.gameLaunched = true;
 
-      // Initialize game data
+      // Initialize game
       this.gameData = newGameData();
       resetBall(this.gameData.ball);
+      this.gameStats = newGameStats();
+      this.gameStats.gameStartTime = Date.now(); // game start time in milliseconds
 
-      if (this.isPlayerAlive(this.player1)) {
-        const gameStartedMessage: GameMessage = {
-          type: "game",
-          data: { type: "gameStarted", id: 1 } as GameStartedMessage,
-        };
-        this.player1?.socket.send(JSON.stringify(gameStartedMessage));
-      }
-      if (this.isPlayerAlive(this.player2)) {
-        const gameStartedMessage: GameMessage = {
-          type: "game",
-          data: { type: "gameStarted", id: 2 } as GameStartedMessage,
-        };
-        this.player2?.socket.send(JSON.stringify(gameStartedMessage));
-      }
+      const gameStartedMessage1: GameMessage = {
+        type: "game",
+        data: { type: "gameStarted", id: 1 } as GameStartedMessage,
+      };
+      this.player1?.socket?.send(JSON.stringify(gameStartedMessage1));
+
+      const gameStartedMessage2: GameMessage = {
+        type: "game",
+        data: { type: "gameStarted", id: 2 } as GameStartedMessage,
+      };
+      this.player2?.socket?.send(JSON.stringify(gameStartedMessage2));
 
       this.startMainLoop();
       resolve();
@@ -278,14 +327,8 @@ export class Room {
         !this.isPlayerAlive(this.player2)
       ) {
         clearInterval(roomMainLoopInterval);
-        this.gameEnded = true;
-        const disconnectionMessage: DisconnectionMessage = {
-          type: "disconnection",
-          id: this.isPlayerAlive(this.player1) ? 2 : 1
-        };
-        this.sendMessage(disconnectionMessage);
-        this.clear();
-        console.log(`[Room ${this.id}] : A player disconnected midgame`);
+        this.endGame(true);
+        return;
       }
 
       const currentTime: number = Date.now(); // Get the current time
@@ -293,7 +336,7 @@ export class Room {
       previousTime = currentTime; // Update the previous time
 
       // Use the computed deltaTime to update the ball position
-      updateBallPosition(this.gameData, deltaTime);
+      updateBallPosition(this.gameData, this.gameStats, deltaTime);
       const gameDataMessage: GameDataMessage = {
         type: "gameData",
         data: this.gameData,
@@ -314,20 +357,39 @@ export class Room {
   /**
    * End the game
    */
-  private endGame(): void {
+  private endGame(disconnectionOccurred: boolean = false): void {
     if (!this.gameLaunched) {
       throw new Error("Cannot end a game not launched");
     }
     this.gameEnded = true;
-    this.saveGameSessionData();
+    this.gameStats.gameEndTime = Date.now(); // game end time in milliseconds
+
+    let winner: string = "";
+
+    if (disconnectionOccurred) {
+      const disconnectedPlayer: 1 | 2 = this.isPlayerAlive(this.player1) ? 2 : 1;
+      console.log(`[Room ${this.id}] : The player ${disconnectedPlayer} (${this.getPlayer(disconnectedPlayer)?.username ?? ""}) disconnected midgame`);
+      const disconnectionMessage: DisconnectionMessage = {
+        type: "disconnection",
+        id: disconnectedPlayer
+      };
+      this.sendMessage(disconnectionMessage);
+      winner = this.getPlayer(disconnectedPlayer === 1 ? 2 : 1)?.username ?? "";
+    } else {
+      const winnerId: 1 | 2 = (this.gameData.p1Score > this.gameData.p2Score ? 1 : 2);
+      winner = this.getPlayer(winnerId)?.username ?? "";
+    }
 
     const gameResultMessage: GameResultMessage = {
       type: "gameResult",
       p1Score: this.gameData.p1Score,
       p2Score: this.gameData.p2Score,
-      winner: this.getPlayer(this.gameData.p1Score >= GAME_CONSTANT.scoreToWin ? 1 : 2)?.username ?? ""
+      winner: winner,
+      gameStats: this.gameStats
     };
     this.sendMessage(gameResultMessage);
+
+    this.saveGameSessionData();
 
     this.clear();
   }
@@ -336,56 +398,28 @@ export class Room {
    * Save the game result and data in the database
    */
   private saveGameSessionData(): void {
-    if (!this.gameEnded || !this.player1 || !this.player2) {
+    if (!this.gameEnded) {
       throw new Error("Cannot save the data of a game not ended");
     }
+    if (!this.player1) {
+      console.warn("[WARNING] missing player 1, this should not happen !");
+    }
+    if (!this.player2) {
+      console.warn("[WARNING] missing player 2, this should not happen !");
+    }
+
     db.prepare(
       `INSERT INTO match_history (
       player_a_name, player_b_name, player_a_uuid, player_b_uuid, score_a, score_b, mode
       ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
     ).run(
-      this.player1.username,
-      this.player2.username,
-      this.player1.id,
-      this.player2.id,
+      this.player1?.username ?? "", // put empty string by default if the player is null
+      this.player2?.username ?? "",
+      this.player1?.uuid ?? "",
+      this.player2?.uuid ?? "",
       this.gameData.p1Score,
       this.gameData.p2Score,
       RoomType[this.type],
     );
-  }
-
-  /**
-   * Sends a message to both players.
-   * @param message The message to send.
-   */
-  public sendMessage(data: GameMessageData, excludedPlayerId?: string[]): void {
-    const message: GameMessage = {
-      type: "game",
-      data: data,
-    };
-    const msg: string = JSON.stringify(message);
-
-    if (
-      this.player1 &&
-      this.isPlayerAlive(this.player1) &&
-      !excludedPlayerId?.includes(this.player1.id)
-    ) {
-      this.player1?.socket.send(msg);
-    }
-    if (
-      this.player2 &&
-      this.isPlayerAlive(this.player2) &&
-      !excludedPlayerId?.includes(this.player2.id)
-    ) {
-      this.player2?.socket.send(msg);
-    }
-  }
-
-  /**
-   * Checks if player is still alive (connected).
-   * @returns True if player exist and is still connected, otherwise false.
-   */
-  public isPlayerAlive(player: Player | null | undefined): boolean {
-    return player?.socket.readyState === WebSocket.OPEN;
   }
 }

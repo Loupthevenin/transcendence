@@ -20,8 +20,14 @@ import { UserPayload } from "../types/UserPayload";
 import { User } from "../types/authTypes";
 import db from "../db/db";
 
-// email : Player
+type DisconnectedPlayer = {
+  disconnectionTime: number;
+  player: Player;
+}
+
+// key = uuid
 const players: Map<string, Player> = new Map();
+const recentlyDisconnectedPlayers: Map<string, DisconnectedPlayer> = new Map();
 
 // Extract the params from the request
 function extractUrlParams(request: IncomingMessage): { [key: string]: string } {
@@ -36,11 +42,6 @@ function extractUrlParams(request: IncomingMessage): { [key: string]: string } {
   return params;
 }
 
-export function getPlayersByEmail(email: string): Player | null {
-  const target: Player | undefined = players.get(email);
-  return target ? target : null;
-}
-
 // WebSocket setup
 export function setupWebSocket(): WebSocketServer {
   const wss: WebSocketServer = new WebSocket.Server({ noServer: true });
@@ -50,7 +51,7 @@ export function setupWebSocket(): WebSocketServer {
     let isAuthentificated: boolean = false;
     const params: { [key: string]: string } = extractUrlParams(request);
 
-    let playerEmail: string = "";
+    let playerUUID: string = "";
     let playerUsername: string = "";
 
     const token: string = params.token;
@@ -58,16 +59,16 @@ export function setupWebSocket(): WebSocketServer {
     if (token) {
       try {
         decoded = jwt.verify(token, JWT_SECRET) as UserPayload;
-        if (decoded && decoded.email && typeof decoded.email === "string") {
-          console.log(`User connected: ${decoded.email}`);
+        if (decoded && decoded.uuid && typeof decoded.uuid === "string") {
+          console.log(`User connected: ${decoded.uuid}`);
 
           const user: User = db
-            .prepare("SELECT * FROM users WHERE email = ?")
-            .get(decoded.email) as User;
+            .prepare("SELECT * FROM users WHERE uuid = ?")
+            .get(decoded.uuid) as User;
 
           if (user) {
             isAuthentificated = true;
-            playerEmail = user.email;
+            playerUUID = user.uuid;
             playerUsername = user.name;
           }
         }
@@ -75,47 +76,49 @@ export function setupWebSocket(): WebSocketServer {
     }
 
     // If there is no token or the token is invalid, refuse the connection
-    if (!isAuthentificated || !playerEmail || !playerUsername) {
+    if (!isAuthentificated || !playerUUID || !playerUsername) {
       const errorMsg: ErrorMessage = {
         type: "error",
         msg: "Token is missing or invalid",
-        errorType: ERROR_TYPE.CONNECTION_REFUSED,
+        errorType: ERROR_TYPE.CONNECTION_REFUSED
       };
       ws.send(JSON.stringify(errorMsg));
       ws.close(); // Close the connection after sending the error message
       return;
     }
 
-    // Check if there player is already connected with this account
-    if (getPlayersByEmail(playerEmail) !== null) {
+    // Check if player is already connected with this account
+    if (players.has(playerUUID)) {
       const errorMsg: ErrorMessage = {
         type: "error",
         msg: "Already connected",
-        errorType: ERROR_TYPE.CONNECTION_REFUSED,
+        errorType: ERROR_TYPE.CONNECTION_REFUSED
       };
       ws.send(JSON.stringify(errorMsg));
       ws.close(); // Close the connection after sending the error message
       return;
     }
 
-    if (!decoded) {
-      console.error("decoded is null");
-      ws.close();
-      return;
+    let player: Player;
+
+    if (recentlyDisconnectedPlayers.has(playerUUID)) {
+      player = recentlyDisconnectedPlayers.get(playerUUID)!.player;
+      recentlyDisconnectedPlayers.delete(playerUUID);
+      player.socket = ws;
+      console.log(`[Reconnection] Player reconnected: ${player.username} (${playerUUID})`);
+      player.room?.notifyReconnection(player);
+    } else {
+      player = {
+        uuid: playerUUID,
+        username: playerUsername,
+        socket: ws,
+        room: null,
+        paddleSkinId: "",
+      };
+      console.log(`New player connected: ${player.username} (${playerUUID})`);
     }
-    const playerId: string = decoded.uuid;
 
-    const player: Player = {
-      id: playerId,
-      email: playerEmail,
-      username: playerUsername,
-      socket: ws,
-      room: null,
-      paddleSkinId: "",
-    };
-
-    players.set(playerEmail, player);
-    console.log(`New player connected: ${player.username} (${playerEmail})`);
+    players.set(playerUUID, player);
 
     ws.on("message", (message: string) => {
       //console.log("Received data:", JSON.parse(message));
@@ -129,7 +132,7 @@ export function setupWebSocket(): WebSocketServer {
         const data: GameMessageData = msgData.data;
 
         if (isMatchmakingMessage(data)) {
-          console.log(`[Matchmaking] : ${player.username} (${playerEmail})`);
+          console.log(`[Matchmaking] : ${player.username} (${playerUUID})`);
           addPlayerToMatchmaking(player);
         } else if (isSkinChangeMessage(data)) {
           if (player.room) {
@@ -142,7 +145,7 @@ export function setupWebSocket(): WebSocketServer {
                   id: data.id,
                   skinId: player.paddleSkinId,
                 };
-                player.room.sendMessage(skinChangeMessage, [playerId]);
+                player.room.sendMessage(skinChangeMessage, [playerUUID]);
               }
             }
           }
@@ -168,11 +171,42 @@ export function setupWebSocket(): WebSocketServer {
 
     ws.on("close", () => {
       clearInterval(pingInterval); // Clear ping interval on disconnect
-      player.room?.removePlayer(player);
-      players.delete(playerEmail);
-      console.log(`Player disconnected: ${player.username} (${playerEmail})`);
+      player.socket = null;
+      if (player.room) {
+        // Remove the player from the room if the game hasn't started
+        if (!player.room.isGameLaunched()) {
+          player.room?.removePlayer(player);
+        }
+      }
+      players.delete(playerUUID);
+      console.log(`Player disconnected: ${player.username} (${playerUUID})`);
+
+      recentlyDisconnectedPlayers.set(playerUUID, {
+          disconnectionTime: Date.now(),
+          player: player
+        } as DisconnectedPlayer
+      );
     });
   });
 
   return wss;
 }
+
+const DISCONNECT_TIMEOUT: number = 30 * 1000; // 30 seconds in milliseconds
+
+setInterval(() => {
+  const currentTime: number = Date.now(); // Get the current time
+
+  // Iterate over the recentlyDisconnectedPlayers map
+  recentlyDisconnectedPlayers.forEach((disconnectedPlayer: DisconnectedPlayer, uuid: string) => {
+    const timeSinceDisconnection: number = currentTime - disconnectedPlayer.disconnectionTime;
+
+    // Check if the disconnection duration exceeds the timeout
+    if (timeSinceDisconnection > DISCONNECT_TIMEOUT) {
+      // Remove the player from the recentlyDisconnectedPlayers map
+      disconnectedPlayer.player.room?.removePlayer(disconnectedPlayer.player);
+      recentlyDisconnectedPlayers.delete(uuid);
+      console.log(`Player with UUID ${uuid} removed after ${timeSinceDisconnection} ms.`);
+    }
+  });
+}, 1000); // Run the interval every second

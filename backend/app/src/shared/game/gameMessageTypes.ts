@@ -1,4 +1,4 @@
-import { isVector2, GameData, isGameData } from "./gameElements";
+import { isVector2, GameData, isGameData, GameStats, isGameStats } from "./gameElements";
 
 export type SkinChangeMessage = {
   readonly type: "skinId";
@@ -60,6 +60,7 @@ export type GameResultMessage = {
   p1Score: number; // The score of the player 1
   p2Score: number; // The score of the player 2
   winner: string; // The winner's nickname
+  gameStats: GameStats; // Stats about the game
 };
 
 export function isGameResultMessage(data: any): data is GameResultMessage {
@@ -68,7 +69,9 @@ export function isGameResultMessage(data: any): data is GameResultMessage {
     data.type === "gameResult" &&
     typeof data.p1Score === "number" &&
     typeof data.p2Score === "number" &&
-    typeof data.winner === "string"
+    typeof data.winner === "string" &&
+    typeof data.gameStats === "object" &&
+    isGameStats(data.gameStats)
   );
 }
 
@@ -81,7 +84,7 @@ export function isDisconnectionMessage(data: any): data is DisconnectionMessage 
   return (
     data &&
     data.type === "disconnection"
-    //&& (data.id === 1 || data.id === 2)
+    && (data.id === 1 || data.id === 2)
   );
 }
 

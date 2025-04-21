@@ -2,10 +2,9 @@ import { WebSocket } from "ws";
 import { Room } from "./room";
 
 export type Player = {
-  id: string;
-  email: string;
+  uuid: string;
   username: string;
-  socket: WebSocket;
+  socket: WebSocket | null;
   room: Room | null;
   paddleSkinId: string;
 }
