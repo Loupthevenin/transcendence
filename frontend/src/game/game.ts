@@ -361,6 +361,10 @@ function setPaddleSkin(paddle: 1 | 2, skinId: string): void {
 let playerId: -1 | 1 | 2 = -1; // Player ID (1 or 2) to identify which paddle the player controls
 let localSkinId: string = "";
 
+// Variables to limit the websocket messages send to the server in the main loop
+let lastSendTime: number = 0;
+const sendRateInterval: number = 1000 / 60; // 60 times per seconds
+
 function handleGameMessages(data: GameMessageData): void {
   //console.log("Received:", data);
   try {
@@ -501,7 +505,7 @@ function gameLoop(deltaTime: number): void {
         type: "gameResult",
         p1Score: gameData.p1Score,
         p2Score: gameData.p2Score,
-        winner: gameData.p1Score >= GAME_CONSTANT.scoreToWin ? "Player 1" : "Player 2",
+        winner: gameData.p1Score > gameData.p2Score ? "Player 1" : "Player 2",
         gameStats: gameStats
       };
       displayGameResult(gameResult);
@@ -719,11 +723,17 @@ export function initGameEnvironment(): void {
               deltaTime
             )
 
-            const paddleData: PaddlePositionMessage = {
-              type: "paddlePosition",
-              position: new BABYLON.Vector2(pos.x, pos.y)
-            };
-            sendMessage("game", paddleData);
+            const now: number = performance.now();
+            if (now - lastSendTime >= sendRateInterval) {
+              lastSendTime = now;
+
+              // Send the local paddle position to the server
+              const paddleData: PaddlePositionMessage = {
+                type: "paddlePosition",
+                position: new BABYLON.Vector2(pos.x, pos.y)
+              };
+              sendMessage("game", paddleData);
+            }
           }
         }
         break;
