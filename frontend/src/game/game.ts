@@ -17,7 +17,7 @@ import {
 } from "@shared/game/gameMessageTypes";
 import { showSkinSelector, hideSkinSelector, getSelectedSkinId } from "./skinSelector";
 import { createDefaultSkin, loadPadddleSkin } from "./paddleSkinLoader";
-import { subscribeToMessage, unsubscribeToMessage, isConnected, sendMessage } from "../websocketManager";
+import { subscribeTo, unsubscribeTo, isConnected, sendMessage } from "../websocketManager";
 import { GameMessageData } from "@shared/messageType"
 import { LoadingHandler } from "./loadingHandler";
 import { showMenu, showInGameMenu } from "../controllers/gameMode";
@@ -436,11 +436,11 @@ function handleGameMessages(data: GameMessageData): void {
 }
 
 function registerToGameMessages(): void {
-  subscribeToMessage("game", handleGameMessages);
+  subscribeTo("game", handleGameMessages);
 }
 
 function unregisterToGameMessages(): void {
-  unsubscribeToMessage("game", handleGameMessages);
+  unsubscribeTo("game", handleGameMessages);
 }
 
 function displayGameResult(gameResult: GameResultMessage): void {
