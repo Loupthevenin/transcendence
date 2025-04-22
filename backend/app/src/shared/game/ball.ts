@@ -18,7 +18,7 @@ const ballAreaMaxX: number = GAME_CONSTANT.areaMaxX - GAME_CONSTANT.ballRadius;
 const ballPaddleCollisionMarginX: number = GAME_CONSTANT.paddleHalfWidth + GAME_CONSTANT.ballRadius;
 const ballPaddleCollisionMarginY: number = GAME_CONSTANT.paddleHalfDepth + GAME_CONSTANT.ballRadius;
 
-type CollisionData = { axis: "x" | "y", time: number };
+type CollisionData = { axis: "x" | "y", time: number, isPaddle: boolean };
 
 function calculateCollisionForPaddle(ballPos: BABYLON.Vector2, ballVel: BABYLON.Vector2, paddlePos: BABYLON.Vector2): CollisionData | null {
   // --- X-Axis Collision ---
@@ -69,9 +69,9 @@ function calculateCollisionForPaddle(ballPos: BABYLON.Vector2, ballVel: BABYLON.
   if (collisionTimeX === Infinity && collisionTimeY === Infinity) {
     return null; // No collision will occur.
   } else if (collisionTimeX <= collisionTimeY) {
-    return { axis: "x", time: collisionTimeX };
+    return { axis: "x", time: collisionTimeX, isPaddle: true };
   } else {
-    return { axis: "y", time: collisionTimeY };
+    return { axis: "y", time: collisionTimeY, isPaddle: true };
   }
 }
 
@@ -85,7 +85,7 @@ function calculateCollisionForWalls(ballPos: BABYLON.Vector2, ballVel: BABYLON.V
   }
 
   if (collisionTimeX !== null) {
-    return { axis: "x", time: collisionTimeX };
+    return { axis: "x", time: collisionTimeX, isPaddle: false };
   }
 
   return null; // No collision
@@ -137,6 +137,9 @@ export function updateBallPosition(gameData: GameData, gameStats: GameStats, del
 
     if (earliestCollision && earliestCollision.time <= remainingTime) {
       handleCollision(earliestCollision, ballPos, ballVel);
+      if (earliestCollision.isPaddle) {
+        gameStats.ballExchangesCount++;
+      }
       gameStats.ballCollisionsCount++;
       // Update remaining time in the frame
       remainingTime -= earliestCollision.time;

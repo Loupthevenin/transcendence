@@ -55,6 +55,7 @@ export function newGameData(): GameData {
 export type GameStats = {
   gameStartTime: number;
   gameEndTime: number;
+  ballExchangesCount: number;
   ballCollisionsCount: number;
   paddle1DistanceTravelled: number;
   paddle2DistanceTravelled: number;
@@ -65,6 +66,7 @@ export function isGameStats(data: any): data is GameStats {
     data &&
     typeof data.gameStartTime === "number" &&
     typeof data.gameEndTime === "number" &&
+    typeof data.ballExchangesCount === "number" &&
     typeof data.ballCollisionsCount === "number" &&
     typeof data.paddle1DistanceTravelled === "number" &&
     typeof data.paddle2DistanceTravelled === "number"
@@ -75,6 +77,7 @@ export function newGameStats(): GameStats {
   return {
     gameStartTime: 0,
     gameEndTime: 0,
+    ballExchangesCount: 0,
     ballCollisionsCount: 0,
     paddle1DistanceTravelled: 0,
     paddle2DistanceTravelled: 0
