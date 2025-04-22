@@ -5,11 +5,13 @@ module.exports = {
   output: {
     filename: "bundle.js",
     path: path.resolve(__dirname, "public"), // Output directory
+    publicPath: "/",
+    chunkFilename: "[name].bundle.js",
   },
   resolve: {
     extensions: [".js", ".ts", ".tsx"], // Resolve JavaScript and TypeScript files
     alias: {
-      "@shared": path.resolve(__dirname, "./src/shared/") // Path to shared folder
+      "@shared": path.resolve(__dirname, "./src/shared/"), // Path to shared folder
     },
   },
   module: {
@@ -22,7 +24,7 @@ module.exports = {
       {
         test: /\.css$/, // Process CSS files
         use: ["style-loader", "css-loader"], // Process CSS with Tailwind
-      }
+      },
     ],
   },
   devServer: {
