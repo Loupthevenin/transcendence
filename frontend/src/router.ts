@@ -83,7 +83,7 @@ const routes: Record<string, Route> = {
   },
 };
 
-export function isAuthenticated(): boolean {
+export function hasTokenStored(): boolean {
   return !!localStorage.getItem("auth_token");
 }
 
@@ -104,7 +104,7 @@ export async function renderRoute(): Promise<void> {
   }
 
   if (
-    isAuthenticated() &&
+    hasTokenStored() &&
     (path === "/auth/login" || path === "/auth/signup")
   ) {
     navigateTo("/");

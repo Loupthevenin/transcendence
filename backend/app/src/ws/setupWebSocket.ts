@@ -14,7 +14,7 @@ import {
   GameMessageData,
   isGameMessage,
 } from "../shared/messageType";
-import ERROR_TYPE from "../shared/errorType";
+import ERROR_TYPE, { ERROR_MSG } from "../shared/errorType";
 import { JWT_SECRET } from "../config";
 import { UserPayload } from "../types/UserPayload";
 import { User } from "../types/authTypes";
@@ -79,7 +79,7 @@ export function setupWebSocket(): WebSocketServer {
     if (!isAuthentificated || !playerUUID || !playerUsername) {
       const errorMsg: ErrorMessage = {
         type: "error",
-        msg: "Token is missing or invalid",
+        msg: ERROR_MSG.TOKEN_MISSING_OR_INVALID,
         errorType: ERROR_TYPE.CONNECTION_REFUSED
       };
       ws.send(JSON.stringify(errorMsg));
@@ -91,7 +91,7 @@ export function setupWebSocket(): WebSocketServer {
     if (players.has(playerUUID)) {
       const errorMsg: ErrorMessage = {
         type: "error",
-        msg: "Already connected",
+        msg: ERROR_MSG.ALREADY_CONNECTED,
         errorType: ERROR_TYPE.CONNECTION_REFUSED
       };
       ws.send(JSON.stringify(errorMsg));

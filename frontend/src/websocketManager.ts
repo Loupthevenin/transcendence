@@ -1,4 +1,4 @@
-import ERROR_TYPE from "@shared/errorType";
+import ERROR_TYPE, { ERROR_MSG } from "@shared/errorType";
 import { isErrorMessage, ChatMessageData, isChatMessage, GameMessageData, isGameMessage } from "@shared/messageType"
 
 // Define a mapping between event types and their corresponding data types
@@ -114,6 +114,10 @@ export function connectToServer(): void {
           if (data.errorType) {
             console.error(`[WebSocket] Received an error (${data.errorType}):`, data.msg);
             if (data.errorType === ERROR_TYPE.CONNECTION_REFUSED) {
+              if (data.msg == ERROR_MSG.TOKEN_MISSING_OR_INVALID) {
+                localStorage.removeItem("auth_token");
+                // TODO: refresh current page
+              }
               autoReconnectEnabled = false;
             }
           } else {
