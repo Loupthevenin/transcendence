@@ -3,6 +3,8 @@ import { isErrorMessage, ChatMessageData, isChatMessage, GameMessageData, isGame
 
 // Define a mapping between event types and their corresponding data types
 type MessageEventMap = {
+  'onConnected': undefined;
+  'onDisconnected': undefined;
   'game': GameMessageData;
   'chat': ChatMessageData;
 };
@@ -14,7 +16,7 @@ type CallbackFunction<T extends keyof MessageEventMap> = (data: MessageEventMap[
 const callbacks: { [K in keyof MessageEventMap]?: Array<CallbackFunction<K>>; } = {};
 
 // Subscribe function
-export function subscribeToMessage<K extends keyof MessageEventMap>(msgEventType: K, callback: CallbackFunction<K>): void {
+export function subscribeTo<K extends keyof MessageEventMap>(msgEventType: K, callback: CallbackFunction<K>): void {
   if (!callbacks[msgEventType]) {
     callbacks[msgEventType] = [];
   }
@@ -22,7 +24,7 @@ export function subscribeToMessage<K extends keyof MessageEventMap>(msgEventType
 }
 
 // Unsubscribe function
-export function unsubscribeToMessage<K extends keyof MessageEventMap>(msgEventType: K, callback: CallbackFunction<K>): void {
+export function unsubscribeTo<K extends keyof MessageEventMap>(msgEventType: K, callback: CallbackFunction<K>): void {
   if (callbacks[msgEventType]) {
     // Find the index of the callback and remove it in place
     const index: number = callbacks[msgEventType].indexOf(callback);
@@ -92,6 +94,7 @@ export function connectToServer(): void {
     // Handle connection open
     socket.onopen = () => {
       console.log("[WebSocket] Connected to ", wsUrl);
+      notifySubscribers("onConnected", undefined);
 
       // Stop reconnection attempts once connected
       if (reconnectInterval !== null) {
@@ -136,6 +139,8 @@ export function connectToServer(): void {
     socket.onclose = () => {
       socket = null;
       console.log("[WebSocket] connection closed.");
+      notifySubscribers("onDisconnected", undefined);
+
       if (autoReconnectEnabled) {
         reconnect();
       }
