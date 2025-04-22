@@ -5,7 +5,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   const token: string | null = localStorage.getItem("auth_token");
 
   if (!token) {
-    navigateTo("/auth/login");
     return;
   }
 
