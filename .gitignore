@@ -1,14 +1,28 @@
+# Ignore node_modules
 node_modules
 **/node_modules
+
+# Ignore package-lock.json
 package-lock.json
 **/package-lock.json
 
+# Ignore backend compilated file
 dist
 **/dist
 
-.env
-.vscode
-
+# Ignore frontend compilated file
 frontend/public/output.css
 frontend/public/**/*.js
 frontend/src/shared
+
+# Ignore all files in the avatars directory except default.svg
+backend/app/assets/avatars/*
+!backend/app/assets/avatars/default.svg
+
+# Ignore environment files
+.env
+
+# others
+.vscode
+logs/
+*.log
