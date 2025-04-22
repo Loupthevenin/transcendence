@@ -6,4 +6,7 @@ export default async function (
   opts: FastifyPluginOptions,
 ): Promise<void> {
   app.addHook("onRequest", requireToken);
+  app.get("/", async (request, reply) => {
+    return reply.send({ ok: true });
+  });
 }
