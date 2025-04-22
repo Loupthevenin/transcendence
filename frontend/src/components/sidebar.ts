@@ -1,4 +1,4 @@
-import { isAuthenticated } from "../router";
+import { hasTokenStored } from "../router";
 
 interface SidebarItem {
   label: string;
@@ -8,7 +8,7 @@ interface SidebarItem {
 function getSidebarItems(): SidebarItem[] {
   let items: SidebarItem[];
 
-  if (isAuthenticated()) {
+  if (hasTokenStored()) {
     items = [
       { label: "Accueil", route: "/" },
       { label: "Chat", route: "/chat" },

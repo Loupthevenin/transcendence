@@ -1,5 +1,5 @@
 import { BackToMenu, SinglePlayer, LocalGame, OnlineGame } from "../game/game";
-import { isAuthenticated } from "../router";
+import { isConnected } from "../websocketManager";
 
 const menuDisplayConfig: Record<string, Record<string, string>> = {
   "showMenu": {
@@ -44,7 +44,7 @@ export function listenerButtonGameMode(): void {
   modes.forEach((mode: string) => {
     const button: HTMLElement | null = document.getElementById(mode);
     if (button) {
-      if (mode === "online" && !isAuthenticated()) {
+      if (mode === "online" && !isConnected()) {
         button.classList.add(
           "bg-gray-400",
           "cursor-not-allowed",
@@ -68,7 +68,7 @@ export function listenerButtonGameMode(): void {
             break;
 
           case "online":
-            if (isAuthenticated()) {
+            if (isConnected()) {
               OnlineGame();
             } else {
               alert("Vous devez être authentifié pour jouer en ligne.");
