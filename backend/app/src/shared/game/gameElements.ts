@@ -19,6 +19,28 @@ export function isVector2(data: any): data is BABYLON.Vector2 {
   );
 }
 
+/**
+ * Scales the magnitude of Vector2 by a given factor.
+ * @param scaleFactor The factor by which to multiply the magnitude.
+ * @param min Optional minimum magnitude value.
+ * @param max Optional maximum magnitude value.
+ * @returns This Vector2 with the scaled magnitude.
+ */
+export function scaleMagnitude(vector: BABYLON.Vector2, scaleFactor: number, min?: number, max?: number): void {
+  const currentMagnitude: number = vector.length();
+  if (currentMagnitude === 0) {
+    return; // Prevent division by zero
+  }
+
+  let newMagnitude: number = currentMagnitude * scaleFactor;
+
+  // Apply clamping if min or max is provided
+  if (min !== undefined) newMagnitude = Math.max(newMagnitude, min);
+  if (max !== undefined) newMagnitude = Math.min(newMagnitude, max);
+
+  vector.normalize().scaleInPlace(newMagnitude);
+}
+
 export type GameData = {
   ball: Ball;
   paddle1Position: BABYLON.Vector2;

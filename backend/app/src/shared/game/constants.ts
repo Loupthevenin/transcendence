@@ -16,8 +16,9 @@ export const paddleDefaultZPosition: number = areaWidth / 2 - 0.6;
 
 // Ball
 export const ballRadius: number = 0.1; // The default radius of the ball
-export const ballSpeed: number = 5; // The default speed of the ball
-export const ballSpeedFactor: number = 1.1; // Factor to increase ball speed
+export const ballDefaultSpeed: number = 4; // The default speed of the ball
+export const ballMaxSpeed: number = 10; // The maximum possible speed of the ball
+export const ballSpeedFactor: number = 1.05; // Factor to increase ball speed
 
 // Others
 export const scoreToWin: number = 11; // the score to win the game
