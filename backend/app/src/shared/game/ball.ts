@@ -1,4 +1,4 @@
-import { BABYLON, GAME_CONSTANT, isVector2, GameData, GameStats } from "./gameElements";
+import { BABYLON, GAME_CONSTANT, isVector2, scaleMagnitude, GameData, GameStats } from "./gameElements";
 
 export interface Ball {
   position: BABYLON.Vector2;
@@ -28,14 +28,14 @@ function calculateCollisionForPaddle(ballPos: BABYLON.Vector2, ballVel: BABYLON.
     let t: number;
     if (ballVel.x > 0) {
       // Moving right: collision when ball center reaches paddle's right boundary.
-      t = ((paddlePos.x - ballPaddleCollisionMarginX) - ballPos.x) / (ballVel.x * GAME_CONSTANT.ballSpeed);
+      t = ((paddlePos.x - ballPaddleCollisionMarginX) - ballPos.x) / ballVel.x;
     } else { 
       // Moving left: collision when ball center reaches paddle's left boundary.
-      t = (ballPos.x - (paddlePos.x + ballPaddleCollisionMarginX)) / (Math.abs(ballVel.x) * GAME_CONSTANT.ballSpeed);
+      t = (ballPos.x - (paddlePos.x + ballPaddleCollisionMarginX)) / Math.abs(ballVel.x);
     }
     if (t >= 0) {
       // Predict the ball's y position at collision time.
-      const futureY: number = ballPos.y + ballVel.y * GAME_CONSTANT.ballSpeed * t;
+      const futureY: number = ballPos.y + ballVel.y * t;
       // Check if the predicted y position falls within the paddle's vertical bounds.
       if (futureY >= (paddlePos.y - ballPaddleCollisionMarginY) && futureY <= (paddlePos.y + ballPaddleCollisionMarginY)) {
         collisionTimeX = t;
@@ -50,14 +50,14 @@ function calculateCollisionForPaddle(ballPos: BABYLON.Vector2, ballVel: BABYLON.
     let t: number;
     if (ballVel.y > 0) {
       // Moving up: collision when ball center reaches paddle's top boundary.
-      t = ((paddlePos.y - ballPaddleCollisionMarginY) - ballPos.y) / (ballVel.y * GAME_CONSTANT.ballSpeed);
+      t = ((paddlePos.y - ballPaddleCollisionMarginY) - ballPos.y) / ballVel.y;
     } else {
       // Moving down: collision when ball center reaches paddle's bottom boundary.
-      t = (ballPos.y - (paddlePos.y + ballPaddleCollisionMarginY)) / (Math.abs(ballVel.y) * GAME_CONSTANT.ballSpeed);
+      t = (ballPos.y - (paddlePos.y + ballPaddleCollisionMarginY)) / Math.abs(ballVel.y);
     }
     if (t >= 0) {
       // Predict the ball's x position at collision time.
-      const futureX: number = ballPos.x + ballVel.x * GAME_CONSTANT.ballSpeed * t;
+      const futureX: number = ballPos.x + ballVel.x * t;
       // Check if the predicted x position falls within the paddle's horizontal bounds.
       if (futureX >= (paddlePos.x - ballPaddleCollisionMarginX) && futureX <= (paddlePos.x + ballPaddleCollisionMarginX)) {
         collisionTimeY = t;
@@ -79,9 +79,9 @@ function calculateCollisionForWalls(ballPos: BABYLON.Vector2, ballVel: BABYLON.V
   let collisionTimeX: number | null = null;
 
   if (ballVel.x < 0 && ballPos.x > ballAreaMinX) {
-    collisionTimeX = (ballPos.x - ballAreaMinX) / (Math.abs(ballVel.x) * GAME_CONSTANT.ballSpeed);
+    collisionTimeX = (ballPos.x - ballAreaMinX) / Math.abs(ballVel.x);
   } else if (ballVel.x > 0 && ballPos.x < ballAreaMaxX) {
-    collisionTimeX = (ballAreaMaxX - ballPos.x) / (Math.abs(ballVel.x) * GAME_CONSTANT.ballSpeed);
+    collisionTimeX = (ballAreaMaxX - ballPos.x) / Math.abs(ballVel.x);
   }
 
   if (collisionTimeX !== null) {
@@ -97,8 +97,8 @@ function handleCollision(collision: CollisionData, ballPos: BABYLON.Vector2, bal
     collision.time = 1e-6;
   }
   // Update position to collision point
-  ballPos.x += ballVel.x * GAME_CONSTANT.ballSpeed * collision.time;
-  ballPos.y += ballVel.y * GAME_CONSTANT.ballSpeed * collision.time;
+  ballPos.x += ballVel.x * collision.time;
+  ballPos.y += ballVel.y * collision.time;
 
   // Reverse velocity
   if (collision.axis === "x") ballVel.x *= -1;
@@ -139,14 +139,19 @@ export function updateBallPosition(gameData: GameData, gameStats: GameStats, del
       handleCollision(earliestCollision, ballPos, ballVel);
       if (earliestCollision.isPaddle) {
         gameStats.ballExchangesCount++;
+        if (gameStats.ballExchangesCount % 5 === 0) {
+          scaleMagnitude(ballVel, GAME_CONSTANT.ballSpeedFactor, 0, GAME_CONSTANT.ballMaxSpeed);
+        }
       }
+
       gameStats.ballCollisionsCount++;
+
       // Update remaining time in the frame
       remainingTime -= earliestCollision.time;
     } else {
       // No more collisions, update position normally
-      ballPos.x += ballVel.x * GAME_CONSTANT.ballSpeed * remainingTime;
-      ballPos.y += ballVel.y * GAME_CONSTANT.ballSpeed * remainingTime;
+      ballPos.x += ballVel.x * remainingTime;
+      ballPos.y += ballVel.y * remainingTime;
       break;
     }
   }
@@ -190,6 +195,6 @@ export function resetBall(ball: Ball): void {
         && angle <= excludedAngle + margin;
   }))
 
-  ball.velocity.x = Math.cos(angle);
-  ball.velocity.y = Math.sin(angle);
+  ball.velocity.x = Math.cos(angle) * GAME_CONSTANT.ballDefaultSpeed;
+  ball.velocity.y = Math.sin(angle) * GAME_CONSTANT.ballDefaultSpeed;
 }
