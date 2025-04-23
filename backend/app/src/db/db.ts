@@ -15,7 +15,7 @@ db.exec(`
 	twofa_secret TEXT,
 	is_verified BOOLEAN DEFAULT FALSE,
 	google_id TEXT,
-	avatar_url TEXT DEFAULT 'https://upload.wikimedia.org/wikipedia/commons/2/2c/Default_pfp.svg'
+	avatar_url TEXT DEFAULT '/api/textures/avatar-default.svg'
 )
 `);
 

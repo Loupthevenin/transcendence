@@ -3,6 +3,7 @@ import path from "path";
 export const DOMAIN_NAME: string = process.env.DOMAIN_NAME as string;
 export const PORT: number = Number(process.env.PORT);
 
+export const DB_DIR: string = process.env.DB_DIR as string;
 export const DB_PATH: string = process.env.DB_PATH as string;
 
 export const JWT_SECRET: string = process.env.JWT_SECRET as string;

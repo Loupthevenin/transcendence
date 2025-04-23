@@ -1,3 +1,5 @@
+name: Transcendance
+
 services:
   nginx:
     container_name: nginx
@@ -25,7 +27,7 @@ services:
     image: backend
     build: ./backend
     volumes:
-      - sqlite_data:$DB_DIR
+      - db_data:$DB_DIR
       - ./backend/app:/var/app
       - ./frontend:/var/www/html
     networks:
@@ -34,7 +36,13 @@ services:
       - .env
 
 volumes:
-  sqlite_data:
+  db_data:
+    name: db_data
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ./db
 
 networks:
   transcendance:

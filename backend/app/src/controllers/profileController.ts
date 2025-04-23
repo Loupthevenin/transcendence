@@ -12,6 +12,7 @@ import { MatchHistoryRow, MatchHistory } from "../types/profileTypes";
 import {
   DOMAIN_NAME,
   PORT,
+  DB_DIR,
   JWT_SECRET,
   EMAIL_USER,
   EMAIL_PASS,
@@ -169,19 +170,15 @@ export async function setAvatar(request: FastifyRequest, reply: FastifyReply) {
   const ext: string = path.extname(data.filename);
   const hashedEmail: string = crypto.createHash("sha256").update(email).digest("hex");
   const filename: string = `${hashedEmail}${ext}`;
-  const uploadPath: string = path.join(
-    __dirname,
-    "..",
-    "..",
-    "assets",
-    "avatars",
-    filename,
-  );
+  const uploadDir: string = path.join(DB_DIR, "avatars");
 
+  fs.mkdirSync(uploadDir, { recursive: true });
+
+  const uploadPath: string = path.join(uploadDir, filename);
   const writeStream: fs.WriteStream = fs.createWriteStream(uploadPath);
   await data.file.pipe(writeStream);
 
-  const avatarUrl: string = `https://${DOMAIN_NAME}:${PORT}/api/uploads/${filename}`;
+  const avatarUrl: string = `https://${DOMAIN_NAME}:${PORT}/api/avatars/${filename}`;
 
   db.prepare("UPDATE users SET avatar_url = ? WHERE email = ?").run(
     avatarUrl,
