@@ -8,7 +8,9 @@ import fastifyStatic from "@fastify/static";
 import fastifyMultipart from "@fastify/multipart";
 import fastifyOauth2 from "@fastify/oauth2";
 import path from "path";
-import { WebSocketServer } from "ws";
+import { IncomingMessage } from "http";
+import { Stream } from "stream";
+import { WebSocketServer, WebSocket } from "ws";
 import { setupWebSocket } from "./ws/setupWebSocket";
 import {
   DOMAIN_NAME,
@@ -16,6 +18,7 @@ import {
   DB_DIR,
   GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET,
+  NODE_ENV
 } from "./config";
 
 // Create a Fastify serveur
@@ -52,17 +55,20 @@ app.register(fastifyOauth2, {
 } as any);
 
 // Routes
+app.register(require("./routes/google"), { prefix: "/api/auth" });
 app.register(require("./routes/login"), { prefix: "/api/login" });
 app.register(require("./routes/signup"), { prefix: "/api/signup" });
 app.register(require("./routes/verifyEmail"), { prefix: "/api/verify-email" });
+app.register(require("./routes/verifyToken"), { prefix: "/api/verify-token" });
 app.register(require("./routes/verify2fa"), { prefix: "/api/verify-2fa" });
 app.register(require("./routes/setup2fa"), { prefix: "/api/setup-2fa" });
-app.register(require("./routes/db"), { prefix: "/api/db/" });
+app.register(require("./routes/profile"), { prefix: "/api/profile" });
 app.register(require("./routes/models"), { prefix: "/api/models" });
 app.register(require("./routes/textures"), { prefix: "/api/textures" });
-app.register(require("./routes/profile"), { prefix: "/api/profile" });
-app.register(require("./routes/google"), { prefix: "/api/auth" });
-app.register(require("./routes/verifyToken"), { prefix: "/api/verify-token" });
+
+if (NODE_ENV === "development") {
+  app.register(require("./routes/db"), { prefix: "/api/db/" });
+}
 
 // Error handling
 app.setErrorHandler(
@@ -82,9 +88,9 @@ app.listen(
     const wss: WebSocketServer = setupWebSocket();
 
     // Integrate WebSocket with Fastify
-    app.server.on("upgrade", (request, socket, head) => {
-      wss.handleUpgrade(request, socket, head, (ws: any) => {
-        wss.emit("connection", ws, request);
+    app.server.on("upgrade", (request: IncomingMessage, socket: Stream.Duplex, head: Buffer) => {
+      wss.handleUpgrade(request, socket, head, (client: WebSocket) => {
+        wss.emit("connection", client, request);
       });
     });
   },
