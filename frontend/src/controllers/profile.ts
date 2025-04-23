@@ -1,18 +1,5 @@
 import { navigateTo } from "../router";
-
-interface UserProfile {
-  avatarUrl: string;
-  name: string;
-  email: string;
-}
-
-interface MatchHistory {
-  date: string;
-  mode: string;
-  opponent: string;
-  result: "win" | "lose";
-  score: string;
-}
+import { UserProfile, MatchHistory } from "./types";
 
 async function loadUserProfile(): Promise<void> {
   const token: string | null = localStorage.getItem("auth_token");
@@ -232,6 +219,13 @@ function updateWinRate(winRate: number): void {
   const pieChart: HTMLElement | null = document.getElementById("pie-chart");
   if (!winRateContainer || !pieChart) return;
 
+  if (winRate < 0) {
+    winRateContainer.textContent = "Aucun match joué";
+    winRateContainer.classList.remove("text-green-400", "text-red-400");
+    pieChart.style.background = "#444";
+    return;
+  }
+
   winRateContainer.textContent = `${winRate.toFixed(2)}%`;
   if (winRate >= 50) {
     winRateContainer.classList.remove("text-red-400");
@@ -305,7 +299,7 @@ async function loadHistory(): Promise<void> {
       historyList.appendChild(li);
     });
 
-    const winRate: number = totalMatches > 0 ? (wins / totalMatches) * 100 : 0;
+    const winRate: number = totalMatches > 0 ? (wins / totalMatches) * 100 : -1;
     updateWinRate(winRate);
   } catch (err) {
     console.error("Error history : ", err);
