@@ -4,7 +4,6 @@ import jwt from "jsonwebtoken";
 import { Player } from "../game/player";
 import { addPlayerToMatchmaking } from "../game/room";
 import {
-  SkinChangeMessage,
   isSkinChangeMessage,
   isPaddlePositionMessage,
   isMatchmakingMessage,
@@ -140,12 +139,7 @@ export function setupWebSocket(): WebSocketServer {
             if (data.id === player.room.indexOfPlayer(player)) {
               player.paddleSkinId = data.skinId;
               if (player.room.isGameLaunched()) {
-                const skinChangeMessage: SkinChangeMessage = {
-                  type: "skinId",
-                  id: data.id,
-                  skinId: player.paddleSkinId,
-                };
-                player.room.sendMessage(skinChangeMessage, [playerUUID]);
+                player.room.notifySkinUpdate(player);
               }
             }
           }

@@ -1,3 +1,5 @@
+import db from "../db/db";
+import { v4 as uuidv4 } from "uuid";
 import {
   GAME_CONSTANT,
   GameData,
@@ -7,6 +9,7 @@ import {
 } from "../shared/game/gameElements";
 import { resetBall, updateBallPosition } from "../shared/game/ball";
 import {
+  SkinChangeMessage,
   GameDataMessage,
   GameStartedMessage,
   GameResultMessage,
@@ -14,7 +17,8 @@ import {
 } from "../shared/game/gameMessageTypes";
 import { GameMessage, GameMessageData } from "../shared/messageType";
 import { Player } from "./player";
-import db from "../db/db";
+import { ReplayData, newReplayData } from "../shared/game/replayData";
+import { snapshotReplayData, saveReplayDataToFile } from "./replayController";
 
 export enum RoomType {
   Matchmaking,
@@ -66,6 +70,7 @@ export class Room {
   private player2: Player | null;
   private gameData: GameData;
   private gameStats: GameStats;
+  private replayData: ReplayData;
   private gameLaunched: boolean;
   private gameEnded: boolean;
 
@@ -76,6 +81,7 @@ export class Room {
     this.player2 = null;
     this.gameData = newGameData();
     this.gameStats = newGameStats();
+    this.replayData = newReplayData();
     this.gameLaunched = false;
     this.gameEnded = false;
   }
@@ -242,6 +248,29 @@ export class Room {
   }
 
   /**
+   * Notify the room about a player skin update.
+   */
+  public notifySkinUpdate(player: Player): void {
+    const playerId: -1 | 1 | 2 = this.indexOfPlayer(player);
+    if (playerId === -1) {
+      return;
+    }
+
+    if (playerId === 1) {
+      this.replayData.p1Skin = player.paddleSkinId;
+    } else if (playerId === 2) {
+      this.replayData.p2Skin = player.paddleSkinId;
+    }
+
+    const skinChangeMessage: SkinChangeMessage = {
+      type: "skinId",
+      id: playerId,
+      skinId: player.paddleSkinId,
+    };
+    this.sendMessage(skinChangeMessage, [player.uuid]);
+  }
+
+  /**
    * Notify the room about the player reconnection.
    */
   public notifyReconnection(player: Player): void {
@@ -252,7 +281,7 @@ export class Room {
    * Sends a message to both players.
    * @param message The message to send.
    */
-  public sendMessage(data: GameMessageData, excludedPlayerId?: string[]): void {
+  public sendMessage(data: GameMessageData, excludedPlayerUUID?: string[]): void {
     const message: GameMessage = {
       type: "game",
       data: data,
@@ -262,7 +291,7 @@ export class Room {
     if (
       this.player1 &&
       this.isPlayerAlive(this.player1) &&
-      !excludedPlayerId?.includes(this.player1.uuid)
+      !excludedPlayerUUID?.includes(this.player1.uuid)
     ) {
       this.player1!.socket!.send(msg);
     }
@@ -270,7 +299,7 @@ export class Room {
     if (
       this.player2 &&
       this.isPlayerAlive(this.player2) &&
-      !excludedPlayerId?.includes(this.player2.uuid)
+      !excludedPlayerUUID?.includes(this.player2.uuid)
     ) {
       this.player2!.socket!.send(msg);
     }
@@ -295,6 +324,11 @@ export class Room {
       resetBall(this.gameData.ball);
       this.gameStats = newGameStats();
       this.gameStats.gameStartTime = Date.now(); // game start time in milliseconds
+
+      // Initialize replay data
+      this.replayData.p1Skin = this.player1!.paddleSkinId;
+      this.replayData.p2Skin = this.player2!.paddleSkinId;
+      snapshotReplayData(this.replayData, 0, this.gameData);
 
       const gameStartedMessage1: GameMessage = {
         type: "game",
@@ -342,6 +376,10 @@ export class Room {
         data: this.gameData,
       };
       this.sendMessage(gameDataMessage);
+
+      // Snapshot the current game data
+      const elapsedTimeSinceStart: number = currentTime - this.gameStats.gameStartTime;
+      snapshotReplayData(this.replayData, elapsedTimeSinceStart, this.gameData);
 
       // Stop the game if one player reaches enought points
       if (
@@ -398,24 +436,25 @@ export class Room {
    * Save the game result and data in the database
    */
   private saveGameSessionData(): void {
-    if (!this.gameEnded) {
-      throw new Error("Cannot save the data of a game not ended");
-    }
-    if (!this.player1) {
-      console.warn("[WARNING] missing player 1, this should not happen !");
-    }
-    if (!this.player2) {
-      console.warn("[WARNING] missing player 2, this should not happen !");
-    }
+    if (!this.gameEnded) throw new Error("Cannot save the data of a game not ended");
+    if (!this.player1) console.warn("[WARNING] missing player 1, this should not happen !");
+    if (!this.player2) console.warn("[WARNING] missing player 2, this should not happen !");
 
+    const uuid: string = uuidv4();
+    // Save the match replay
+    this.replayData.gameDuration = this.gameStats.gameEndTime - this.gameStats.gameStartTime;
+    saveReplayDataToFile(this.replayData, uuid);
+
+    // Save the match result in the database
     db.prepare(
       `INSERT INTO match_history (
-      player_a_name, player_b_name, player_a_uuid, player_b_uuid, score_a, score_b, mode
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      uuid, player_a_name, player_b_name, player_a_uuid, player_b_uuid, score_a, score_b, mode
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     ).run(
+      uuid,
       this.player1?.username ?? "", // put empty string by default if the player is null
       this.player2?.username ?? "",
-      this.player1?.uuid ?? "",
+      this.player1?.uuid ?? "", // same for uuid
       this.player2?.uuid ?? "",
       this.gameData.p1Score,
       this.gameData.p2Score,
