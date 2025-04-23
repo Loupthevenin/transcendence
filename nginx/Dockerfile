@@ -1,4 +1,5 @@
 FROM debian:bullseye
+LABEL project="transcendence"
 
 RUN apt-get update -y --fix-missing
 RUN apt-get install -y --fix-missing nginx openssl
