@@ -94,7 +94,7 @@ export async function verifyEmail(
       decoded.email,
     );
 
-    return reply.send({ message: "Email vérifié !" });
+    return reply.redirect(`https://${DOMAIN_NAME}:${PORT}/`);
   } catch (err) {
     return reply.code(400).send({ message: "Lien invalide ou expiré." });
   }
