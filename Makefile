@@ -11,18 +11,17 @@ build:
 up: build
 	@$(DOCKER) up
 
+down:
+	@$(DOCKER) down
+
 start:
+	mkdir -p ./db
 	@$(DOCKER) up -d
 
 stop:
 	@$(DOCKER) stop
 
-down:
-	@$(DOCKER) down
-
-restart:
-	@$(DOCKER) stop
-	@$(DOCKER) up
+restart: stop start
 
 logs:
 	@$(DOCKER) logs
@@ -39,9 +38,9 @@ clean:
 
 fclean: clean
 	@if [ "$(shell id -u)" != "0" ]; then \
-        echo "Please run with sudo to use rm"; \
-        exit 1; \
-    fi
+		echo "Please run with sudo to use rm"; \
+		exit 1; \
+	fi
 
 	rm -rf backend/app/node_modules frontend/node_modules 2>/dev/null || true
 	rm -rf backend/app/package-lock.json frontend/package-lock.json 2>/dev/null || true
@@ -52,7 +51,7 @@ fclean: clean
 
 re: fclean all
 
-.PHONY: all up start stop restart logs down status ps clean fclean re
+.PHONY: all build up down start stop restart logs ps status clean fclean re
 
 # delete all cache : docker system prune -a
 
