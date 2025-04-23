@@ -1,6 +1,7 @@
+import { FastifyRequest, FastifyReply } from "fastify";
 import path from "path";
 import fs from "fs";
-import { PositionData, ScoreData, ReplayData } from "../shared/game/replayData";
+import { PositionData, ScoreData, RawReplayData, isRawReplayData, ReplayData } from "../shared/game/replayData";
 import { GameData } from "../shared/game/gameElements"
 import { DB_DIR } from "../config";
 
@@ -70,7 +71,7 @@ export function saveReplayDataToFile(replayData: ReplayData, filename: string): 
 }
 
 // Load the ReplayData from filename
-export function loadReplayDataFromFile(filename: string): ReplayData | null {
+function loadRawReplayDataFromFile(filename: string): RawReplayData | null {
   const filePath: string = path.join(saveDir, `${filename}.replay`);
 
   // Check if the file exists
@@ -83,25 +84,34 @@ export function loadReplayDataFromFile(filename: string): ReplayData | null {
     const parsedData: any = JSON.parse(jsonData);
 
     // Check file content validity
-    if (
-      parsedData &&
-      typeof parsedData.gameDuration === "number" &&
-      typeof parsedData.p1Score === "string" &&
-      typeof parsedData.p2Score === "string"
-    ) {
-      const replayData: ReplayData = {
-        gameDuration: parsedData.gameDuration,
-        p1Skin: parsedData.p1Skin,
-        p2Skin: parsedData.p2Skin,
-        positionData: new Map<number, PositionData>(parsedData.positionData),
-        scoreData: new Map<number, ScoreData>(parsedData.scoreData),
-      };
-
-      return replayData;
+    if (isRawReplayData(parsedData)) {
+      return parsedData;
     }
     return null;
   } catch (error) {
     console.error(`Error loading replay data (${filePath}) : ${error}`);
     return null;
+  }
+}
+
+export function getMatchIdData(request: FastifyRequest, reply: FastifyReply) {
+  if (!request.params || !(request.params as any).match_id) {
+    reply.status(400).send({ error: "Empty request" });
+    return;
+  }
+
+  try {
+    const { match_id } = request.params as { match_id: string };
+
+    const replayData: RawReplayData | null = loadRawReplayDataFromFile(match_id);
+
+    if (!replayData) {
+      reply.status(404).send({ error: "Match not found" });
+      return;
+    }
+
+    reply.send(JSON.stringify(replayData));
+  } catch (error) {
+    reply.status(500).send({ error: "Internal server error" });
   }
 }

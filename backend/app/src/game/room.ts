@@ -18,7 +18,7 @@ import {
 import { GameMessage, GameMessageData } from "../shared/messageType";
 import { Player } from "./player";
 import { ReplayData, newReplayData } from "../shared/game/replayData";
-import { snapshotReplayData, saveReplayDataToFile } from "./replayController";
+import { snapshotReplayData, saveReplayDataToFile } from "../controllers/replayController";
 
 export enum RoomType {
   Matchmaking,

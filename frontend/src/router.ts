@@ -6,6 +6,7 @@ import { TwoFAView } from "./views/2fa";
 import { ProfileView } from "./views/profile";
 import { Generate404Page } from "./views/404";
 import { TournamentView } from "./views/tournaments";
+import { ReplayView } from "./views/replay";
 
 import { initSideBarNavigation } from "./controllers/navbar";
 import { handleGoogleCallback } from "./controllers/google";
@@ -37,6 +38,13 @@ const routes: Record<string, Route> = {
       mod.setupSignupHandlers(root);
     },
   },
+  "/auth/verify-2fa": {
+    view: TwoFAView,
+    setup: async (root: HTMLElement) => {
+      const mod = await import("./controllers/2fa");
+      mod.setupTwoFAHandlers(root);
+    },
+  },
   "/profile": {
     view: () => MainLayout(ProfileView()),
     setup: async (root: HTMLElement) => {
@@ -53,11 +61,12 @@ const routes: Record<string, Route> = {
       mod.tournamentsHandlers(root);
     },
   },
-  "/auth/verify-2fa": {
-    view: TwoFAView,
-    setup: async (root: HTMLElement) => {
-      const mod = await import("./controllers/2fa");
-      mod.setupTwoFAHandlers(root);
+  "/replay": {
+    view: () => MainLayout(ReplayView()),
+    setup: async () => {
+      const mod = await import("./controllers/replay");
+      initSideBarNavigation();
+      mod.setupReplay();
     },
   },
   "/callback": {
