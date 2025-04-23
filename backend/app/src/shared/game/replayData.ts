@@ -2,12 +2,42 @@ export type Vector2 = [number, number];
 export type PositionData = [Vector2, Vector2, Vector2];
 export type ScoreData = Vector2;
 
+export type RawReplayData = {
+  gameDuration: number;
+  p1Skin: string;
+  p2Skin: string;
+  positionData: [number, PositionData][];
+  scoreData: [number, ScoreData][];
+}
+
+export function isRawReplayData(data: any): data is RawReplayData {
+  return (
+    data &&
+    typeof data.gameDuration === "number" &&
+    typeof data.p1Skin === "string" &&
+    typeof data.p2Skin === "string" &&
+    typeof data.positionData === "object" &&
+    typeof data.scoreData === "object"
+  );
+}
+
 export type ReplayData = {
   gameDuration: number;
   p1Skin: string;
   p2Skin: string;
   positionData: Map<number, PositionData>;
   scoreData: Map<number, ScoreData>;
+}
+
+export function isReplayData(data: any): data is ReplayData {
+  return (
+    data &&
+    typeof data.gameDuration === "number" &&
+    typeof data.p1Skin === "string" &&
+    typeof data.p2Skin === "string" &&
+    data.positionData instanceof Map &&
+    data.scoreData instanceof Map
+  );
 }
 
 export function newReplayData(): ReplayData {
@@ -17,6 +47,16 @@ export function newReplayData(): ReplayData {
     p2Skin: "",
     positionData: new Map<number, PositionData>(),
     scoreData: new Map<number, ScoreData>()
+  };
+}
+
+export function convertRawReplayData(raw: RawReplayData): ReplayData {
+  return {
+    gameDuration: raw.gameDuration,
+    p1Skin: raw.p1Skin,
+    p2Skin: raw.p2Skin,
+    positionData: new Map<number, PositionData>(raw.positionData),
+    scoreData: new Map<number, ScoreData>(raw.scoreData),
   };
 }
 
