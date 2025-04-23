@@ -1,4 +1,5 @@
 FROM node:23-bookworm
+LABEL project="transcendence"
 
 RUN apt update -y && apt upgrade -y && apt install -y \
     tini \
