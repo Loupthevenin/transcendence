@@ -15,9 +15,8 @@ frontend/public/output.css
 frontend/public/**/*.js
 frontend/src/shared
 
-# Ignore all files in the avatars directory except default.svg
-backend/app/assets/avatars/*
-!backend/app/assets/avatars/default.svg
+# Ignore the database
+db/
 
 # Ignore environment files
 .env

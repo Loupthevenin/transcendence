@@ -5,6 +5,7 @@ DOCKER = $(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE)
 all: up
 
 build:
+	mkdir -p ./db
 	@$(DOCKER) build
 
 up: build

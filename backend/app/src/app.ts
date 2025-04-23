@@ -13,6 +13,7 @@ import { setupWebSocket } from "./ws/setupWebSocket";
 import {
   DOMAIN_NAME,
   PORT,
+  DB_DIR,
   GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET,
 } from "./config";
@@ -31,8 +32,8 @@ app.register(fastifyMultipart, {
 
 // Serve Avatars for front
 app.register(fastifyStatic, {
-  root: path.join(__dirname, "..", "assets", "avatars"),
-  prefix: "/api/uploads/",
+  root: path.join(DB_DIR, "avatars"),
+  prefix: "/api/avatars/",
 });
 
 // Google OAUTH
