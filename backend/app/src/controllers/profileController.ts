@@ -178,7 +178,7 @@ export async function setAvatar(request: FastifyRequest, reply: FastifyReply) {
   const writeStream: fs.WriteStream = fs.createWriteStream(uploadPath);
   await data.file.pipe(writeStream);
 
-  const avatarUrl: string = `https://${DOMAIN_NAME}:${PORT}/api/avatars/${filename}`;
+  const avatarUrl: string = `/api/avatars/${filename}`;
 
   db.prepare("UPDATE users SET avatar_url = ? WHERE email = ?").run(
     avatarUrl,
