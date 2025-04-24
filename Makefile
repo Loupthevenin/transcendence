@@ -5,7 +5,7 @@ DOCKER = $(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE)
 all: up
 
 build:
-	mkdir -p ./db
+	@mkdir -p ./db
 	@$(DOCKER) build
 
 up: build
@@ -15,7 +15,7 @@ down:
 	@$(DOCKER) down
 
 start:
-	mkdir -p ./db
+	@mkdir -p ./db
 	@$(DOCKER) up -d
 
 stop:
