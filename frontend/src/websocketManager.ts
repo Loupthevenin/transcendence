@@ -3,11 +3,16 @@ import { isErrorMessage, ChatMessageData, isChatMessage, GameMessageData, isGame
 
 // Define a mapping between event types and their corresponding data types
 type MessageEventMap = {
-  'onConnected': undefined;
-  'onDisconnected': undefined;
-  'game': GameMessageData;
-  'chat': ChatMessageData;
+  "onConnected": undefined;
+  "onDisconnected": undefined;
+  "game": GameMessageData;
+  "chat": ChatMessageData;
 };
+
+// Create a type that includes only keys where the mapped type is NOT undefined
+type SendableMessageTypes = {
+  [K in keyof MessageEventMap]: MessageEventMap[K] extends undefined ? never : K
+}[keyof MessageEventMap];
 
 // Callback function type that uses the event map
 type CallbackFunction<T extends keyof MessageEventMap> = (data: MessageEventMap[T]) => void;
@@ -55,7 +60,7 @@ export function isConnected(): boolean {
   return socket !== null && socket.readyState === WebSocket.OPEN;
 }
 
-export function sendMessage<K extends keyof MessageEventMap>(msgEventType: K, data: MessageEventMap[K]): void {
+export function sendMessage<K extends SendableMessageTypes>(msgEventType: K, data: MessageEventMap[K]): void {
   if (!isConnected()) {
     return;
   }
