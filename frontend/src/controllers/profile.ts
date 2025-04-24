@@ -307,18 +307,45 @@ async function loadHistory(): Promise<void> {
   }
 }
 
-function listener2FA(container: HTMLElement): void {
+async function listener2FA(container: HTMLElement): Promise<void> {
   const button2FA: HTMLElement | null = container.querySelector(
     "#activate-2fa",
   ) as HTMLElement;
-  if (!button2FA) return;
+  const buttonDisable2FA: HTMLElement | null = container.querySelector(
+    "#deactivate-2fa",
+  ) as HTMLElement;
+  const qrCodeContainer: HTMLElement | null = container.querySelector(
+    "#qr-code-container",
+  ) as HTMLElement;
+  if (!button2FA || !buttonDisable2FA || !qrCodeContainer) return;
 
-  button2FA.addEventListener("click", async () => {
-    const token: string | null = localStorage.getItem("auth_token");
-    if (!token) {
-      alert("Pas de token !");
+  const token: string | null = localStorage.getItem("auth_token");
+  if (!token) {
+    alert("Pas de token !");
+    return;
+  }
+
+  try {
+    const resStatus: Response = await fetch("/api/setup-2fa/check-2fa-status", {
+      method: "GET",
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const dataStatus: any = await resStatus.json();
+    if (!resStatus.ok) {
+      const errorMsg: string =
+        dataStatus?.message || dataStatus?.error || "Error check 2FA";
+      alert(errorMsg);
       return;
     }
+    if (dataStatus.require2FA) {
+      button2FA.classList.add("hidden");
+      buttonDisable2FA.classList.remove("hidden");
+    }
+  } catch (err) {
+    console.error(err);
+  }
+
+  button2FA.addEventListener("click", async () => {
     try {
       const res: Response = await fetch("/api/setup-2fa", {
         method: "GET",
@@ -336,18 +363,47 @@ function listener2FA(container: HTMLElement): void {
       }
 
       const qrCodeDataURL: any = data.qrCodeDataURL;
-
       if (qrCodeDataURL) {
-        const qrCodeContainer: Element | null =
-          container.querySelector("#qr-code-container");
         if (qrCodeContainer) {
           qrCodeContainer.innerHTML = `<img src="${qrCodeDataURL}" alt="QR Code 2FA" />`;
+          button2FA.classList.add("hidden");
+          buttonDisable2FA.classList.remove("hidden");
         }
       } else {
-        alert("Erreur : QR code non reçu.");
+        alert(data?.message);
       }
     } catch (err) {
       alert("Erreur lors de l'activation 2FA");
+      console.error(err);
+    }
+  });
+
+  buttonDisable2FA.addEventListener("click", async () => {
+    try {
+      const resDisable: Response = await fetch("/api/setup-2fa/disable2fa", {
+        method: "GET",
+        headers: {
+          authorization: `Bearer ${token}`,
+        },
+      });
+
+      const dataDisable: any = await resDisable.json();
+      if (!resDisable.ok) {
+        const errorMsg: string =
+          dataDisable?.message || dataDisable?.error || "Error disable 2FA";
+        alert(errorMsg);
+        return;
+      }
+
+      if (dataDisable.success) {
+        alert(dataDisable?.message);
+        button2FA.classList.remove("hidden");
+        buttonDisable2FA.classList.add("hidden");
+        qrCodeContainer.innerHTML = "";
+      } else {
+        alert(dataDisable?.message);
+      }
+    } catch (err) {
       console.error(err);
     }
   });
