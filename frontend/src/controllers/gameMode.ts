@@ -1,5 +1,6 @@
 import { BackToMenu, SinglePlayer, LocalGame, OnlineGame } from "../game/game";
 import { subscribeTo, unsubscribeTo, isConnected } from "../websocketManager";
+import nodeRemovalObserver from "../utils/nodeRemovalObserver";
 
 const menuDisplayConfig: Record<string, Record<string, string>> = {
   "showMenu": {
@@ -55,31 +56,19 @@ export function listenerButtonGameMode(): void {
   showMenu();
 }
 
-// Setup the event and the MutationObserver of the online button
-function setupOnlineButton(button: HTMLElement | null): void {
+// Setup the event and the nodeRemovalObserver of the online button
+function setupOnlineButton(button: HTMLElement): void {
   // Define the default appearance
   updateOnlineButtonAppearance();
 
   subscribeTo("onConnected", updateOnlineButtonAppearance);
   subscribeTo("onDisconnected", updateOnlineButtonAppearance);
 
-  // Create MutationObserver to detect when the online button is removed
-  const observer: MutationObserver = new MutationObserver((mutations: MutationRecord[]) => {
-    for (let mutation of mutations) {
-      for (let node of mutation.removedNodes) {
-        if (node.contains(button)) {
-          // Unsubscribe from the event since the button has been removed
-          unsubscribeTo("onConnected", updateOnlineButtonAppearance);
-          unsubscribeTo("onDisconnected", updateOnlineButtonAppearance);
-
-          observer.disconnect(); // Stop observing once cleanup is done
-          return; // Exit all loops immediately
-        }
-      }
-    }
+  nodeRemovalObserver(button, () => {
+    // Unsubscribe from the event since the button has been removed
+    unsubscribeTo("onConnected", updateOnlineButtonAppearance);
+    unsubscribeTo("onDisconnected", updateOnlineButtonAppearance);
   });
-
-  observer.observe(document.body, { childList: true });
 }
 
 // Update the appearance of the online button, when the user connects/disconnects from the websocket

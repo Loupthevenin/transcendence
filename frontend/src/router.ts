@@ -63,10 +63,10 @@ const routes: Record<string, Route> = {
   },
   "/replay": {
     view: () => MainLayout(ReplayView()),
-    setup: async () => {
+    setup: async (root: HTMLElement) => {
       const mod = await import("./controllers/replay");
       initSideBarNavigation();
-      mod.setupReplay();
+      mod.setupReplay(root);
     },
   },
   "/callback": {
@@ -81,7 +81,6 @@ const routes: Record<string, Route> = {
   "/": {
     view: () => MainLayout(createGameCanvas(), ModeLayout()),
     setup: (root: HTMLElement) => {
-      document.body.style.overflow = "hidden";
       initSideBarNavigation();
       initGameEnvironment();
 
