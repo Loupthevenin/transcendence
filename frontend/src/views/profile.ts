@@ -63,6 +63,12 @@ export function ProfileView(): HTMLElement {
   >
     Activer l'authentification à deux facteurs
   </button>
+<button
+    class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl transition hidden"
+    id="deactivate-2fa"
+  >
+    Désactiver l'authentification à deux facteurs
+  </button>
 	<div id="qr-code-container"></div>
 </div>
 <!-- Bouton de déconnexion -->

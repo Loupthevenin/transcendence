@@ -19,6 +19,10 @@ export async function setup2FA(request: FastifyRequest, reply: FastifyReply) {
     return reply.status(404).send({ error: "User not found" });
   }
 
+  if (user.require2FA) {
+    return reply.send({ message: "2FA already active" });
+  }
+
   const secret: speakeasy.GeneratedSecret = speakeasy.generateSecret({
     name: `Transcendence (${email})`,
   });
@@ -36,6 +40,60 @@ export async function setup2FA(request: FastifyRequest, reply: FastifyReply) {
   const qrCodeDataURL: string = await qrcode.toDataURL(secret.otpauth_url);
 
   return reply.send({ qrCodeDataURL });
+}
+
+export async function check2FAStatus(
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
+  const email: string | undefined = request.user?.email;
+  if (!email) {
+    return reply.status(401).send({ error: "Invalid Token" });
+  }
+
+  const user: User = db
+    .prepare("SELECT * FROM users WHERE email = ?")
+    .get(email) as User;
+  if (!user) {
+    return reply.status(404).send({ error: "User not found" });
+  }
+
+  if (user.require2FA) {
+    return reply.send({
+      success: true,
+      require2FA: user.require2FA,
+      message: "2FA is active",
+    });
+  } else {
+    return reply.send({
+      success: false,
+      require2FA: user.require2FA,
+      message: "2FA isn't active",
+    });
+  }
+}
+
+export async function disable2FA(request: FastifyRequest, reply: FastifyReply) {
+  const email: string | undefined = request.user?.email;
+  if (!email) {
+    return reply.status(401).send({ error: "Invalid Token" });
+  }
+
+  const user: User = db
+    .prepare("SELECT * FROM users WHERE email = ?")
+    .get(email) as User;
+  if (!user) {
+    return reply.status(404).send({ error: "User not found" });
+  }
+
+  db.prepare(
+    "UPDATE users SET twofa_secret = ?, require2FA = ? WHERE email = ?",
+  ).run(null, 0, email);
+
+  return reply.send({
+    success: true,
+    message: "2FA has been disabled successfully.",
+  });
 }
 
 export async function verify2FA(
