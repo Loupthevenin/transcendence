@@ -21,12 +21,15 @@ import { subscribeTo, unsubscribeTo, isConnected, sendMessage } from "../websock
 import { GameMessageData } from "@shared/messageType"
 import { LoadingHandler } from "./loadingHandler";
 import { showMenu, showInGameMenu } from "../controllers/gameMode";
+import { PositionData, ScoreData } from "@shared/game/replayData";
 
 enum GameMode {
   MENU,         // Player is in the menu
   SINGLEPLAYER, // Singleplayer mode
   LOCAL,        // Local multiplayer mode
-  ONLINE        // Online multiplayer mode
+  ONLINE,       // Online multiplayer mode
+  SPECTATING,   // The player is spectating a match
+  REPLAY        // The player is watching a replay of a match
 }
 
 let currentGameMode: GameMode = GameMode.MENU;
@@ -94,29 +97,49 @@ let camera: BABYLON.ArcRotateCamera;
 let light: BABYLON.HemisphericLight;
 
 // Update camera rotation based on game mode
-function updateCameraRotation(camera: BABYLON.ArcRotateCamera, gameMode: GameMode): void {
-  if (!camera) {
-    return;
-  }
+function updateCameraMode(camera: BABYLON.ArcRotateCamera): void {
+  if (!camera) return;
 
-  switch (gameMode) {
+  switch (currentGameMode) {
     case GameMode.MENU:
       camera.alpha = BABYLON.Tools.ToRadians(180); // Horizontal rotation
       camera.beta = BABYLON.Tools.ToRadians(50); // Vertical rotation
       break;
     case GameMode.ONLINE:
       // If the player control the 2e paddle, rotate the camera to get the correct view
-      // else do the same as SINGLEPLAYER and LOCAL
       if (playerId === 2) {
         camera.alpha = BABYLON.Tools.ToRadians(0); // Horizontal rotation
         camera.beta = BABYLON.Tools.ToRadians(0); // Vertical rotation
         break;
       }
+      // else do the default one
     case GameMode.SINGLEPLAYER:
     case GameMode.LOCAL:
+    case GameMode.SPECTATING:
+    case GameMode.REPLAY:
       camera.alpha = BABYLON.Tools.ToRadians(180); // Horizontal rotation
       camera.beta = BABYLON.Tools.ToRadians(0); // Vertical rotation
       break;
+  }
+
+  // Clear all existing inputs
+  camera.inputs.clear();
+
+  // Set if the user can rotate the camera
+  if (currentGameMode === GameMode.SPECTATING || currentGameMode === GameMode.REPLAY) {
+    const rotateInput: BABYLON.ArcRotateCameraPointersInput = new BABYLON.ArcRotateCameraPointersInput();
+    camera.inputs.add(rotateInput);
+
+    // Disable movement and zoom
+    camera.panningSensibility = 0; // Disable panning
+    camera.wheelPrecision = 0; // Disable zoom
+
+    // Limit vertical rotation
+    camera.lowerBetaLimit = 0; // Prevent looking below the horizon
+    camera.upperBetaLimit = BABYLON.Tools.ToRadians(65); // Limit upward tilt to 65°
+
+    // Attach controls again to ensure activation
+    camera.attachControl(canvas as HTMLElement, false);
   }
 }
 
@@ -373,7 +396,7 @@ function handleGameMessages(data: GameMessageData): void {
       if (playerId === 2) {
         // if we are the 2e player then set our skin to the 2e paddle and rotate camera
         setPaddleSkin(2, localSkinId);
-        updateCameraRotation(camera, currentGameMode);
+        updateCameraMode(camera);
       }
       const skinChangeMessage: SkinChangeMessage = {
         type: "skinId",
@@ -403,21 +426,7 @@ function handleGameMessages(data: GameMessageData): void {
         updateScoreText();
       }
 
-      // Update the ball mesh position
-      if (ballMesh) {
-        ballMesh.position.x = gameData.ball.position.x;
-        ballMesh.position.z = gameData.ball.position.y;
-      }
-
-      // Update the paddle mesh positions
-      if (paddle1Mesh) {
-        paddle1Mesh.position.x = gameData.paddle1Position.x;
-        paddle1Mesh.position.z = gameData.paddle1Position.y;
-      }
-      if (paddle2Mesh) {
-        paddle2Mesh.position.x = gameData.paddle2Position.x;
-        paddle2Mesh.position.z = gameData.paddle2Position.y;
-      }
+      updateAllPositions();
 
       //lastUpdateTime = performance.now();
     }
@@ -465,11 +474,8 @@ function displayGameError(errorMessage: DisconnectionMessage): void {
   BackToMenu();
 }
 
-// Reset the game and all position
-function resetGame(): void {
-  gameData = newGameData();
-  gameStats = newGameStats();
-
+// Update the ball and paddles meshes positions
+function updateAllPositions(): void {
   if (ballMesh) {
     ballMesh.position.x = gameData.ball.position.x;
     ballMesh.position.z = gameData.ball.position.y;
@@ -482,6 +488,14 @@ function resetGame(): void {
     paddle2Mesh.position.x = gameData.paddle2Position.x;
     paddle2Mesh.position.z = gameData.paddle2Position.y;
   }
+}
+
+// Reset the game and all position
+function resetGame(): void {
+  gameData = newGameData();
+  gameStats = newGameStats();
+
+  updateAllPositions();
 
   resetBall(gameData.ball);
   updateScoreText();
@@ -535,9 +549,8 @@ export function initGameEnvironment(): void {
     scene,
   );
   camera.attachControl(canvas as HTMLElement, false);
-  camera.inputs.clear(); // Delete all default camera's inputs
 
-  updateCameraRotation(camera, currentGameMode);
+  updateCameraMode(camera);
 
   // Create an hemispheric light
   light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
@@ -737,6 +750,10 @@ export function initGameEnvironment(): void {
           }
         }
         break;
+
+      case GameMode.SPECTATING:
+        // TODO
+        break;
     }
 
     // Render the scene
@@ -774,7 +791,7 @@ export function initGameEnvironment(): void {
 // Quit the game and go back to the menu
 export function BackToMenu(): void {
   currentGameMode = GameMode.MENU;
-  updateCameraRotation(camera, currentGameMode);
+  updateCameraMode(camera);
   unregisterToGameMessages();
   showMenu();
 
@@ -788,7 +805,7 @@ export function BackToMenu(): void {
 // Launch the game in single player against an AI opponent
 export function SinglePlayer(): void {
   currentGameMode = GameMode.SINGLEPLAYER;
-  updateCameraRotation(camera, currentGameMode);
+  updateCameraMode(camera);
   unregisterToGameMessages();
   showInGameMenu();
 
@@ -802,7 +819,7 @@ export function SinglePlayer(): void {
 // Launch the game in local 1v1 mode
 export function LocalGame(): void {
   currentGameMode = GameMode.LOCAL;
-  updateCameraRotation(camera, currentGameMode);
+  updateCameraMode(camera);
   unregisterToGameMessages();
   showInGameMenu();
 
@@ -820,7 +837,7 @@ export function OnlineGame(): void {
     return;
   }
   currentGameMode = GameMode.ONLINE;
-  updateCameraRotation(camera, currentGameMode);
+  updateCameraMode(camera);
   showInGameMenu();
 
   resetGame();
@@ -835,6 +852,69 @@ export function OnlineGame(): void {
     username: `Player-${localSkinId}`
   };
   sendMessage("game", matchmakingMessage);
+}
+
+// Launch the game in spectating mode to watch match of other remote players
+export function SpectatingMode(): void {
+  if (!isConnected()) {
+    console.error("You are not connected to the server, cannot spectate other game");
+    return;
+  }
+  currentGameMode = GameMode.SPECTATING;
+  updateCameraMode(camera);
+  //showInGameMenu();
+
+  resetGame();
+
+  //hideSkinSelector();
+
+  registerToGameMessages();
+  // const matchmakingMessage: MatchmakingMessage = {
+  //   type: "matchmaking",
+  //   username: `Player-${localSkinId}`
+  // };
+  // sendMessage("game", matchmakingMessage);
+}
+
+// Setup the game to replay mode
+export function ReplayMode(p1Skin: string, p2Skin: string): void {
+  currentGameMode = GameMode.REPLAY;
+  updateCameraMode(camera);
+  // TODO: show a menu to come back before if a 'replay' button was pressed
+  //       else send back to '/'
+  // showInGameMenu();
+
+  resetGame();
+
+  setPaddleSkin(1, p1Skin);
+  setPaddleSkin(2, p2Skin);
+}
+
+export function SetReplayGameData(
+  positionData: PositionData | undefined,
+  scoreData: ScoreData | undefined
+): void {
+  if (currentGameMode !== GameMode.REPLAY) {
+    return;
+  }
+
+  if (positionData) {
+    gameData.ball.position.x = positionData[0][0];
+    gameData.ball.position.y = positionData[0][1];
+    gameData.paddle1Position.x = positionData[1][0];
+    gameData.paddle1Position.y = positionData[1][1];
+    gameData.paddle2Position.x = positionData[2][0];
+    gameData.paddle2Position.y = positionData[2][1];
+    updateAllPositions();
+  }
+
+  if (scoreData) {
+    if (gameData.p1Score !== scoreData[0] || gameData.p2Score !== scoreData[1]) {
+      gameData.p1Score = scoreData[0];
+      gameData.p2Score = scoreData[1];
+      updateScoreText();
+    }
+  }
 }
 
 //// TO DELETE //// TO DELETE //// TO DELETE //// TO DELETE ////
