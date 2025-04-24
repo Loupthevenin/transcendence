@@ -1,5 +1,6 @@
 import { navigateTo } from "../router";
 import { handleGoogle } from "./google";
+import { connectToServer } from "../websocketManager";
 
 export function setupLoginHandlers(container: HTMLElement): void {
   handleGoogle();
@@ -38,6 +39,7 @@ export function setupLoginHandlers(container: HTMLElement): void {
         navigateTo("/auth/verify-2fa");
       } else {
         localStorage.setItem("auth_token", data.token);
+        connectToServer();
         navigateTo("/");
       }
     } catch (err) {
