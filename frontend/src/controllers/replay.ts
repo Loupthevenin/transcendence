@@ -105,13 +105,13 @@ function fetchMatchData(token: string, matchId: string): Promise<ReplayData> {
       });
 
       if (!res.ok) {
-        if (res.status === 400) {
+        if (res.status === 400 || res.status === 404) {
           return reject("No match found with this ID");
         }
         if (res.status === 401 || res.status === 403) {
           localStorage.removeItem("auth_token");
         }
-        return reject(`An error occured when fetching match data (code ${res.status})`);
+        return reject(`An error occured when fetching match data (status ${res.status})`);
       }
 
       const data: any = await res.json();
