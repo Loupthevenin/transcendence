@@ -149,7 +149,7 @@ export async function loginUser(
       { uuid: user.uuid, name: user.name, email: user.email },
       JWT_SECRET,
       {
-        expiresIn: "2h",
+        expiresIn: "1d",
       },
     );
 
