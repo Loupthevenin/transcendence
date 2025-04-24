@@ -1,4 +1,5 @@
 import { navigateTo } from "../router";
+import { connectToServer } from "../websocketManager";
 
 export function handleGoogle(): void {
   const googleAuth: HTMLElement | null = document.getElementById("google-auth");
@@ -31,6 +32,7 @@ export function handleGoogleCallback(): void {
       navigateTo("/auth/verify-2fa");
     } else {
       localStorage.setItem("auth_token", token);
+      connectToServer();
       navigateTo("/");
     }
   } else {

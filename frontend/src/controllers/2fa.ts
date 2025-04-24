@@ -1,4 +1,5 @@
 import { navigateTo } from "../router";
+import { connectToServer } from "../websocketManager";
 
 export function setupTwoFAHandlers(container: HTMLElement): void {
   const twoFaForm: HTMLFormElement = document.getElementById(
@@ -37,6 +38,7 @@ export function setupTwoFAHandlers(container: HTMLElement): void {
 
       localStorage.removeItem("temp_token");
       localStorage.setItem("auth_token", data.token);
+      connectToServer();
       navigateTo("/");
     } catch (err) {
       alert("Code 2FA incorrect");
