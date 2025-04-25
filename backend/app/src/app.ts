@@ -82,8 +82,8 @@ app.setErrorHandler(
 // Start the server
 app.listen(
   { host: "0.0.0.0", port: 3000 },
-  (err: Error | null, address: string) => {
-    if (err) throw err;
+  (error: Error | null, address: string) => {
+    if (error) throw error;
     console.log(`Server running at ${DOMAIN_NAME}:${PORT}`);
 
     const wss: WebSocketServer = setupWebSocket();

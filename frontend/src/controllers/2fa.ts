@@ -40,9 +40,9 @@ export function setupTwoFAHandlers(container: HTMLElement): void {
       localStorage.setItem("auth_token", data.token);
       connectToServer();
       navigateTo("/");
-    } catch (err) {
+    } catch (error: any) {
       alert("Code 2FA incorrect");
-      console.error(err);
+      console.error(error);
     }
   });
 }

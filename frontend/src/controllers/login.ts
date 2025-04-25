@@ -42,9 +42,9 @@ export function setupLoginHandlers(container: HTMLElement): void {
         connectToServer();
         navigateTo("/");
       }
-    } catch (err) {
+    } catch (error: any) {
       alert("Email ou mot de passe incorrect");
-      console.error(err);
+      console.error(error);
     }
   });
 }

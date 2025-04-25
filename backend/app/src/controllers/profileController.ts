@@ -24,7 +24,7 @@ type UpdateBody = {
   avatarUrl?: string;
 };
 
-export async function getData(request: FastifyRequest, reply: FastifyReply) {
+export async function getData(request: FastifyRequest, reply: FastifyReply): Promise<void> {
   const email: string | undefined = request.user?.email;
   if (!email) {
     return reply.status(401).send({ message: "Invalid Token" });
@@ -45,7 +45,7 @@ export async function getData(request: FastifyRequest, reply: FastifyReply) {
   return reply.send(updateBody);
 }
 
-export async function getHistory(request: FastifyRequest, reply: FastifyReply) {
+export async function getHistory(request: FastifyRequest, reply: FastifyReply): Promise<void> {
   const uuid: string | undefined = request.user?.uuid;
   if (!uuid) {
     return reply.status(401).send({ message: "Invalid Token" });
@@ -83,7 +83,7 @@ export async function getHistory(request: FastifyRequest, reply: FastifyReply) {
 export async function setName(
   request: FastifyRequest<{ Body: UpdateBody }>,
   reply: FastifyReply,
-) {
+): Promise<void> {
   const email: string | undefined = request.user?.email;
 
   if (!email) {
@@ -102,8 +102,8 @@ export async function setName(
     );
 
     return reply.send({ success: true, updated: cleanName });
-  } catch (err) {
-    console.error("Erreur update profile : ", err);
+  } catch (error: any) {
+    console.error("Erreur update profile : ", error);
     return reply.status(500).send({ error: "Erreur serveur" });
   }
 }
@@ -111,7 +111,7 @@ export async function setName(
 export async function setEmail(
   request: FastifyRequest<{ Body: UpdateBody }>,
   reply: FastifyReply,
-) {
+): Promise<void>  {
   const oldEmail: string | undefined = request.user?.email;
   if (!oldEmail) {
     return reply.status(404).send({ error: "Invalid Token" });
@@ -161,7 +161,7 @@ export async function setEmail(
   });
 }
 
-export async function setAvatar(request: FastifyRequest, reply: FastifyReply) {
+export async function setAvatar(request: FastifyRequest, reply: FastifyReply): Promise<void> {
   const email: string | undefined = request.user?.email;
   if (!email) {
     return reply.status(404).send({ error: "Invalid Token" });

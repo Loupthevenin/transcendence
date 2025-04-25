@@ -124,7 +124,6 @@ export function connectToServer(): void {
             if (data.errorType === ERROR_TYPE.CONNECTION_REFUSED) {
               if (data.msg == ERROR_MSG.TOKEN_MISSING_OR_INVALID) {
                 localStorage.removeItem("auth_token");
-                // TODO: refresh current page
               }
               autoReconnectEnabled = false;
             }
@@ -135,7 +134,7 @@ export function connectToServer(): void {
           console.warn("[WebSocket] Unrecognized data type:", data);
         }
       }
-      catch (error) {
+      catch (error: any) {
         console.error("[WebSocket] An Error occured:", error);
       }
     };
@@ -152,10 +151,10 @@ export function connectToServer(): void {
     };
 
     // Handle errors
-    socket.onerror = (error) => {
+    socket.onerror = (error: Event) => {
       console.error("[WebSocket] error:", error);
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("[WebSocket] Error during connection setup:", error);
   }
 }

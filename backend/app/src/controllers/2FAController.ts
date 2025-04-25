@@ -6,7 +6,10 @@ import qrcode from "qrcode";
 import { JWT_SECRET } from "../config";
 import { User } from "../types/authTypes";
 
-export async function setup2FA(request: FastifyRequest, reply: FastifyReply) {
+export async function setup2FA(
+  request: FastifyRequest,
+  reply: FastifyReply
+): Promise<void> {
   const email: string | undefined = request.user?.email;
   if (!email) {
     return reply.status(401).send({ error: "Invalid Token" });
@@ -44,8 +47,8 @@ export async function setup2FA(request: FastifyRequest, reply: FastifyReply) {
 
 export async function check2FAStatus(
   request: FastifyRequest,
-  reply: FastifyReply,
-) {
+  reply: FastifyReply
+): Promise<void> {
   const email: string | undefined = request.user?.email;
   if (!email) {
     return reply.status(401).send({ error: "Invalid Token" });
@@ -73,7 +76,10 @@ export async function check2FAStatus(
   }
 }
 
-export async function disable2FA(request: FastifyRequest, reply: FastifyReply) {
+export async function disable2FA(
+  request: FastifyRequest,
+  reply: FastifyReply
+): Promise<void> {
   const email: string | undefined = request.user?.email;
   if (!email) {
     return reply.status(401).send({ error: "Invalid Token" });
@@ -99,7 +105,7 @@ export async function disable2FA(request: FastifyRequest, reply: FastifyReply) {
 export async function verify2FA(
   request: FastifyRequest<{ Body: { code: string } }>,
   reply: FastifyReply,
-) {
+): Promise<void> {
   const { code } = request.body;
   const email: string | undefined = request.user?.email;
   if (!email) {

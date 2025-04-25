@@ -8,8 +8,8 @@ export function handleGoogle(): void {
   googleAuth.addEventListener("click", () => {
     try {
       window.location.href = "/api/auth/google";
-    } catch (err) {
-      console.error("Erreur google auth : ", err);
+    } catch (error: any) {
+      console.error("Erreur google auth : ", error);
       alert("Erreur Google OAUTH2");
     }
   });

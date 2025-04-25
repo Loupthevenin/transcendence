@@ -56,7 +56,7 @@ function startGameIfRoomFull(room: Room): void {
           `Game started: ${room.getId()} with p1 '${room.getPlayer(1)?.username}' and p2 '${room.getPlayer(2)?.username}'`,
         );
       })
-      .catch((error) => {
+      .catch((error: any) => {
         console.error(`Error starting game in room '${room.getId()}':`, error);
         rooms.delete(room.getId());
       });

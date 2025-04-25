@@ -88,7 +88,7 @@ export function setupReplay(root: HTMLElement): void {
 
     mainLoop();
 
-  }).catch((error) => {
+  }).catch((error: any) => {
     showError(error);
   });
 }
@@ -120,7 +120,7 @@ function fetchMatchData(token: string, matchId: string): Promise<ReplayData> {
       }
 
       return reject("Receive invalid data");
-    } catch (error) {
+    } catch (error: any) {
       console.error("An error occured when fetching match data :", error);
       return reject("An error occured when fetching match data");
     }
