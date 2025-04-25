@@ -9,7 +9,7 @@ export function ProfileView(): HTMLElement {
         <div class="relative group">
           <img src="/api/textures/avatar-default.svg" alt="Avatar"
                class="w-24 h-24 rounded-full object-cover border-2 border-indigo-500 shadow-md cursor-pointer hover:opacity-80 transition"
-               id="user-avatar">
+               id="user-avatar" referrerpolicy="no-referrer" onerror="this.src='/api/textures/avatar-default.svg'">
           <input type="file" accept="image/*" id="avatar-upload" class="sr-only" />
           <div class="absolute inset-0 bg-black bg-opacity-40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-sm text-white">
             Changer
