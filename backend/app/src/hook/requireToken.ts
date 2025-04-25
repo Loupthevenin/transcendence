@@ -6,7 +6,7 @@ import { JWT_SECRET } from "../config";
 export async function requireToken(
   request: FastifyRequest,
   reply: FastifyReply,
-) {
+): Promise<void> {
   try {
     const authHeader: string | undefined = request.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {

@@ -88,13 +88,13 @@ function loadRawReplayDataFromFile(filename: string): RawReplayData | null {
       return parsedData;
     }
     return null;
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Error loading replay data (${filePath}) : ${error}`);
     return null;
   }
 }
 
-export function getMatchIdData(request: FastifyRequest, reply: FastifyReply) {
+export function getMatchIdData(request: FastifyRequest, reply: FastifyReply): void {
   if (!request.params || !(request.params as any).match_id) {
     reply.status(400).send({ error: "Empty request" });
     return;
@@ -111,7 +111,7 @@ export function getMatchIdData(request: FastifyRequest, reply: FastifyReply) {
     }
 
     reply.send(JSON.stringify(replayData));
-  } catch (error) {
+  } catch (error: any) {
     reply.status(500).send({ error: "Internal server error" });
   }
 }

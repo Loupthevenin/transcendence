@@ -71,7 +71,7 @@ export function setupWebSocket(): WebSocketServer {
             playerUsername = user.name;
           }
         }
-      } catch (error) {}
+      } catch (error: any) {}
     }
 
     // If there is no token or the token is invalid, refuse the connection
@@ -152,7 +152,7 @@ export function setupWebSocket(): WebSocketServer {
             }
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("An Error occured:", error);
       }
     });

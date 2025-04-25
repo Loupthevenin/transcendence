@@ -439,7 +439,7 @@ function handleGameMessages(data: GameMessageData): void {
       playerId = -1; // Reset player ID
       displayGameError(data);
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("An Error occured:", error);
   }
 }
@@ -567,10 +567,10 @@ export function initGameEnvironment(): void {
       const sceneMesh: BABYLON.Mesh = result.meshes[0] as BABYLON.Mesh; // Get the root of the model
       sceneMesh.position = new BABYLON.Vector3(0, 0, 0);
       sceneMesh.rotation = new BABYLON.Vector3(0, 0, 0);
-    }).catch((error) => {
+    }).catch((error: any) => {
       console.error("An error occurred while loading model 'scene.glb' :", error);
     }).finally(() => loadingHandler.setLoaded(environmentSceneLoadingStateIndex));
-  } catch (error) {
+  } catch (error: any) {
     console.error("An error occurred while loading model 'scene.glb' :", error);
     loadingHandler.setLoaded(environmentSceneLoadingStateIndex);
   }

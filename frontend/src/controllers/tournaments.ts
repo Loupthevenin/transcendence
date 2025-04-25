@@ -19,12 +19,12 @@ async function setDisplayNameInputs(): Promise<void> {
         document.querySelectorAll<HTMLInputElement>(
           'input[name="displayName"]',
         );
-      displayInputs.forEach((input) => {
+      displayInputs.forEach((input: HTMLInputElement) => {
         input.value = data.name;
       });
     }
-  } catch (err) {
-    console.error("Error loading name : ", err);
+  } catch (error: any) {
+    console.error("Error loading name : ", error);
   }
 }
 
@@ -36,8 +36,8 @@ async function setDisplayNameInputs(): Promise<void> {
 //   }
 //   try {
 //     // const res: response = await fetch("/api/tournaments", )
-//   } catch (err) {
-//     console.error("Error loading Tournaments", err);
+//   } catch (error: any) {
+//     console.error("Error loading Tournaments", error);
 //   }
 // }
 

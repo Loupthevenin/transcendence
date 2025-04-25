@@ -38,7 +38,7 @@ export async function getModel(request: FastifyRequest, reply: FastifyReply): Pr
 
     // Set the Content-Type header for .glb files and send the file
     reply.type("model/gltf-binary").send(fileContent);
-  } catch (error) {
+  } catch (error: any) {
     reply.status(500).send({ error: "Internal server error" });
   }
 }
@@ -87,7 +87,7 @@ export async function getPaddleModel(request: FastifyRequest, reply: FastifyRepl
 
     // Set the Content-Type header for .glb files and send the file
     reply.type("model/gltf-binary").send(fileContent);
-  } catch (error) {
+  } catch (error: any) {
     reply.status(500).send({ error: "Internal server error" });
   }
 }
@@ -95,7 +95,7 @@ export async function getPaddleModel(request: FastifyRequest, reply: FastifyRepl
 export async function getPaddleModelIdsList(request: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
     reply.type("application/json").send(JSON.stringify(Object.keys(paddleModelReferences)));
-  } catch (error) {
+  } catch (error: any) {
     reply.status(500).send({ error: "Internal server error" });
   }
 }
@@ -138,7 +138,7 @@ export async function getTexture(request: FastifyRequest, reply: FastifyReply): 
       reply.type("image/svg+xml");
     }
     reply.send(fileContent);
-  } catch (error) {
+  } catch (error: any) {
     reply.status(500).send({ error: "Internal server error" });
   }
 }

@@ -35,15 +35,15 @@ export function setupSignupHandlers(container: HTMLElement): void {
         body: JSON.stringify({ name, email, password }),
       });
 
-      const data = await res.json();
+      const data: any = await res.json();
       if (!res.ok) {
         const errorMsg: string = data?.message || "Error signup";
         alert(errorMsg);
         return;
       }
       navigateTo("/");
-    } catch (err) {
-      console.error("Signup error", err);
+    } catch (error: any) {
+      console.error("Signup error", error);
       alert("Une erreur est survenue pendant l'inscription");
     }
   });

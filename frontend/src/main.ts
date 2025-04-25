@@ -16,15 +16,15 @@ document.addEventListener("DOMContentLoaded", async () => {
       },
     });
 
-    const data = await res.json();
+    const data: any = await res.json();
     if (!res.ok) {
       const errorMsg: string = data?.error || "Erreur verification token";
       console.log(errorMsg);
       localStorage.removeItem("auth_token");
       navigateTo("/auth/login");
     }
-  } catch (err) {
-    console.error("Erreur verification token : ", err);
+  } catch (error: any) {
+    console.error("Erreur verification token : ", error);
     navigateTo("/auth/login");
   }
 });

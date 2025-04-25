@@ -17,7 +17,7 @@ import { Register, Login, User } from "../types/authTypes";
 export async function registerUser(
   request: FastifyRequest<{ Body: Register }>,
   reply: FastifyReply,
-) {
+): Promise<void> {
   const { name, email, password } = request.body;
 
   try {
@@ -66,8 +66,8 @@ export async function registerUser(
       message:
         "Inscription réussie. Vérifie ton email pour activer ton compte.",
     });
-  } catch (err) {
-    console.error("Error signin:", err);
+  } catch (error: any) {
+    console.error("Error signin:", error);
     return reply.code(500).send({ message: "Erreur serveur" });
   }
 }
@@ -75,7 +75,7 @@ export async function registerUser(
 export async function verifyEmail(
   request: FastifyRequest<{ Querystring: { token: string } }>,
   reply: FastifyReply,
-) {
+): Promise<void> {
   const token: string = request.query.token;
 
   try {
@@ -95,7 +95,7 @@ export async function verifyEmail(
     );
 
     return reply.redirect(`https://${DOMAIN_NAME}:${PORT}/`);
-  } catch (err) {
+  } catch (error: any) {
     return reply.code(400).send({ message: "Lien invalide ou expiré." });
   }
 }
@@ -103,7 +103,7 @@ export async function verifyEmail(
 export async function loginUser(
   request: FastifyRequest<{ Body: Login }>,
   reply: FastifyReply,
-) {
+): Promise<void> {
   const { email, password } = request.body;
 
   try {
@@ -158,8 +158,8 @@ export async function loginUser(
       token,
       require2FA: false,
     });
-  } catch (err) {
-    console.error("Error login:", err);
+  } catch (error: any) {
+    console.error("Error login:", error);
     return reply.code(500).send({ message: "Erreur serveur" });
   }
 }

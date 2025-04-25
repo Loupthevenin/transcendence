@@ -44,8 +44,8 @@ async function loadUserProfile(): Promise<void> {
     if (emailElement && data.email) {
       emailElement.textContent = data.email;
     }
-  } catch (err) {
-    console.error("Error profile :", err);
+  } catch (error: any) {
+    console.error("Error profile :", error);
     alert("impossible de charger le profile");
   }
 }
@@ -71,8 +71,8 @@ async function updateUserProfile(
     if (!res.ok) throw new Error("Erreur lors de la mise a jour du profile");
 
     return await res.json();
-  } catch (err) {
-    console.error("Erreur update :", err);
+  } catch (error: any) {
+    console.error("Erreur update :", error);
     alert("Impossible de mettre à jour le profile");
   }
 }
@@ -127,7 +127,7 @@ function listenerEmail(): void {
         alert("veuillez entrer une adresse email valide.");
         emailElement.textContent = currentEmail;
       } else if (newEmail && newEmail !== currentEmail) {
-        const res = await updateUserProfile({ email: newEmail }, "email");
+        const res: any = await updateUserProfile({ email: newEmail }, "email");
         if (res && res.success) {
           alert(res.message);
           localStorage.removeItem("auth_token");
@@ -197,8 +197,8 @@ function listenerAvatar(): void {
       if (data.avatarUrl) {
         avatarImg.src = data.avatarUrl;
       }
-    } catch (err) {
-      console.error("Erreur update avatar : ", err);
+    } catch (error: any) {
+      console.error("Erreur update avatar : ", error);
       alert("Impossible d'update l'avatar");
     }
   });
@@ -305,21 +305,22 @@ async function loadHistory(): Promise<void> {
     const winRate: number = totalMatches > 0 ? (wins / totalMatches) * 100 : -1;
     updateWinRate(winRate);
     listenerButtonReplay();
-  } catch (err) {
-    console.error("Error history : ", err);
+  } catch (error: any) {
+    console.error("Error history : ", error);
     alert("impossible de charger l'historique");
   }
 }
 
-function listenerButtonReplay() {
+function listenerButtonReplay(): void {
   const buttonsReplay: NodeListOf<HTMLButtonElement> =
     document.querySelectorAll(".replay-button");
-  buttonsReplay.forEach((buttonReplay) => {
-    const uuid = buttonReplay.getAttribute("data-uuid");
-    if (!uuid) return;
-    buttonReplay.addEventListener("click", () => {
-      navigateTo(`/replay?match_id=${uuid}`);
-    });
+  buttonsReplay.forEach((buttonReplay: HTMLButtonElement) => {
+    const uuid: string | null = buttonReplay.getAttribute("data-uuid");
+    if (uuid) {
+      buttonReplay.addEventListener("click", () => {
+        navigateTo(`/replay?match_id=${uuid}`);
+      });
+    }
   });
 }
 
@@ -357,8 +358,8 @@ async function listener2FA(container: HTMLElement): Promise<void> {
       button2FA.classList.add("hidden");
       buttonDisable2FA.classList.remove("hidden");
     }
-  } catch (err) {
-    console.error(err);
+  } catch (error: any) {
+    console.error(error);
   }
 
   button2FA.addEventListener("click", async () => {
@@ -388,9 +389,9 @@ async function listener2FA(container: HTMLElement): Promise<void> {
       } else {
         alert(data?.message);
       }
-    } catch (err) {
+    } catch (error: any) {
       alert("Erreur lors de l'activation 2FA");
-      console.error(err);
+      console.error(error);
     }
   });
 
@@ -419,8 +420,8 @@ async function listener2FA(container: HTMLElement): Promise<void> {
       } else {
         alert(dataDisable?.message);
       }
-    } catch (err) {
-      console.error(err);
+    } catch (error: any) {
+      console.error(error);
     }
   });
 }

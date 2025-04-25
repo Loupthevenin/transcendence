@@ -41,7 +41,7 @@ export async function loadPadddleSkin(skinId: string, scene: BABYLON.Scene): Pro
 
       resolve(paddleMesh);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("An error occurred while loading models:", error);
       resolve(createDefaultSkin(scene));
     }

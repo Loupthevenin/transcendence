@@ -29,7 +29,7 @@ async function fetchSkinIds(): Promise<void> {
     } else {
       console.error("Unexpected data format received:", data);
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching skin IDs:", error);
   }
 }
@@ -61,7 +61,7 @@ async function loadModels(): Promise<void> {
 
     // Add all models (or nulls) to the models array
     models.push(...results);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error occurred while loading models:", error);
   }
   //console.log(models);
