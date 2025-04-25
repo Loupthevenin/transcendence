@@ -8,7 +8,8 @@ import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 
 import { User } from "../types/authTypes";
-import { MatchHistoryRow, MatchHistory } from "../types/profileTypes";
+import { MatchHistoryRow } from "../types/profileTypes";
+import { MatchHistory } from "../shared/match/matchHistory";
 import {
   DOMAIN_NAME,
   PORT,
@@ -62,16 +63,18 @@ export async function getHistory(request: FastifyRequest, reply: FastifyReply): 
 
     const myScore: number = isPlayerA ? match.score_a : match.score_b;
     const opponentScore: number = isPlayerA ? match.score_b : match.score_a;
-    const opponentName: string = isPlayerA
-      ? match.player_b_name
-      : match.player_a_name;
+    const opponentName: string = isPlayerA ? match.player_b_name : match.player_a_name;
 
     const matchHistory: MatchHistory = {
       uuid: match.uuid,
       date: match.date,
       mode: match.mode,
       opponent: opponentName,
-      result: myScore > opponentScore ? "win" : "lose",
+      result: match.winner === "draw"
+                ? "draw"
+                : match.winner === (isPlayerA ? "A" : "B")
+                  ? "win"
+                  : "lose",
       score: `${myScore} - ${opponentScore}`,
     };
     return matchHistory;

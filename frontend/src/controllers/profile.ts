@@ -1,5 +1,6 @@
 import { navigateTo } from "../router";
-import { UserProfile, MatchHistory } from "./types";
+import { UserProfile } from "./types";
+import { MatchHistory } from "@shared/match/matchHistory";
 
 async function loadUserProfile(): Promise<void> {
   const token: string | null = localStorage.getItem("auth_token");
@@ -212,30 +213,54 @@ function formatDate(dateStr: string): string {
     year: "numeric",
   });
 }
-
-function updateWinRate(winRate: number): void {
-  const winRateContainer: HTMLElement | null =
-    document.getElementById("win-rate-container");
+(window as any).updateWinRate = updateWinRate;
+function updateWinRate(wins: number, draws: number, totalMatches: number): void {
+  const winRateContainer: HTMLElement | null = document.getElementById("win-rate-container");
+  const drawRateContainer: HTMLElement | null = document.getElementById("draw-rate-container");
+  const loseRateContainer: HTMLElement | null = document.getElementById("lose-rate-container");
+  const winRateHeader: HTMLElement | null = document.getElementById("win-rate-header");
+  const drawRateHeader: HTMLElement | null = document.getElementById("draw-rate-header");
+  const loseRateHeader: HTMLElement | null = document.getElementById("lose-rate-header");
   const pieChart: HTMLElement | null = document.getElementById("pie-chart");
-  if (!winRateContainer || !pieChart) return;
 
-  if (winRate < 0) {
+  winRateHeader?.classList.remove("font-bold", "text-xl");
+  drawRateHeader?.classList.remove("font-bold", "text-xl");
+  loseRateHeader?.classList.remove("font-bold", "text-xl");
+
+  if (!winRateContainer || !drawRateContainer || !loseRateContainer || !pieChart) return;
+
+  // If no matches played, set default text and styles
+  if (totalMatches === 0) {
     winRateContainer.textContent = "Aucun match joué";
-    winRateContainer.classList.remove("text-green-400", "text-red-400");
+    drawRateContainer.textContent = "";
+    loseRateContainer.textContent = "";
     pieChart.style.background = "#444";
     return;
   }
 
+  // Calculate win, draw, and lose rates
+  const winRate: number = (wins / totalMatches) * 100;
+  const drawRate: number = (draws / totalMatches) * 100;
+  const loseRate: number = Math.max(100 - winRate - drawRate, 0);
+
+  // Update text content for the new containers
   winRateContainer.textContent = `${winRate.toFixed(2)}%`;
-  if (winRate >= 50) {
-    winRateContainer.classList.remove("text-red-400");
-    winRateContainer.classList.add("text-green-400");
-  } else {
-    winRateContainer.classList.remove("text-green-400");
-    winRateContainer.classList.add("text-red-400");
+  drawRateContainer.textContent = `${drawRate.toFixed(2)}%`;
+  loseRateContainer.textContent = `${loseRate.toFixed(2)}%`;
+
+  if (winRate >= drawRate && winRate >= loseRate) {
+    winRateHeader?.classList.add("font-bold", "text-xl");
+  } else if (drawRate >= winRate && drawRate >= loseRate) {
+    drawRateHeader?.classList.add("font-bold", "text-xl");
+  } else if (loseRate >= winRate && loseRate >= drawRate) {
+    loseRateHeader?.classList.add("font-bold", "text-xl");
   }
 
-  pieChart.style.background = `conic-gradient(#4caf50 0% ${winRate}%, #f44336 ${winRate}% 100%)`;
+  pieChart.style.background = `conic-gradient(
+  #4caf50 0% ${winRate}%,
+  #ffeb3b ${winRate}% ${winRate + drawRate}%,
+  #f44336 ${winRate + drawRate}% 100%
+  )`;
 }
 
 async function loadHistory(): Promise<void> {
@@ -265,6 +290,7 @@ async function loadHistory(): Promise<void> {
     const data: MatchHistory[] = rawData as MatchHistory[];
 
     let wins: number = 0;
+    let draws: number = 0;
     let totalMatches: number = 0;
 
     const historyList: HTMLElement | null =
@@ -276,12 +302,15 @@ async function loadHistory(): Promise<void> {
     data.forEach((match: MatchHistory) => {
       const li: HTMLLIElement = document.createElement("li");
       const isWin: boolean = match.result === "win";
-      const borderColor: string = isWin ? "border-green-400" : "border-red-400";
-      const scoreColor: string = isWin ? "text-green-400" : "text-red-400";
-      const resultText: string = isWin ? "✅ Victoire" : "❌ Défaite";
+      const isDraw: boolean = match.result === "draw";
+      const borderColor: string = isWin ? "border-green-400" : (isDraw ? "border-gray-400" : "border-red-400");
+      const scoreColor: string = isWin ? "text-green-400" : (isDraw ? "text-gray-400" : "text-red-400");
+      const resultText: string = isWin ? "✅ Victoire" : (isDraw ? "⚖️ Match nul" : "❌ Défaite");
 
       if (isWin) {
         wins++;
+      } else if (isDraw) {
+        draws++;
       }
       totalMatches++;
 
@@ -302,8 +331,7 @@ async function loadHistory(): Promise<void> {
       historyList.appendChild(li);
     });
 
-    const winRate: number = totalMatches > 0 ? (wins / totalMatches) * 100 : -1;
-    updateWinRate(winRate);
+    updateWinRate(wins, draws, totalMatches);
     listenerButtonReplay();
   } catch (error: any) {
     console.error("Error history : ", error);

@@ -402,7 +402,7 @@ export class Room {
     this.gameEnded = true;
     this.gameStats.gameEndTime = Date.now(); // game end time in milliseconds
 
-    let winner: string = "";
+    let winnerId: -1 | 1 | 2;
 
     if (disconnectionOccurred) {
       const disconnectedPlayer: 1 | 2 = this.isPlayerAlive(this.player1) ? 2 : 1;
@@ -412,11 +412,13 @@ export class Room {
         id: disconnectedPlayer
       };
       this.sendMessage(disconnectionMessage);
-      winner = this.getPlayer(disconnectedPlayer === 1 ? 2 : 1)?.username ?? "";
+      winnerId = (disconnectedPlayer === 1 ? 2 : 1);
+    } else if (this.gameData.p1Score === this.gameData.p2Score) {
+      winnerId = -1; // If the match ended by a draw
     } else {
-      const winnerId: 1 | 2 = (this.gameData.p1Score > this.gameData.p2Score ? 1 : 2);
-      winner = this.getPlayer(winnerId)?.username ?? "";
+      winnerId = (this.gameData.p1Score > this.gameData.p2Score ? 1 : 2);
     }
+    const winner: string = winnerId === -1 ? "" : (this.getPlayer(winnerId)?.username ?? "");
 
     const gameResultMessage: GameResultMessage = {
       type: "gameResult",
@@ -427,7 +429,7 @@ export class Room {
     };
     this.sendMessage(gameResultMessage);
 
-    this.saveGameSessionData();
+    this.saveGameSessionData(winnerId);
 
     this.clear();
   }
@@ -435,7 +437,7 @@ export class Room {
   /**
    * Save the game result and data in the database
    */
-  private saveGameSessionData(): void {
+  private saveGameSessionData(winnerId: -1 | 1 | 2): void {
     if (!this.gameEnded) throw new Error("Cannot save the data of a game not ended");
     if (!this.player1) console.warn("[WARNING] missing player 1, this should not happen !");
     if (!this.player2) console.warn("[WARNING] missing player 2, this should not happen !");
@@ -448,8 +450,8 @@ export class Room {
     // Save the match result in the database
     db.prepare(
       `INSERT INTO match_history (
-      uuid, player_a_name, player_b_name, player_a_uuid, player_b_uuid, score_a, score_b, mode
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      uuid, player_a_name, player_b_name, player_a_uuid, player_b_uuid, score_a, score_b, winner, mode
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).run(
       uuid,
       this.player1?.username ?? "", // put empty string by default if the player is null
@@ -458,6 +460,7 @@ export class Room {
       this.player2?.uuid ?? "",
       this.gameData.p1Score,
       this.gameData.p2Score,
+      winnerId === 1 ? "A" : (winnerId === 2 ? "B" : "draw"),
       RoomType[this.type],
     );
   }
