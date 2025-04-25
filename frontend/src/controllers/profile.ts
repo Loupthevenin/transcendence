@@ -294,6 +294,9 @@ async function loadHistory(): Promise<void> {
           <p class="text-sm">${resultText}</p>
         </div>
         <div class="text-xl font-bold ${scoreColor}">${match.score}</div>
+		<button class="replay-button bg-indigo-500 hover:bg-indigo-600 text-white text-sm px-2 py-1 rounded-lg" data-uuid="${match.uuid}">
+        🔁 Replay
+		</button>
       </div>
 	`;
       historyList.appendChild(li);
@@ -301,10 +304,23 @@ async function loadHistory(): Promise<void> {
 
     const winRate: number = totalMatches > 0 ? (wins / totalMatches) * 100 : -1;
     updateWinRate(winRate);
+    listenerButtonReplay();
   } catch (err) {
     console.error("Error history : ", err);
     alert("impossible de charger l'historique");
   }
+}
+
+function listenerButtonReplay() {
+  const buttonsReplay: NodeListOf<HTMLButtonElement> =
+    document.querySelectorAll(".replay-button");
+  buttonsReplay.forEach((buttonReplay) => {
+    const uuid = buttonReplay.getAttribute("data-uuid");
+    if (!uuid) return;
+    buttonReplay.addEventListener("click", () => {
+      navigateTo(`/replay?match_id=${uuid}`);
+    });
+  });
 }
 
 async function listener2FA(container: HTMLElement): Promise<void> {

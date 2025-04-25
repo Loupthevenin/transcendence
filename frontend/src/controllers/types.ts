@@ -5,6 +5,7 @@ export interface UserProfile {
 }
 
 export interface MatchHistory {
+  uuid: string;
   date: string;
   mode: string;
   opponent: string;
