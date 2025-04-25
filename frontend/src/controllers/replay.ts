@@ -12,8 +12,9 @@ let progressBar: HTMLInputElement | null = null;
 let tooltip: HTMLElement | null = null;
 let timeText: HTMLElement | null = null
 let filledProgress: HTMLElement | null = null;
+let speedControl: HTMLSelectElement | null = null;
 
-let timeMultiplier: number = 1; // TODO: add a button to modify it (0.5, 1, 1.5, 2)
+let timeMultiplier: number = 1; // Default speed multiplier
 let mainLoopInterval: NodeJS.Timeout | null = null;
 
 // Track if the user is adjusting the progress bar
@@ -31,6 +32,7 @@ export function setupReplay(root: HTMLElement): void {
   tooltip = document.getElementById("tooltip");
   timeText = document.getElementById("current-time")
   filledProgress = document.getElementById("filled-progress");
+  speedControl = document.getElementById("speed-control") as HTMLSelectElement | null;
 
   // Setup the default progress bar
   if (progressBar) {
@@ -42,6 +44,10 @@ export function setupReplay(root: HTMLElement): void {
     progressBar.onmouseleave = hideTooltip;
     progressBar.onmousedown = () => { isUserInteracting = true; };
     progressBar.onmouseup = () => { isUserInteracting = false; };
+  }
+
+  if (speedControl) {
+    speedControl.onchange = setReplaySpeed;
   }
 
   // Verify if a token is available
@@ -77,6 +83,12 @@ export function setupReplay(root: HTMLElement): void {
           progressBar.value = time.toString();
         }
       }
+    }
+
+    // Set the total time text
+    const totalTimeText: HTMLElement | null = document.getElementById("total-time");
+    if (totalTimeText) {
+      totalTimeText.innerText = formatTime(replayData.gameDuration);
     }
 
     // Setup game canvas and environment
@@ -189,10 +201,11 @@ function showTooltip(event: MouseEvent): void {
     // Calculate the predicted value
     const predictedValue: number = Math.ceil((mouseX / rect.width) * parseInt(progressBar.max));
 
-    tooltip.style.left = `${rect.left + mouseX}px`;
-    tooltip.style.top = `${rect.top - 30}px`;
     tooltip.innerText = formatTime(predictedValue);
     tooltip.style.display = "block";
+
+    tooltip.style.left = `${event.clientX - tooltip.offsetWidth / 2}px`;
+    tooltip.style.top = `${rect.top - 30}px`;
   }
 }
 
@@ -207,6 +220,15 @@ function formatTime(milliseconds: number): string {
   let mins: number = Math.floor(seconds / 60);
   let secs: number = seconds % 60;
   return `${mins}:${secs.toString().padStart(2, "0")}`;
+}
+
+function setReplaySpeed(event: Event): void {
+  if (speedControl) {
+    const speed: number = parseFloat(speedControl.value);
+    if (speed === 0.5 || speed === 1 || speed === 1.5 || speed === 2) {
+      timeMultiplier = speed;
+    }
+  }
 }
 
 function showError(message: string): void {
