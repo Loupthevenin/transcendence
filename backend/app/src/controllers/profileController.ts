@@ -40,7 +40,7 @@ export async function getData(request: FastifyRequest, reply: FastifyReply) {
   const updateBody: UpdateBody = {
     name: user.name,
     email: user.email,
-    avatarUrl: user.avatar_url
+    avatarUrl: user.avatar_url,
   };
   return reply.send(updateBody);
 }
@@ -52,7 +52,9 @@ export async function getHistory(request: FastifyRequest, reply: FastifyReply) {
   }
 
   const matches: MatchHistoryRow[] = db
-    .prepare(`SELECT * FROM match_history WHERE player_a_uuid = ? OR player_b_uuid = ? ORDER BY date DESC`)
+    .prepare(
+      `SELECT * FROM match_history WHERE player_a_uuid = ? OR player_b_uuid = ? ORDER BY date DESC`,
+    )
     .all(uuid, uuid) as MatchHistoryRow[];
 
   const history: MatchHistory[] = matches.map((match: MatchHistoryRow) => {
@@ -60,9 +62,12 @@ export async function getHistory(request: FastifyRequest, reply: FastifyReply) {
 
     const myScore: number = isPlayerA ? match.score_a : match.score_b;
     const opponentScore: number = isPlayerA ? match.score_b : match.score_a;
-    const opponentName: string = isPlayerA ? match.player_b_name : match.player_a_name;
+    const opponentName: string = isPlayerA
+      ? match.player_b_name
+      : match.player_a_name;
 
     const matchHistory: MatchHistory = {
+      uuid: match.uuid,
       date: match.date,
       mode: match.mode,
       opponent: opponentName,
@@ -168,7 +173,10 @@ export async function setAvatar(request: FastifyRequest, reply: FastifyReply) {
   }
 
   const ext: string = path.extname(data.filename);
-  const hashedEmail: string = crypto.createHash("sha256").update(email).digest("hex");
+  const hashedEmail: string = crypto
+    .createHash("sha256")
+    .update(email)
+    .digest("hex");
   const filename: string = `${hashedEmail}${ext}`;
   const uploadDir: string = path.join(DB_DIR, "avatars");
 

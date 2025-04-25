@@ -1,5 +1,6 @@
 export interface MatchHistoryRow {
   id: number;
+  uuid: string;
   player_a_name: string;
   player_b_name: string;
   player_a_uuid: string;
@@ -11,6 +12,7 @@ export interface MatchHistoryRow {
 }
 
 export interface MatchHistory {
+  uuid: string;
   date: string;
   mode: string;
   opponent: string;
