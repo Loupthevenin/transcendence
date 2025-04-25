@@ -30,8 +30,8 @@ ps status:
 	@ docker ps
 
 clean:
-	(docker stop $$(docker ps -qa); \
-	docker rm $$(docker ps -qa); \
+	(docker stop $$(docker ps -qa -f "label=project=transcendence"); \
+	docker rm $$(docker ps -qa -f "label=project=transcendence"); \
 	docker rmi -f $$(docker images -f "label=project=transcendence" -qa); \
 	docker volume rm $$(docker volume ls -q); \
 	docker network rm $$(docker network ls -q)) 2>/dev/null || true
