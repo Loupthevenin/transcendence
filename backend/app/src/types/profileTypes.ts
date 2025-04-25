@@ -7,15 +7,7 @@ export interface MatchHistoryRow {
   player_b_uuid: string;
   score_a: number;
   score_b: number;
+  winner: "A" | "B" | "draw";
   mode: string;
   date: string;
-}
-
-export interface MatchHistory {
-  uuid: string;
-  date: string;
-  mode: string;
-  opponent: string;
-  result: "win" | "lose";
-  score: string;
 }

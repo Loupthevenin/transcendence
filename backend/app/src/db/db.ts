@@ -29,6 +29,7 @@ db.exec(`
   player_b_uuid TEXT NOT NULL,
   score_a INTEGER NOT NULL,
   score_b INTEGER NOT NULL,
+  winner TEXT NOT NULL,
   mode TEXT NOT NULL,
   date DATETIME DEFAULT CURRENT_TIMESTAMP
 )

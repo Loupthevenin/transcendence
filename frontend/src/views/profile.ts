@@ -33,9 +33,19 @@ export function ProfileView(): HTMLElement {
 <div class="bg-[#1e1b4b] p-6 rounded-xl shadow-lg text-white">
   <h3 class="text-xl font-semibold text-indigo-300 mb-4">Statistiques</h3>
   <div class="flex items-center justify-between">
-    <div>
-      <p class="text-sm text-purple-300 mb-1">Win Rate</p>
-      <div id="win-rate-container" class="text-2xl font-bold text-green-400"></div>
+    <div class="flex space-x-6">
+      <div>
+        <p id="win-rate-header" class="text-sm text-purple-300 mb-1">Win Rate</p>
+        <div id="win-rate-container" class="text-2xl font-bold text-green-400"></div>
+      </div>
+      <div>
+        <p id="draw-rate-header" class="text-sm text-purple-300 mb-1">Draw Rate</p>
+        <div id="draw-rate-container" class="text-2xl font-bold text-gray-400"></div>
+      </div>
+      <div>
+        <p id="lose-rate-header" class="text-sm text-purple-300 mb-1">Lose Rate</p>
+        <div id="lose-rate-container" class="text-2xl font-bold text-red-400"></div>
+      </div>
     </div>
     <div class="flex-shrink-0 ml-6">
       <div id="pie-chart" class="pie-chart"></div>
