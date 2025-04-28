@@ -1,4 +1,5 @@
 const path = require("path");
+const webpack = require("webpack");
 
 module.exports = {
   entry: "./src/main.ts", // Your main TypeScript file
@@ -24,9 +25,15 @@ module.exports = {
       {
         test: /\.css$/, // Process CSS files
         use: ["style-loader", "css-loader"], // Process CSS with Tailwind
-      },
+      }
     ],
   },
+  devtool: false, // Disable source maps globally
+  plugins: [
+    new webpack.SourceMapDevToolPlugin({
+        exclude: [/node_modules/], // Exclude all node_modules
+    }),
+  ],
   devServer: {
     static: path.resolve(__dirname, "public"), // Serve static files from the public folder
     port: 9000, // Webpack Dev Server will run on localhost:9000
