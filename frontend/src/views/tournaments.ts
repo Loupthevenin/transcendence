@@ -26,16 +26,6 @@ export function TournamentView(): HTMLElement {
     />
   </div>
 
-<div>
-  <label for="display-name" class="block text-sm font-medium mb-2">Nom</label>
-  <input
-    type="text"
-    id="display-name"
-    name="displayName"
-    class="w-full px-4 py-2 rounded-lg bg-[#1e1b4b] text-white border border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-    required
-  />
-</div>
 
   <div>
     <label for="points-to-win" class="block text-sm font-medium mb-2">Points pour gagner</label>
@@ -79,7 +69,7 @@ export function TournamentView(): HTMLElement {
       </div>
 
       <!-- Tournois -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div id="tournaments-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
 		<!-- insertion dynamique -->
         <div class="bg-gray-800 p-6 rounded-lg shadow-xl flex flex-col justify-between">
           <div>
@@ -113,7 +103,6 @@ export function TournamentView(): HTMLElement {
             Déjà inscrit
           </button>
         </div>
-
       </div>
     </div>`;
   return container;

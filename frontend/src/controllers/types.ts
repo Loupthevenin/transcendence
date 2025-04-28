@@ -4,9 +4,11 @@ export interface UserProfile {
   email: string;
 }
 
-// interface Tournaments {
-//   id: number;
-//   playerRegistered: number;
-//   maxPlayers: number;
-//   status: "Ongoing" | "Pending";
-// }
+export interface Tournament {
+  id: number;
+  name: string;
+  playerRegistered: number;
+  maxPlayers: number;
+  status: "Ongoing" | "Pending";
+  joined: boolean;
+}
