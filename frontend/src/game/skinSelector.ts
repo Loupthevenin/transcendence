@@ -1,5 +1,6 @@
 import { BABYLON } from "@shared/game/gameElements";
 import { loadPadddleSkin } from "./paddleSkinLoader";
+import enableCanvasExtension from "../utils/canvasExtensionEnabler";
 
 let canvas: HTMLCanvasElement | null = null;
 let engine: BABYLON.Engine;
@@ -79,6 +80,8 @@ export function createSkinSelectorCanvas(root: HTMLElement): void {
 
   canvas = document.createElement("canvas");
   canvas.id = "skinSelectorCanvas";
+
+  enableCanvasExtension(canvas);
 
   root.appendChild(canvas);
 }
