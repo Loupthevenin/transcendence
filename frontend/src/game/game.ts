@@ -22,6 +22,7 @@ import { GameMessageData } from "@shared/messageType"
 import { LoadingHandler } from "./loadingHandler";
 import { showMenu, showInGameMenu } from "../controllers/gameMode";
 import { PositionData, ScoreData } from "@shared/game/replayData";
+import enableCanvasExtension from "../utils/canvasExtensionEnabler";
 
 enum GameMode {
   MENU,         // Player is in the menu
@@ -85,6 +86,8 @@ export function createGameCanvas(): HTMLCanvasElement {
   canvas.id = "renderCanvas";
   canvas.className = "absolute top-0 left-0 w-full h-full z-10";
   canvas.style.visibility = "hidden";
+
+  enableCanvasExtension(canvas);
 
   createLoadingScreen();
 
