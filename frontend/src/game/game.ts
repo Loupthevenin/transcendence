@@ -199,31 +199,37 @@ function updateScoreText(): void {
   }
 }
 
+enum INPUT {
+  NONE = 0b00,
+  UP =   0b01,
+  DOWN = 0b10
+}
+
 // Paddle movement variables
-let paddle1Input: number = 0;
-let paddle2Input: number = 0;
+let paddle1Input: INPUT = 0;
+let paddle2Input: INPUT = 0;
 
 // Add input handling for paddle movement
 window.addEventListener("keydown", (event: KeyboardEvent) => {
   switch (event.code) {
     case "KeyW": // Move Paddle 1 (Player 1) Up
       if (currentGameMode !== GameMode.MENU) {
-        paddle1Input |= 0b01;
+        paddle1Input |= INPUT.UP;
       }
       break;
     case "KeyS": // Move Paddle 1 (Player 1) Down
       if (currentGameMode !== GameMode.MENU) {
-        paddle1Input |= 0b10;
+        paddle1Input |= INPUT.DOWN;
       }
       break;
     case "ArrowUp": // Move Paddle 2 (Player 2) Up
       if (currentGameMode === GameMode.LOCAL) {
-        paddle2Input |= 0b01;
+        paddle2Input |= INPUT.UP;
       }
       break;
     case "ArrowDown": // Move Paddle 2 (Player 2) Down
       if (currentGameMode === GameMode.LOCAL) {
-        paddle2Input |= 0b10;
+        paddle2Input |= INPUT.DOWN;
       }
       break;
   }
@@ -232,16 +238,16 @@ window.addEventListener("keydown", (event: KeyboardEvent) => {
 window.addEventListener("keyup", (event: KeyboardEvent) => {
   switch (event.code) {
     case "KeyW": // Stop Paddle 1 Up movement
-      paddle1Input &= ~0b01;
+      paddle1Input &= ~INPUT.UP;
       break;
     case "KeyS": // Stop Paddle 1 Down movement
-      paddle1Input &= ~0b10;
+      paddle1Input &= ~INPUT.DOWN;
       break;
     case "ArrowUp": // Stop Paddle 2 Up movement
-      paddle2Input &= ~0b01;
+      paddle2Input &= ~INPUT.UP;
       break;
     case "ArrowDown": // Stop Paddle 2 Down movement
-      paddle2Input &= ~0b10;
+      paddle2Input &= ~INPUT.DOWN;
       break;
   }
 });
@@ -271,13 +277,21 @@ function handlePlayerDragInput(pointerInfo: BABYLON.PointerInfo): void {
 
             // Check if pickedMesh is not null and cast it to BABYLON.Mesh
             if (pickedMesh && pickedMesh instanceof BABYLON.Mesh) {
-              if (pickedMesh === paddle1Mesh) {
-                if (paddle1DraggingData.pointerId === -1) {
-                  paddle1DraggingData.pointerId = pointerId;
-                }
-              } else if (pickedMesh === paddle2Mesh) {
-                if (paddle2DraggingData.pointerId === -1) {
-                  paddle2DraggingData.pointerId = pointerId;
+              // Traverse up the parent chain to find the root node
+              let root: BABYLON.AbstractMesh | null = pickedMesh;
+              while (root.parent) {
+                root = root.parent as BABYLON.AbstractMesh;
+              }
+
+              if (root) {
+                if (root === paddle1Mesh) {
+                  if (paddle1DraggingData.pointerId === -1) {
+                    paddle1DraggingData.pointerId = pointerId;
+                  }
+                } else if (root === paddle2Mesh) {
+                  if (paddle2DraggingData.pointerId === -1) {
+                    paddle2DraggingData.pointerId = pointerId;
+                  }
                 }
               }
             }
@@ -316,7 +330,7 @@ function handlePlayerDragInput(pointerInfo: BABYLON.PointerInfo): void {
 }
 
 // Function to handle player input and update paddle position
-function handlePlayerInput(paddlePosition: BABYLON.Vector2, paddleMesh: BABYLON.Mesh, keyInput: number, draggingData: PaddleDraggingData, deltaTime: number): void {
+function handlePlayerInput(paddlePosition: BABYLON.Vector2, paddleMesh: BABYLON.Mesh, keyInput: INPUT, draggingData: PaddleDraggingData, deltaTime: number): void {
   if (keyInput === 0 && draggingData.pointerId === -1) {
     return; // No key input, no movement
   }
@@ -324,16 +338,18 @@ function handlePlayerInput(paddlePosition: BABYLON.Vector2, paddleMesh: BABYLON.
   let deltaX: number = 0;
   if (draggingData.pointerId !== -1) {
     if (draggingData.targetX !== null) {
-      const computedDelta: number = (draggingData.targetX - paddlePosition.x) * GAME_CONSTANT.paddleSpeed * deltaTime;
-      deltaX = Math.min(Math.max(computedDelta, -1), 1);
+      const distanceToTarget: number = (draggingData.targetX - paddlePosition.x);
+      deltaX = Math.min(Math.max(distanceToTarget, -1), 1);
     }
   } else {
-    deltaX = ((keyInput & 0b1) - ((keyInput >> 1) & 0b1)) * GAME_CONSTANT.paddleSpeed * deltaTime;
+    deltaX = ((keyInput & INPUT.UP) ? 1 : 0) - ((keyInput & INPUT.DOWN) ? 1 : 0);
   }
 
   if (deltaX === 0) {
     return; // No delta, no movement
   }
+
+  deltaX *= GAME_CONSTANT.paddleSpeed * deltaTime;
 
   // Update and clamp paddle positions to prevent them from going out of bounds
   paddlePosition.x = Math.min(
@@ -349,7 +365,7 @@ function handlePlayerInput(paddlePosition: BABYLON.Vector2, paddleMesh: BABYLON.
 function handleAIInput(paddlePosition: BABYLON.Vector2, paddleMesh: BABYLON.Mesh, ball: Ball, deltaTime: number): void {
   // TODO: do some weird math to predict the ball position instead of the current one
   const draggingData: PaddleDraggingData = { pointerId: -2, targetX: ball.position.x };
-  handlePlayerInput(paddlePosition, paddleMesh, 0, draggingData, deltaTime);
+  handlePlayerInput(paddlePosition, paddleMesh, INPUT.NONE, draggingData, deltaTime);
 }
 
 // Function to set the skin id of the given paddle
