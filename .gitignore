@@ -21,6 +21,12 @@ db/
 # Ignore environment files
 .env
 
+# Ignore blockchain files
+artifacts/
+cache/
+typechain/
+typechain-types/
+
 # others
 .vscode
 logs/
