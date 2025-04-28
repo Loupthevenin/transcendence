@@ -18,7 +18,7 @@ import {
   DB_DIR,
   GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET,
-  NODE_ENV
+  NODE_ENV,
 } from "./config";
 
 // Create a Fastify serveur
@@ -66,6 +66,7 @@ app.register(require("./routes/profile"), { prefix: "/api/profile" });
 app.register(require("./routes/replay"), { prefix: "/api/replay" });
 app.register(require("./routes/models"), { prefix: "/api/models" });
 app.register(require("./routes/textures"), { prefix: "/api/textures" });
+app.register(require("./routes/blockchain"), { prefix: "/api/blockchain" });
 
 if (NODE_ENV === "development") {
   app.register(require("./routes/db"), { prefix: "/api/db/" });
@@ -89,10 +90,13 @@ app.listen(
     const wss: WebSocketServer = setupWebSocket();
 
     // Integrate WebSocket with Fastify
-    app.server.on("upgrade", (request: IncomingMessage, socket: Stream.Duplex, head: Buffer) => {
-      wss.handleUpgrade(request, socket, head, (client: WebSocket) => {
-        wss.emit("connection", client, request);
-      });
-    });
+    app.server.on(
+      "upgrade",
+      (request: IncomingMessage, socket: Stream.Duplex, head: Buffer) => {
+        wss.handleUpgrade(request, socket, head, (client: WebSocket) => {
+          wss.emit("connection", client, request);
+        });
+      },
+    );
   },
 );

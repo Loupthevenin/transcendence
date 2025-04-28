@@ -10,6 +10,7 @@
     "noImplicitAny": true,
     "noUnusedLocals": true,
     "skipLibCheck": true,
+    "resolveJsonModule": true,
     "paths": {
       "@shared/*": ["./src/shared/*"]
     },
@@ -18,4 +19,3 @@
   "include": ["src/**/*"],
   "exclude": ["node_modules", "./dist"]
 }
-

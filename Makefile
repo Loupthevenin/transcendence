@@ -2,7 +2,10 @@ DOCKER_COMPOSE = docker compose
 DOCKER_COMPOSE_FILE = ./docker-compose.yml
 DOCKER = $(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE)
 
-all: up
+all: compile-blockchain up
+
+compile-blockchain:
+	@cd blockchain && npx hardhat compile
 
 build:
 	@mkdir -p ./db
@@ -35,6 +38,7 @@ clean:
 	docker rmi -f $$(docker images -f "label=project=transcendence" -qa); \
 	docker volume rm $$(docker volume ls -q); \
 	docker network rm $$(docker network ls -q)) 2>/dev/null || true
+	@rm -rf ./blockchain/artifacts/ ./blockchain/cache ./blockchain/typechain-types/ 2>/dev/null || true
 
 fclean: clean
 	@if [ "$(shell id -u)" != "0" ]; then \
@@ -42,8 +46,8 @@ fclean: clean
 		exit 1; \
 	fi
 
-	rm -rf backend/app/node_modules frontend/node_modules 2>/dev/null || true
-	rm -rf backend/app/package-lock.json frontend/package-lock.json 2>/dev/null || true
+	rm -rf backend/app/node_modules frontend/node_modules blockchain/node_modules 2>/dev/null || true
+	rm -rf backend/app/package-lock.json frontend/package-lock.json blockchain/package-lock.json 2>/dev/null || true
 
 	(rm -rf ./backend/app/dist; \
 	rm -rf ./frontend/public/*.js ./frontend/public/**/*.js ./frontend/public/output.css; \
@@ -51,7 +55,7 @@ fclean: clean
 
 re: fclean all
 
-.PHONY: all build up down start stop restart logs ps status clean fclean re
+.PHONY: all compile-blockchain build up down start stop restart logs ps status clean fclean re
 
 # delete all cache : docker system prune -a
 

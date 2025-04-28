@@ -30,6 +30,7 @@ services:
       - db_data:$DB_DIR
       - ./backend/app:/var/app
       - ./frontend:/var/www/html
+      - ./blockchain/artifacts/:/var/app/artifacts
     networks:
       - transcendance
     env_file:
