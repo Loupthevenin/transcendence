@@ -1,7 +1,4 @@
 import { ethers } from "hardhat";
-import * as dotenv from "dotenv";
-import * as path from "path";
-dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 async function main() {
   const [deployer] = await ethers.getSigners();
