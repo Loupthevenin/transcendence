@@ -1,7 +1,7 @@
 import WebSocket, { WebSocketServer } from "ws";
 import { IncomingMessage } from "http";
 import jwt from "jsonwebtoken";
-import { Player } from "../game/player";
+import { Player, DisconnectedPlayer } from "../types/player";
 import { addPlayerToMatchmaking } from "../game/room";
 import {
   isSkinChangeMessage,
@@ -18,11 +18,6 @@ import { JWT_SECRET } from "../config";
 import { UserPayload } from "../types/UserPayload";
 import { User } from "../types/authTypes";
 import db from "../db/db";
-
-type DisconnectedPlayer = {
-  disconnectionTime: number;
-  player: Player;
-}
 
 // key = uuid
 const players: Map<string, Player> = new Map();
@@ -109,6 +104,7 @@ export function setupWebSocket(): WebSocketServer {
     } else {
       player = {
         uuid: playerUUID,
+        isBot: false,
         username: playerUsername,
         socket: ws,
         room: null,

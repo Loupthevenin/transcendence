@@ -16,7 +16,7 @@ import {
   DisconnectionMessage,
 } from "../shared/game/gameMessageTypes";
 import { GameMessage, GameMessageData } from "../shared/messageType";
-import { Player } from "./player";
+import { Player } from "../types/player";
 import { ReplayData, newReplayData } from "../shared/game/replayData";
 import { snapshotReplayData, saveReplayDataToFile } from "../controllers/replayController";
 
