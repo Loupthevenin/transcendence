@@ -55,14 +55,19 @@ const paddleModelReferences: Record<string, PaddleModelInfo> = JSON.parse(
   fs.readFileSync(path.join(assetsPaddlesModelsPath, "model-references.json"), "utf-8")
 );
 
+// Function to get a random paddle model ID
+export function getRandomPaddleModelId(): string {
+  const keys: string[] = Object.keys(paddleModelReferences);
+  return keys[Math.floor(Math.random() * keys.length)];
+}
+
 export async function getPaddleModel(request: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
     let { model_id } = request.params as { model_id: string };
 
     // If the model_id undefined or empty then take a random model
     if (!model_id || model_id.length === 0) {
-      const keys: string[] = Object.keys(paddleModelReferences);
-      model_id = keys[Math.floor(Math.random() * keys.length)];
+      model_id = getRandomPaddleModelId();
     }
 
     const modelInfo: PaddleModelInfo = paddleModelReferences[model_id];
