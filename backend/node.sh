@@ -5,22 +5,44 @@ set -o pipefail # Ensure all parts of a pipeline fail correctly
 
 # Define colors
 RESET='\033[0m'
+RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 
+FRONT_DIR="/var/www/html"
+BACK_DIR="/var/app"
+
+if [ "$INTEGRITY_TEST" = "true" ]; then
+    cd $BACK_DIR
+
+    echo -e "${CYAN}Building the project...${RESET}"
+    npm run build
+
+    echo -e "${BLUE}Running tests...${RESET}"
+
+    # Run tests and check the exit status
+    if npm run test; then
+       echo -e "${GREEN}Success: Integrity test passed!${RESET}"
+    else
+       echo -e "${RED}Error: Integrity test failed!${RESET}"
+    fi
+
+    exit 0
+fi
+
 # Install npm dependencies
 echo -e "${BLUE}Installing npm dependencies...${RESET}"
-( cd /var/www/html && npm install ) &
-( cd /var/app && npm install ) &
+( cd $FRONT_DIR && npm install ) &
+( cd $BACK_DIR && npm install ) &
 
 wait
 echo -e "${GREEN}Npm dependencies installed successfully...${RESET}"
 
 # Compilation of front
-cd /var/www/html
-ln -sfn /var/app/src/shared /var/www/html/src/shared
+cd $FRONT_DIR
+ln -sfn ${BACK_DIR}/src/shared ${FRONT_DIR}/src/shared
 
 if [ "$NODE_ENV" = "development" ]; then
   echo -e "${YELLOW}Starting frontend development server...${RESET}"
@@ -33,7 +55,7 @@ else
 fi
 
 # Compilation of back and run the server
-cd /var/app
+cd $BACK_DIR
 npm run build
 
 if [ "$NODE_ENV" = "development" ]; then
@@ -45,6 +67,6 @@ else
 fi
 
 if [ ! -z "$FRONTEND_PID" ]; then
-  echo -e "${YELLOW}Waiting for the frontend development server to finish...${RESET}"
+  echo -e "${YELLOW}Waiting for the frontend development server to exit...${RESET}"
   wait $FRONTEND_PID # Wait for the frontend server process if running
 fi
