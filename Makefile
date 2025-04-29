@@ -30,6 +30,9 @@ stop:
 
 restart: stop start
 
+test:
+	@$(DOCKER) run --rm -e INTEGRITY_TEST=true backend
+
 logs:
 	@$(DOCKER) logs
 
@@ -59,7 +62,7 @@ fclean: clean
 
 re: fclean all
 
-.PHONY: all compile-blockchain build up down start stop restart logs ps status clean fclean re
+.PHONY: all compile-blockchain build up down start stop restart test logs ps status clean fclean re
 
 # delete all cache : docker system prune -a
 
