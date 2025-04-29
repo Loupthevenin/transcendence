@@ -1,5 +1,11 @@
 import { UserProfile, Tournament } from "./types";
 
+interface TournamentFormData {
+  name: string;
+  pointsTowin: number;
+  playersCount: number;
+}
+
 function createCardTournament(tournament: Tournament): HTMLElement {
   const card: HTMLElement = document.createElement("div");
   card.className =
@@ -50,6 +56,7 @@ async function loadTournaments(): Promise<void> {
     "tournaments-container",
   );
   if (!container) return;
+  // TODO: replace GET request by function get Info Tournament (const tournaments: Tournament[] = getInfo());
   try {
     const res: Response = await fetch("/api/tournaments", {
       method: "GET",
@@ -59,6 +66,7 @@ async function loadTournaments(): Promise<void> {
     });
     if (!res.ok) return;
 
+    // TODO: here:
     const tournaments: Tournament[] = await res.json();
     container.innerHTML = "";
     tournaments.forEach((tournament) => {
@@ -87,7 +95,10 @@ async function loadTournaments(): Promise<void> {
       form.addEventListener("submit", (e) => {
         e.preventDefault();
         form.classList.add("hidden");
-        console.log("rejoindre le tournoi");
+        const formdata: FormData = new FormData(form);
+        const displayName: string = formdata.get("displayName") as string;
+        // TODO: Add join Tournament function;
+        console.log("rejoindre le tournoi name: ", displayName);
       });
     });
   } catch (error: any) {
@@ -143,14 +154,28 @@ function createTournament(): void {
 
   form.addEventListener("submit", (e) => {
     e.preventDefault(); // Empêche le rechargement de la page
-    console.log("Create Tournament");
+    const formData: FormData = new FormData(form);
+    const name: string = formData.get("tournamentName") as string;
+    const pointsToWin: number = parseInt(
+      formData.get("pointsToWin") as string,
+      10,
+    );
+    const playersCount: number = parseInt(
+      formData.get("playersCount") as string,
+      10,
+    );
+    const tournamentData: TournamentFormData = {
+      name: name,
+      pointsTowin: pointsToWin,
+      playersCount: playersCount,
+    };
+    // TODO: Add function to create Tournament with tournamentData;
+    console.log(tournamentData);
   });
 }
-// function joinTournament(): void {}
 
 export function tournamentsHandlers(container: HTMLElement): void {
   loadTournaments();
   setDisplayNameInputs();
   createTournament();
-  // joinTournament();
 }
