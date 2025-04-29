@@ -5,7 +5,11 @@ DOCKER = $(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE)
 all: compile-blockchain up
 
 compile-blockchain:
-	@cd blockchain && npx hardhat compile
+	@docker build -t blockchain ./blockchain
+	@docker run --rm \
+		-v $(PWD)/blockchain:/app \
+		--env-file .env \
+		blockchain
 
 build:
 	@mkdir -p ./db
