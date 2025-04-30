@@ -1,3 +1,6 @@
+import { GameResultMessage } from "../shared/game/gameMessageTypes";
+import { GAME_CONSTANT } from "../shared/game/gameElements";
+import { Room, RoomType, createNewRoom } from "../game/room";
 import { Player } from "../types/player";
 
 type MatchNode = {
@@ -8,7 +11,13 @@ type MatchNode = {
 
 export class TournamentTree {
   public root: MatchNode | null = null;
-  //private depth: number = 0;
+  public scoreToWin: number = GAME_CONSTANT.defaultScoreToWin;
+
+  constructor(scoreToWin?: number) {
+    if (scoreToWin) {
+      this.scoreToWin = scoreToWin;
+    }
+  }
 
   // Function to generate the tournament tree
   public generate(players: Player[]): void {
@@ -28,7 +37,6 @@ export class TournamentTree {
 
     // Build the tree
     this.root = this.buildTree(shuffledPlayers);
-    //this.depth = Math.ceil(Math.log2(players.length));
   }
 
   // Recursive function to build the tree
@@ -44,15 +52,113 @@ export class TournamentTree {
     return { player: null, left: leftTree, right: rightTree };
   }
 
-  public playMatch(node: MatchNode): void {
+  public playTournament(): Promise<void> {
+    if (!this.root) throw new Error("Tournament tree has not been generated yet.");
+
+    return new Promise<void>(async (resolve) => {
+      let currentRoundNodes: MatchNode[] = this.getBottomMatches(); // Start with the first round
+
+      while (currentRoundNodes.length > 0) {
+        await this.playRound(currentRoundNodes); // Play all matches in the round
+        currentRoundNodes = this.getNextRound(currentRoundNodes); // Move to the next round
+        // this.printTree(); ////////////////////////////////////////
+      }
+
+      console.log(`Tournament finished! Winner: '${this.root?.player?.username}'`);
+      resolve();
+    });
+  }
+
+  // Play all matches in the current round asynchronously
+  private async playRound(nodes: MatchNode[]): Promise<void> {
+    await Promise.all(nodes.map((node: MatchNode) => this.playMatchAsync(node)));
+  }
+
+  // Collect all the matches from the bottom of the tree (first round)
+  private getBottomMatches(): MatchNode[] {
+    if (!this.root) return [];
+    let queue: MatchNode[] = [this.root];
+    let firstRoundMatches: MatchNode[] = [];
+
+    while (queue.length > 0) {
+      const node: MatchNode = queue.shift()!;
+
+      if (node.left && node.right) {
+        // If both children are leaf nodes (have players assigned), this node is a first-round match
+        if (node.left.player && node.right.player) {
+          firstRoundMatches.push(node);
+        } else {
+          queue.push(node.left, node.right);
+        }
+      }
+    }
+
+    return firstRoundMatches;
+  }
+
+  // Get the next round matches
+  private getNextRound(previousRound: MatchNode[]): MatchNode[] {
+    let nextRound: MatchNode[] = [];
+
+    for (const match of previousRound) {
+      const parent: MatchNode | null = this.findParent(match);
+      if (parent && !nextRound.includes(parent)) {
+        nextRound.push(parent);
+      }
+    }
+
+    return nextRound;
+  }
+
+  // Find parent node of a match (needed for advancing rounds)
+  private findParent(child: MatchNode): MatchNode | null {
+    function findParentRecursively(current: MatchNode | null, child: MatchNode): MatchNode | null {
+      if (!current || !current.left || !current.right) return null;
+      if (current.left === child || current.right === child) return current;
+
+      return findParentRecursively(current.left, child) || findParentRecursively(current.right, child);
+    }
+
+    return findParentRecursively(this.root, child);
+  }
+
+  // Wrapper to play a match asynchronously
+  private playMatchAsync(node: MatchNode): Promise<void> {
+    return new Promise((resolve) => {
+      if (!node.left?.player || !node.right?.player) {
+        throw new Error("Cannot play match for a node with missing players.");
+      }
+
+      if (node.left.player.isBot && node.right.player.isBot) {
+        // Both players are bots, so randomly select a winner
+        this.handleMatchEnded(node, Math.random() < 0.5 ? "A" : "B");
+        return resolve(); // Resolve immediately
+      }
+
+      const room: Room = createNewRoom(RoomType.Tournament);
+      room.addPlayer(node.left.player);
+      room.addPlayer(node.right.player);
+
+      room.setGameEndedCallback((gameResult: GameResultMessage) => {
+        this.handleMatchEnded(node, gameResult.winner === node.right!.player!.username ? "B" : "A");
+        resolve(); // Resolve once the match is over
+      });
+      room.setScoreToWin(this.scoreToWin);
+
+      room.startGame().catch((error: any) => {
+        console.error(`Error starting game in room '${room.getId()}':`, error);
+        room.dispose();
+        // If the game cannot be started, select the winner randomly to avoid blocking the tournament
+        this.handleMatchEnded(node, Math.random() < 0.5 ? "A" : "B");
+        resolve(); // Resolve even if there's an error
+      });
+    });
+  }
+
+  private handleMatchEnded(node: MatchNode, winner: "A" | "B") {
     if (node.player) throw new Error("This match has already been played.");
     if (!node.left || !node.right) throw new Error("Cannot play a match for a node without two children.");
     if (!node.left.player || !node.right.player) throw new Error("Cannot play a match for a node with children without player.");
-
-    // Simulate a match between the two players
-
-    // Get the winner
-    const winner: "A" | "B" = Math.random() < 0.5 ? "A" : "B";
 
     // Advance the winner to the current node
     node.player = (winner === "A" ? node.left : node.right).player;
