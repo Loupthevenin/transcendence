@@ -28,6 +28,13 @@ export enum RoomType {
 const rooms: Map<string, Room> = new Map();
 let roomCounter: number = 1;
 
+export function createNewRoom(type: RoomType): Room {
+  const roomId: string = `room-${roomCounter++}`;
+  const room: Room = new Room(roomId, type);
+  rooms.set(roomId, room);
+  return room;
+}
+
 export function addPlayerToMatchmaking(player: Player): void {
   // Check for an available room of type Matchmaking
   for (const [, room] of rooms) {
@@ -40,39 +47,36 @@ export function addPlayerToMatchmaking(player: Player): void {
   }
 
   // If no available room, create a new room
-  const newRoomId: string = `room-${roomCounter++}`;
-  const newRoom: Room = new Room(newRoomId, RoomType.Matchmaking);
+  const newRoom: Room = createNewRoom(RoomType.Matchmaking);
   newRoom.addPlayer(player);
-
-  rooms.set(newRoomId, newRoom);
 }
 
 // Start the game if room is full
 function startGameIfRoomFull(room: Room): void {
   if (room.isFull()) {
-    room.startGame()
-      .then(() => {
-        console.log(
-          `Game started: ${room.getId()} with p1 '${room.getPlayer(1)?.username}' and p2 '${room.getPlayer(2)?.username}'`,
-        );
-      })
-      .catch((error: any) => {
+      room.startGame().catch((error: any) => {
         console.error(`Error starting game in room '${room.getId()}':`, error);
-        rooms.delete(room.getId());
+        room.dispose();
       });
   }
 }
 
 export class Room {
-  private id: string;
-  private type: RoomType;
+  private readonly id: string;
+  private readonly type: RoomType;
   private player1: Player | null;
   private player2: Player | null;
+
   private gameData: GameData;
   private gameStats: GameStats;
   private replayData: ReplayData;
+
   private gameLaunched: boolean;
   private gameEnded: boolean;
+
+  private gameEndedCallback?: (gameResult: GameResultMessage) => void = undefined;
+
+  private scoreToWin: number = GAME_CONSTANT.defaultScoreToWin;
 
   public constructor(id: string, type: RoomType) {
     this.id = id;
@@ -143,6 +147,20 @@ export class Room {
     } else if (index === 2) {
       this.gameData.paddle2Position = pos;
     }
+  }
+
+  /**
+   * @param gameEndedCallback The callback to call when the game ends.
+   */
+  public setGameEndedCallback(gameEndedCallback: (gameResult: GameResultMessage) => void): void {
+    this.gameEndedCallback = gameEndedCallback;
+  }
+
+  /**
+   * @param scoreToWin The score needed to win the game.
+   */
+  public setScoreToWin(scoreToWin: number): void {
+    this.scoreToWin = scoreToWin;
   }
 
   /**
@@ -244,7 +262,7 @@ export class Room {
    * @returns True if player exist and is still connected, otherwise false.
    */
   public isPlayerAlive(player: Player | null | undefined): boolean {
-    return player?.socket?.readyState === WebSocket.OPEN;
+    return !!player && (player.isBot || player.socket?.readyState === WebSocket.OPEN);
   }
 
   /**
@@ -293,7 +311,7 @@ export class Room {
       this.isPlayerAlive(this.player1) &&
       !excludedPlayerUUID?.includes(this.player1.uuid)
     ) {
-      this.player1!.socket!.send(msg);
+      this.player1!.socket?.send(msg);
     }
 
     if (
@@ -301,7 +319,7 @@ export class Room {
       this.isPlayerAlive(this.player2) &&
       !excludedPlayerUUID?.includes(this.player2.uuid)
     ) {
-      this.player2!.socket!.send(msg);
+      this.player2!.socket?.send(msg);
     }
   }
 
@@ -330,19 +348,25 @@ export class Room {
       this.replayData.p2Skin = this.player2!.paddleSkinId;
       snapshotReplayData(this.replayData, 0, this.gameData);
 
-      const gameStartedMessage1: GameMessage = {
-        type: "game",
-        data: { type: "gameStarted", id: 1 } as GameStartedMessage,
-      };
-      this.player1?.socket?.send(JSON.stringify(gameStartedMessage1));
+      if (this.player1?.socket) {
+        const gameStartedMessage1: GameMessage = {
+          type: "game",
+          data: { type: "gameStarted", id: 1 } as GameStartedMessage,
+        };
+        this.player1.socket.send(JSON.stringify(gameStartedMessage1));
+      }
 
-      const gameStartedMessage2: GameMessage = {
-        type: "game",
-        data: { type: "gameStarted", id: 2 } as GameStartedMessage,
-      };
-      this.player2?.socket?.send(JSON.stringify(gameStartedMessage2));
+      if (this.player2?.socket) {
+        const gameStartedMessage2: GameMessage = {
+          type: "game",
+          data: { type: "gameStarted", id: 2 } as GameStartedMessage,
+        };
+        this.player2.socket.send(JSON.stringify(gameStartedMessage2));
+      }
 
       this.startMainLoop();
+
+      console.log(`Game started: ${this.id} (${RoomType[this.type]}) with p1 '${this.player1?.username}' and p2 '${this.player2?.username}'`);
       resolve();
     });
   }
@@ -383,8 +407,8 @@ export class Room {
 
       // Stop the game if one player reaches enought points
       if (
-        this.gameData.p1Score >= GAME_CONSTANT.scoreToWin ||
-        this.gameData.p2Score >= GAME_CONSTANT.scoreToWin
+        this.gameData.p1Score >= this.scoreToWin ||
+        this.gameData.p2Score >= this.scoreToWin
       ) {
         clearInterval(roomMainLoopInterval);
         this.endGame();
@@ -431,6 +455,8 @@ export class Room {
 
     this.saveGameSessionData(winnerId);
 
+    this.gameEndedCallback?.(gameResultMessage);
+
     this.clear();
   }
 
@@ -463,5 +489,15 @@ export class Room {
       winnerId === 1 ? "A" : (winnerId === 2 ? "B" : "draw"),
       RoomType[this.type],
     );
+  }
+
+  /**
+   * Dispose the room and remove it from the map.
+   * This should be called when the game is over and the room is no longer needed.
+   */
+  public dispose(): void {
+    this.clear();
+    this.gameEndedCallback = undefined;
+    rooms.delete(this.id);
   }
 }

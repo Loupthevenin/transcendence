@@ -30,7 +30,7 @@ export function createNewTournament(
     playerCount: 0,
     players: [],
     settings,
-    tree: new TournamentTree(),
+    tree: new TournamentTree(settings.scoreToWin),
     isClosed: false
   };
 
