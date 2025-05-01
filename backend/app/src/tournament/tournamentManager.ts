@@ -5,29 +5,33 @@ import { Tournament, isValidTournamentSettings } from "../types/tournament";
 import { TournamentSettings } from "../shared/tournament/tournamentSettings";
 import { TournamentTree } from "./tournamentTree";
 import { getRandomPaddleModelId } from "../controllers/assetsController";
+import { ERROR_MSG } from "../shared/errorType";
 
 const tournaments: Map<string, Tournament> = new Map();
 
-// This function creates a new tournament, adds it to the tournaments map and returns it
-// It checks if the owner has already created a tournament, and if so, it returns null
+/**
+ * This function creates a new tournament, adds it to the tournaments map and returns it
+ * If there is an error return null instead and an error message
+ * @returns the tournament if it was created successfully, or null if there was an error, and an error message
+ */
 export function createNewTournament(
   name: string,
   owner: Player,
   settings: TournamentSettings
-): Tournament | null {
+): [Tournament | null, string | undefined] {
   // If the name is empty or only whitespace, return null
-  if (!name || name.trim() === "") return null;
+  if (!name || name.trim() === "") return [null, ERROR_MSG.INVALID_TOURNAMENT_NAME];
 
   // If the settings are not valid, return null
-  if (!isValidTournamentSettings(settings)) return null;
+  if (!isValidTournamentSettings(settings)) return [null, ERROR_MSG.INVALID_TOURNAMENT_SETTINGS];
 
   // Search if the owner has already created a tournament
-  const ownerTournament: Tournament | undefined = Array.from(tournaments.values()).find(
+  const tournamentWithSameOwner: Tournament | undefined = Array.from(tournaments.values()).find(
     (tournament: Tournament) => tournament.owner.uuid === owner.uuid
   );
 
   // If a tournament already exists for this owner, return null
-  if (ownerTournament) return null;
+  if (tournamentWithSameOwner) return [null, ERROR_MSG.ALREADY_OWNER_OF_TOURNAMENT];
 
   const uuid: string = uuidv4();
   const tournament: Tournament = {
@@ -42,64 +46,74 @@ export function createNewTournament(
   };
 
   tournaments.set(uuid, tournament);
-  return tournament;
+  return [tournament, undefined];
 }
 
-// Getter for tournaments
+/**
+ * @param uuid the uuid of the tournament
+ * @returns return the tournament if it exist, else undefined
+ */
 export function getTournament(uuid: string): Tournament | undefined {
   return tournaments.get(uuid);
 }
 
-// Return a list of tournaments a given player has joined
+/**
+ * @param player the player to search for
+ * @returns the list of tournaments the player is in
+ */
 export function getTournamentsForPlayer(player: Player): Tournament[] {
   return Array.from(tournaments.values()).filter((tournament: Tournament) =>
     tournament.players.some((p: Player) => p.uuid === player.uuid)
   );
 }
 
-// Add a player to a tournament
+/**
+ * Add a player to a tournament
+ * @returns nothing if the player was added successfully, or an error message
+ */
 export function addPlayerToTournament(
   tournamentUUID: string,
   player: Player
-): boolean {
+): string | undefined {
   const tournament: Tournament | undefined = tournaments.get(tournamentUUID);
-  if (!tournament) return false;
+  if (!tournament) return ERROR_MSG.TOURNAMENT_NOT_FOUND;
 
   // Tournament is closed
-  if (tournament.isClosed) return false;
+  if (tournament.isClosed) return ERROR_MSG.TOURNAMENT_CLOSED;
 
   // Tournament is full
-  if (tournament.players.length >= tournament.settings.maxPlayerCount) return false;
+  if (tournament.players.length >= tournament.settings.maxPlayerCount) return ERROR_MSG.TOURNAMENT_FULL;
 
   // Player is already in the tournament
-  if (tournament.players.find((p: Player) => p.uuid === player.uuid)) return false;
+  if (tournament.players.find((p: Player) => p.uuid === player.uuid)) return ERROR_MSG.PLAYER_ALREADY_IN_TOURNAMENT;
 
   tournament.players.push(player);
   tournament.playerCount++;
-  return true;
 }
 
-// Remove a player from a tournament
+/**
+ * Remove a player from a tournament
+ * @returns nothing if the player was removed successfully, or an error message
+ */
 export function removePlayerFromTournament(
   tournamentUUID: string,
   player: Player
-): boolean {
+): string | undefined {
   const tournament: Tournament | undefined = tournaments.get(tournamentUUID);
-  if (!tournament) return false;
+  if (!tournament) return ERROR_MSG.TOURNAMENT_NOT_FOUND;
 
   // Tournament is closed
-  if (tournament.isClosed) return false;
+  if (tournament.isClosed) return ERROR_MSG.TOURNAMENT_CLOSED;
 
   const playerIndex: number = tournament.players.findIndex(
     (p: Player) => p.uuid === player.uuid
   );
 
   // Player not found in the tournament
-  if (playerIndex === -1) return false;
+  if (playerIndex === -1) return ERROR_MSG.PLAYER_NOT_IN_TOURNAMENT;
 
   tournament.players.splice(playerIndex, 1);
   tournament.playerCount--;
-  return true;
 }
 
 // Adjust players to make the count a power of 2 by adding bot players
@@ -124,22 +138,25 @@ function adjustPlayers(players: Player[]): void {
   }
 }
 
-// Close a tournament for new players
+/**
+ * Close a tournament and prevent players from joining and quitting
+ * @returns nothing if the tournament was closed successfully, or an error message
+ */
 export function closeTournament(
   tournamentUUID: string,
   player: Player
-): boolean {
+): string | undefined {
   const tournament: Tournament | undefined = tournaments.get(tournamentUUID);
-  if (!tournament) return false;
+  if (!tournament) return ERROR_MSG.TOURNAMENT_NOT_FOUND;
 
   // Tournament is already closed
-  if (tournament.isClosed) return false;
+  if (tournament.isClosed) return ERROR_MSG.TOURNAMENT_CLOSED;
 
   // Only the owner can close the tournament
-  if (tournament.owner.uuid !== player.uuid) return false;
+  if (tournament.owner.uuid !== player.uuid) return ERROR_MSG.NOT_OWNER_OF_TOURNAMENT;
 
   // Tournament must have at least 3 players to be closed
-  if (tournament.players.length < 3) return false;
+  if (tournament.players.length < 3) return ERROR_MSG.NOT_ENOUGHT_PLAYER_TO_CLOSE_TOURNAMENT;
 
   tournament.isClosed = true;
 
@@ -148,5 +165,4 @@ export function closeTournament(
   tournament.playerCount = tournament.players.length;
 
   tournament.tree.generate(tournament.players);
-  return true;
 }

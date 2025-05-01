@@ -1,6 +1,6 @@
 import { TournamentTree } from "../tournament/tournamentTree";
 import { Player } from "../types/player";
-import { TournamentSettings } from "../shared/tournament/tournamentSettings";
+import { TournamentSettings, isTournamentSettings } from "../shared/tournament/tournamentSettings";
 import { maxScoreToWin } from "../shared/game/constants";
 
 export type Tournament = {
@@ -15,6 +15,10 @@ export type Tournament = {
 }
 
 export function isValidTournamentSettings(settings: TournamentSettings): boolean {
+  if (!isTournamentSettings(settings)) {
+    return false;
+  }
+
   if (settings.maxPlayerCount !== 4 &&
       settings.maxPlayerCount !== 8 &&
       settings.maxPlayerCount !== 16 &&

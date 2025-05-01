@@ -1,3 +1,5 @@
+import { maxScoreToWin } from "@shared/game/constants";
+
 export function TournamentView(): HTMLElement {
   const container: HTMLElement = document.createElement("div");
   container.className = "bg-gray-900 text-white min-h-screen py-10 px-6 flex-1";
@@ -34,6 +36,7 @@ export function TournamentView(): HTMLElement {
       id="points-to-win"
       name="pointsToWin"
       min="1"
+      max="${maxScoreToWin}"
       value="5"
       class="w-full px-4 py-2 rounded-lg bg-[#1e1b4b] text-white border border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400"
       required
@@ -51,6 +54,7 @@ export function TournamentView(): HTMLElement {
       <option value="4">4 joueurs</option>
       <option value="8">8 joueurs</option>
       <option value="16">16 joueurs</option>
+      <option value="32">32 joueurs</option>
     </select>
   </div>
 
