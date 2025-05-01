@@ -63,6 +63,7 @@ export function isConnected(): boolean {
 
 export function sendMessage<K extends SendableMessageTypes>(msgEventType: K, data: MessageEventMap[K]): void {
   if (!isConnected()) {
+    console.error("[WebSocket] Not connected. Cannot send message.");
     return;
   }
   const message: { type: K; data: MessageEventMap[K]; } = {

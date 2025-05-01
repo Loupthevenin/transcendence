@@ -5,7 +5,7 @@ export interface UserProfile {
 }
 
 export interface Tournament {
-  id: number;
+  uuid: string;
   name: string;
   playerRegistered: number;
   maxPlayers: number;

@@ -9,15 +9,28 @@ import {
   isMatchmakingMessage,
 } from "../shared/game/gameMessageTypes";
 import {
+  isCreateMessage,
+  isJoinMessage,
+  isLeaveMessage,
+} from "../shared/tournament/tournamentMessageTypes";
+import {
   ErrorMessage,
   GameMessageData,
   isGameMessage,
+  isTournamentMessage,
+  TournamentMessageData,
 } from "../shared/messageType";
 import ERROR_TYPE, { ERROR_MSG } from "../shared/errorType";
 import { JWT_SECRET } from "../config";
 import { UserPayload } from "../types/UserPayload";
 import { User } from "../types/authTypes";
 import db from "../db/db";
+import {
+  createNewTournament,
+  addPlayerToTournament,
+  removePlayerFromTournament
+} from "../tournament/tournamentManager";
+import { Tournament } from "../types/tournament";
 
 // key = uuid
 const players: Map<string, Player> = new Map();
@@ -34,6 +47,14 @@ function extractUrlParams(request: IncomingMessage): { [key: string]: string } {
   }
 
   return params;
+}
+
+function sendErrorMessage(ws: WebSocket, msg: string, errorType?: ERROR_TYPE | undefined): void {
+  const errorMessage: ErrorMessage = { type: "error", msg };
+  if (errorType) {
+    errorMessage.errorType = errorType;
+  }
+  ws.send(JSON.stringify(errorMessage));
 }
 
 // WebSocket setup
@@ -71,24 +92,14 @@ export function setupWebSocket(): WebSocketServer {
 
     // If there is no token or the token is invalid, refuse the connection
     if (!isAuthentificated || !playerUUID || !playerUsername) {
-      const errorMsg: ErrorMessage = {
-        type: "error",
-        msg: ERROR_MSG.TOKEN_MISSING_OR_INVALID,
-        errorType: ERROR_TYPE.CONNECTION_REFUSED
-      };
-      ws.send(JSON.stringify(errorMsg));
+      sendErrorMessage(ws, ERROR_MSG.TOKEN_MISSING_OR_INVALID, ERROR_TYPE.CONNECTION_REFUSED);
       ws.close(); // Close the connection after sending the error message
       return;
     }
 
     // Check if player is already connected with this account
     if (players.has(playerUUID)) {
-      const errorMsg: ErrorMessage = {
-        type: "error",
-        msg: ERROR_MSG.ALREADY_CONNECTED,
-        errorType: ERROR_TYPE.CONNECTION_REFUSED
-      };
-      ws.send(JSON.stringify(errorMsg));
+      sendErrorMessage(ws, ERROR_MSG.ALREADY_CONNECTED, ERROR_TYPE.CONNECTION_REFUSED);
       ws.close(); // Close the connection after sending the error message
       return;
     }
@@ -121,31 +132,58 @@ export function setupWebSocket(): WebSocketServer {
       try {
         const msgData: any = JSON.parse(message);
 
-        if (!isGameMessage(msgData)) {
-          return;
-        }
-        const data: GameMessageData = msgData.data;
+        if (isGameMessage(msgData)) {
+          const data: GameMessageData = msgData.data;
 
-        if (isMatchmakingMessage(data)) {
-          console.log(`[Matchmaking] : ${player.username} (${playerUUID})`);
-          addPlayerToMatchmaking(player);
-        } else if (isSkinChangeMessage(data)) {
-          if (player.room) {
-            // Check if the player who send the message is the owner of the paddle
-            if (data.id === player.room.indexOfPlayer(player)) {
-              player.paddleSkinId = data.skinId;
-              if (player.room.isGameLaunched()) {
-                player.room.notifySkinUpdate(player);
+          if (isMatchmakingMessage(data)) {
+            console.log(`[Matchmaking] : ${player.username} (${playerUUID})`);
+            addPlayerToMatchmaking(player);
+          } else if (isSkinChangeMessage(data)) {
+            if (player.room) {
+              // Check if the player who send the message is the owner of the paddle
+              if (data.id === player.room.indexOfPlayer(player)) {
+                player.paddleSkinId = data.skinId;
+                if (player.room.isGameLaunched()) {
+                  player.room.notifySkinUpdate(player);
+                }
+              }
+            }
+          } else if (isPaddlePositionMessage(data)) {
+            // Update paddle positions if condition meeted
+            if (player.room) {
+              const index: -1 | 1 | 2 = player.room.indexOfPlayer(player);
+              if (index !== -1) {
+                player.room.setPaddlePosition(index, data.position);
               }
             }
           }
-        } else if (isPaddlePositionMessage(data)) {
-          // Update paddle positions if condition meeted
-          if (player.room) {
-            const index: -1 | 1 | 2 = player.room.indexOfPlayer(player);
-            if (index !== -1) {
-              player.room.setPaddlePosition(index, data.position);
+        } else if (isTournamentMessage(msgData)) {
+          const data: TournamentMessageData = msgData.data;
+          let error: string | undefined = undefined;
+          let errorType: ERROR_TYPE | undefined = undefined;
+
+          if (isCreateMessage(data)) {
+            console.log(`[Tournament - Create] : ${player.username}`, data);
+            const [tournament, err]: [Tournament | null, string | undefined] = createNewTournament(data.name, player, data.settings);
+            if (err) {
+              error = err;
+              errorType = ERROR_TYPE.TOURNAMENT_CREATION_FAILED;
+            } else if (tournament) {
+              // TODO: send the tournament uuid back to the player to show him the tournament joining page
             }
+          } else if (isJoinMessage(data)) {
+            console.log(`[Tournament - Join] : ${player.username}`, data);
+            error = addPlayerToTournament(data.uuid, player);
+            errorType = ERROR_TYPE.TOURNAMENT_JOIN_FAILED;
+          } else if (isLeaveMessage(data)) {
+            console.log(`[Tournament - Leave] : ${player.username}`, data);
+            error = removePlayerFromTournament(data.uuid, player);
+            errorType = ERROR_TYPE.TOURNAMENT_LEAVE_FAILED;
+          }
+
+          // If an error occurred, send it to the player
+          if (error) {
+            sendErrorMessage(ws, error, errorType);
           }
         }
       } catch (error: any) {

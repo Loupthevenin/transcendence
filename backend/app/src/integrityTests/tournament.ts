@@ -4,6 +4,7 @@ import { Tournament } from "../types/tournament";
 import { TournamentSettings } from "../shared/tournament/tournamentSettings";
 import { createNewTournament, addPlayerToTournament, removePlayerFromTournament, closeTournament } from "../tournament/tournamentManager";
 import { getRandomPaddleModelId } from "../controllers/assetsController";
+import { ERROR_MSG } from "../shared/errorType";
 import { maxScoreToWin } from "../shared/game/constants";
 
 const assert = (condition: boolean, message: string): void => {
@@ -53,63 +54,91 @@ export async function Test1(): Promise<void> {
 
   const settings: TournamentSettings = {
     maxPlayerCount: 8,
-    scoreToWin: 0
+    scoreToWin: 5
   };
 
   assert(
-    createNewTournament("Invalid Tournament settings", p1, settings) === null,
+    createNewTournament(undefined as unknown as string, p1, settings)[1] === ERROR_MSG.INVALID_TOURNAMENT_NAME,
+    "tournament should be null because of invalid name"
+  );
+
+  assert(
+    createNewTournament("", p1, settings)[1] === ERROR_MSG.INVALID_TOURNAMENT_NAME,
+    "tournament should be null because of invalid name"
+  );
+
+  assert(
+    createNewTournament("    ", p1, settings)[1] === ERROR_MSG.INVALID_TOURNAMENT_NAME,
+    "tournament should be null because of invalid name"
+  );
+
+  settings.scoreToWin = 0;
+  assert(
+    createNewTournament("Invalid Tournament settings", p1, settings)[1] === ERROR_MSG.INVALID_TOURNAMENT_SETTINGS,
     "tournament should be null because of invalid settings"
   );
 
   settings.scoreToWin = 10000;
   assert(
-    createNewTournament("Invalid Tournament settings", p1, settings) === null,
+    createNewTournament("Invalid Tournament settings", p1, settings)[1] === ERROR_MSG.INVALID_TOURNAMENT_SETTINGS,
     "tournament should be null because of invalid settings"
   );
 
   settings.scoreToWin = 5;
   (settings as any).maxPlayerCount = 6;
   assert(
-    createNewTournament("Invalid Tournament settings", p1, settings) === null,
+    createNewTournament("Invalid Tournament settings", p1, settings)[1] === ERROR_MSG.INVALID_TOURNAMENT_SETTINGS,
     "tournament should be null because of invalid settings"
   );
 
   settings.maxPlayerCount = 8;
 
-  const tournament: Tournament | null = createNewTournament("Test Tournament", p1, settings);
-  assert(tournament !== null, "tournament should not be null");
+  const [tournament, error]: [Tournament | null, string | undefined] = createNewTournament("Test Tournament", p1, settings);
+  assert(tournament !== null && error === undefined, "tournament should not be null");
   console.log("tournament:", tournament);
 
   assert(
-    createNewTournament("Test Tournament 2", p1, settings) === null,
+    createNewTournament("Test Tournament 2", p1, settings)[1] === ERROR_MSG.ALREADY_OWNER_OF_TOURNAMENT,
     "tournament2 should be null"
   );
 
   if (!tournament) return;
 
-  let hasBeenAdded: boolean = addPlayerToTournament(tournament.uuid, p2);
-  assert(hasBeenAdded === true, "hasBeenAdded should be true");
+  assert(
+    addPlayerToTournament(tournament.uuid, p2) === undefined,
+    "there should be no error"
+  );
   // console.log("\n\nAdded player 2\n");
   // console.log(tournament);
 
-  hasBeenAdded = addPlayerToTournament(tournament.uuid, p1);
-  assert(hasBeenAdded === true, "hasBeenAdded should be true");
+  assert(
+    addPlayerToTournament(tournament.uuid, p1) === undefined,
+    "there should be no error"
+  );
   // console.log("\n\nAdded player 1\n");
   // console.log(tournament);
 
-  hasBeenAdded = addPlayerToTournament(tournament.uuid, p2);
-  assert(hasBeenAdded === false, "p2 is already in the tournament");
+  assert(
+    addPlayerToTournament(tournament.uuid, p2) === ERROR_MSG.PLAYER_ALREADY_IN_TOURNAMENT,
+    "p2 is already in the tournament"
+  );
 
-  let hasBeenRemoved: boolean = removePlayerFromTournament(tournament.uuid, p2);
-  assert(hasBeenRemoved === true, "hasBeenRemoved should be true");
+  assert(
+    removePlayerFromTournament(tournament.uuid, p2) === undefined,
+    "there should be no error"
+  );
   // console.log("\n\nRemoved player 2\n");
   // console.log(tournament);
 
-  hasBeenRemoved = removePlayerFromTournament(tournament.uuid, p2);
-  assert(hasBeenRemoved === false, "p2 is not in the tournament");
+  assert(
+    removePlayerFromTournament(tournament.uuid, p2) === ERROR_MSG.PLAYER_NOT_IN_TOURNAMENT,
+    "p2 is not in the tournament"
+  );
 
-  hasBeenAdded = addPlayerToTournament(tournament.uuid, p2);
-  assert(hasBeenAdded === true, "hasBeenAdded should be true");
+  assert(
+    addPlayerToTournament(tournament.uuid, p2) === undefined,
+    "there should be no error"
+  );
   // console.log("\n\nAdded player 2 for the second time\n");
   // console.log(tournament);
 
@@ -120,14 +149,28 @@ export async function Test1(): Promise<void> {
   }, "Cannot generate the tournament tree here because players count is not a power of 2");
 
   tournament.tree.printTree(); // not generated yet
-  assert(closeTournament(tournament.uuid, p2) === false, "p2 should not be able to close the tournament");
-  assert(closeTournament(tournament.uuid, p1) === false, "not enough players to close the tournament");
+  assert(
+    closeTournament(tournament.uuid, p2) === ERROR_MSG.NOT_OWNER_OF_TOURNAMENT,
+    "p2 should not be able to close the tournament"
+  );
+  assert(
+    closeTournament(tournament.uuid, p1) === ERROR_MSG.NOT_ENOUGHT_PLAYER_TO_CLOSE_TOURNAMENT,
+    "not enough players to close the tournament"
+  );
 
-  hasBeenAdded = addPlayerToTournament(tournament.uuid, p3);
-  assert(hasBeenAdded === true, "hasBeenAdded should be true");
+  assert(
+    addPlayerToTournament(tournament.uuid, p3) === undefined,
+    "there should be no error"
+  );
 
-  assert(closeTournament(tournament.uuid, p1) === true, "the tournament should be closed");
-  assert(closeTournament(tournament.uuid, p1) === false, "should not be able to close a tournament already closed");
+  assert(
+    closeTournament(tournament.uuid, p1) === undefined,
+    "the tournament should be closed"
+  );
+  assert(
+    closeTournament(tournament.uuid, p1) === ERROR_MSG.TOURNAMENT_CLOSED,
+    "should not be able to close a tournament already closed"
+  );
 
   console.log("tournament:", tournament, "\n");
 
@@ -158,19 +201,24 @@ export async function Test2(): Promise<void> {
     scoreToWin: 1
   };
 
-  const tournament: Tournament | null = createNewTournament("Test Tournament", players[4], settings);
-  assert(tournament !== null, "tournament should not be null");
+  const [tournament, error]: [Tournament | null, string | undefined] = createNewTournament("Test Tournament", players[4], settings);
+  assert(tournament !== null && error === undefined, "tournament should not be null");
 
   if (!tournament) return;
 
   for (const player of players) {
-    const hasBeenAdded: boolean = addPlayerToTournament(tournament.uuid, player);
-    assert(hasBeenAdded === true, `'${player.username}' should be added successfully`);
+    assert(
+      addPlayerToTournament(tournament.uuid, player) === undefined,
+      `'${player.username}' should be added successfully`
+    );
   }
 
   console.log("tournament:", tournament);
 
-  assert(closeTournament(tournament.uuid, players[4]) === true, "the tournament should be closed");
+  assert(
+    closeTournament(tournament.uuid, players[4]) === undefined,
+    "the tournament should be closed"
+  );
 
   assertTry(() => {
     tournament.tree.generate(tournament.players);
@@ -197,24 +245,31 @@ export async function Test3(): Promise<void> {
     scoreToWin: 15
   };
 
-  const tournament: Tournament | null = createNewTournament("Test Tournament", players[7], settings);
-  assert(tournament !== null, "tournament should not be null");
+  const [tournament, error]: [Tournament | null, string | undefined] = createNewTournament("Test Tournament", players[7], settings);
+  assert(tournament !== null && error === undefined, "tournament should not be null");
 
   if (!tournament) return;
 
   for (let i = 0; i < 50; i++) {
-    const hasBeenAdded: boolean = addPlayerToTournament(tournament.uuid, players[i]);
+    const error: string | undefined = addPlayerToTournament(tournament.uuid, players[i]);
     if (i < 16) {
-      assert(hasBeenAdded === true, `'${players[i].username}' should be added successfully`);
+      assert(error === undefined, `'${players[i].username}' should be added successfully`);
     } else {
-      assert(hasBeenAdded === false, `'${players[i].username}' should not be added`);
+      assert(error === ERROR_MSG.TOURNAMENT_FULL, `'${players[i].username}' should not be added`);
     }
   }
 
   console.log("tournament:", tournament);
 
-  assert(closeTournament(tournament.uuid, players[4]) === false, "p5 should not be able to close the tournament");
-  assert(closeTournament(tournament.uuid, players[7]) === true, "the tournament should be closed");
+  assert(
+    closeTournament(tournament.uuid, players[4]) === ERROR_MSG.NOT_OWNER_OF_TOURNAMENT,
+    "the tournament should be closed"
+  );
+
+  assert(
+    closeTournament(tournament.uuid, players[7]) === undefined,
+    "the tournament should be closed"
+  );
 
   await tournament.tree.playTournament();
 }
@@ -237,19 +292,24 @@ export async function Test4(): Promise<void> {
     scoreToWin: maxScoreToWin
   };
 
-  const tournament: Tournament | null = createNewTournament("Test Tournament", players[0], settings);
-  assert(tournament !== null, "tournament should not be null");
+  const [tournament, error]: [Tournament | null, string | undefined] = createNewTournament("Test Tournament", players[0], settings);
+  assert(tournament !== null && error === undefined, "tournament should not be null");
 
   if (!tournament) return;
 
   for (let i = 0; i < 15; i++) {
-    const hasBeenAdded: boolean = addPlayerToTournament(tournament.uuid, players[i]);
-    assert(hasBeenAdded === true, `'${players[i].username}' should be added successfully`);
+    assert(
+      addPlayerToTournament(tournament.uuid, players[i]) === undefined,
+      `'${players[i].username}' should be added successfully`
+    );
   }
 
   console.log("tournament:", tournament);
 
-  assert(closeTournament(tournament.uuid, players[0]) === true, "the tournament should be closed");
+  assert(
+    closeTournament(tournament.uuid, players[0]) === undefined,
+    "the tournament should be closed"
+  );
 
   await tournament.tree.playTournament();
 

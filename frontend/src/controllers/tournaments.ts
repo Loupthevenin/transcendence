@@ -1,10 +1,7 @@
 import { UserProfile, Tournament } from "./types";
-
-interface TournamentFormData {
-  name: string;
-  pointsTowin: number;
-  playersCount: number;
-}
+import { sendMessage } from "../websocketManager";
+import { TournamentSettings } from "@shared/tournament/tournamentSettings";
+import * as TournamentMessages from "@shared/tournament/tournamentMessageTypes";
 
 function createCardTournament(tournament: Tournament): HTMLElement {
   const card: HTMLElement = document.createElement("div");
@@ -69,7 +66,7 @@ async function loadTournaments(): Promise<void> {
     // TODO: here:
     const tournaments: Tournament[] = await res.json();
     container.innerHTML = "";
-    tournaments.forEach((tournament) => {
+    tournaments.forEach((tournament: Tournament) => {
       const card: HTMLElement = createCardTournament(tournament);
       container.appendChild(card);
 
@@ -83,7 +80,7 @@ async function loadTournaments(): Promise<void> {
         if (joinButton.disabled) return;
         document
           .querySelectorAll<HTMLFormElement>(".join-form")
-          .forEach((f) => f.classList.add("hidden"));
+          .forEach((f: HTMLFormElement) => f.classList.add("hidden"));
         form.classList.remove("hidden");
         setDisplayNameInputs();
       });
@@ -92,13 +89,15 @@ async function loadTournaments(): Promise<void> {
         form.classList.add("hidden");
       });
 
-      form.addEventListener("submit", (e) => {
+      form.addEventListener("submit", (e: SubmitEvent) => {
         e.preventDefault();
         form.classList.add("hidden");
-        const formdata: FormData = new FormData(form);
-        const displayName: string = formdata.get("displayName") as string;
-        // TODO: Add join Tournament function;
-        console.log("rejoindre le tournoi name: ", displayName);
+
+        const tournamentJoinMessage: TournamentMessages.JoinMessage = {
+          type: "join",
+          uuid: tournament.uuid
+        };
+        sendMessage("tournament", tournamentJoinMessage);
       });
     });
   } catch (error: any) {
@@ -152,7 +151,7 @@ function createTournament(): void {
     buttonCreateTournament.classList.remove("hidden");
   });
 
-  form.addEventListener("submit", (e) => {
+  form.addEventListener("submit", (e: SubmitEvent) => {
     e.preventDefault(); // Empêche le rechargement de la page
     const formData: FormData = new FormData(form);
     const name: string = formData.get("tournamentName") as string;
@@ -164,13 +163,16 @@ function createTournament(): void {
       formData.get("playersCount") as string,
       10,
     );
-    const tournamentData: TournamentFormData = {
+
+    const tournamentCreateMessage: TournamentMessages.CreateMessage = {
+      type: "create",
       name: name,
-      pointsTowin: pointsToWin,
-      playersCount: playersCount,
+      settings: {
+        maxPlayerCount: playersCount,
+        scoreToWin: pointsToWin,
+      } as TournamentSettings,
     };
-    // TODO: Add function to create Tournament with tournamentData;
-    console.log(tournamentData);
+    sendMessage("tournament", tournamentCreateMessage);
   });
 }
 
