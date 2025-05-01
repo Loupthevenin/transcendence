@@ -1,5 +1,5 @@
 import ERROR_TYPE, { ERROR_MSG } from "@shared/errorType";
-import { isErrorMessage, ChatMessageData, isChatMessage, GameMessageData, isGameMessage } from "@shared/messageType"
+import { isErrorMessage, ChatMessageData, isChatMessage, GameMessageData, isGameMessage, TournamentMessageData, isTournamentMessage } from "@shared/messageType"
 
 // Define a mapping between event types and their corresponding data types
 type MessageEventMap = {
@@ -7,6 +7,7 @@ type MessageEventMap = {
   "onDisconnected": undefined;
   "game": GameMessageData;
   "chat": ChatMessageData;
+  "tournament": TournamentMessageData;
 };
 
 // Create a type that includes only keys where the mapped type is NOT undefined
@@ -118,6 +119,8 @@ export function connectToServer(): void {
           notifySubscribers("game", data.data);
         } else if (isChatMessage(data)) {
           notifySubscribers("chat", data.data);
+        } else if (isTournamentMessage(data)) {
+          notifySubscribers("tournament", data.data);
         } else if (isErrorMessage(data)) {
           if (data.errorType) {
             console.error(`[WebSocket] Received an error (${data.errorType}):`, data.msg);
