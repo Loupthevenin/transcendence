@@ -532,8 +532,8 @@ function gameLoop(deltaTime: number): void {
   }
 
   if (currentGameMode !== GameMode.MENU && currentGameMode !== GameMode.ONLINE) {
-    if ( gameData.p1Score >= GAME_CONSTANT.scoreToWin
-      || gameData.p2Score >= GAME_CONSTANT.scoreToWin) {
+    if ( gameData.p1Score >= GAME_CONSTANT.defaultScoreToWin
+      || gameData.p2Score >= GAME_CONSTANT.defaultScoreToWin) {
       const gameResult: GameResultMessage = {
         type: "gameResult",
         p1Score: gameData.p1Score,
