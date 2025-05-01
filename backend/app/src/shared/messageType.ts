@@ -1,6 +1,7 @@
 import ERROR_TYPE from "./errorType";
 import * as GameMessages from "./game/gameMessageTypes";
 import * as ChatMessages from "./chat/chatMessageTypes";
+import * as TournamentMessages from "./tournament/tournamentMessageTypes";
 
 export type ErrorMessage = {
   readonly type: "error";
@@ -51,6 +52,24 @@ export function isChatMessage(data: any): data is ChatMessage {
   return (
     data &&
     data.type === "chat" &&
+    "data" in data
+  );
+}
+
+export type TournamentMessageData =
+  | TournamentMessages.CreateMessage
+  | TournamentMessages.JoinMessage
+  | TournamentMessages.LeaveMessage
+
+export type TournamentMessage = {
+  readonly type: "tournament";
+  data: TournamentMessageData;
+};
+
+export function isTournamentMessage(data: any): data is TournamentMessage {
+  return (
+    data &&
+    data.type === "tournament" &&
     "data" in data
   );
 }

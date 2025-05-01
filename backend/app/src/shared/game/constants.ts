@@ -22,5 +22,6 @@ export const ballSpeedFactor: number = 1.05; // Factor to increase ball speed
 
 // Others
 export const defaultScoreToWin: number = 11; // the score to win the game
+export const maxScoreToWin: number = 30; // the maximum ScoreToWin available in game settings
 
 export const cameraRotationSpeed: number = 0.2; // Speed of camera rotation when in the menu

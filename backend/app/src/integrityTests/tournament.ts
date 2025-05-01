@@ -1,8 +1,10 @@
 import { AssertionError } from "assert";
 import { Player } from "../types/player";
-import { Tournament, TournamentSettings } from "../types/tournament";
+import { Tournament } from "../types/tournament";
+import { TournamentSettings } from "../shared/tournament/tournamentSettings";
 import { createNewTournament, addPlayerToTournament, removePlayerFromTournament, closeTournament } from "../tournament/tournamentManager";
 import { getRandomPaddleModelId } from "../controllers/assetsController";
+import { maxScoreToWin } from "../shared/game/constants";
 
 const assert = (condition: boolean, message: string): void => {
   if (!condition) throw new AssertionError({ message });
@@ -51,8 +53,28 @@ export async function Test1(): Promise<void> {
 
   const settings: TournamentSettings = {
     maxPlayerCount: 8,
-    scoreToWin: 5
+    scoreToWin: 0
   };
+
+  assert(
+    createNewTournament("Invalid Tournament settings", p1, settings) === null,
+    "tournament should be null because of invalid settings"
+  );
+
+  settings.scoreToWin = 10000;
+  assert(
+    createNewTournament("Invalid Tournament settings", p1, settings) === null,
+    "tournament should be null because of invalid settings"
+  );
+
+  settings.scoreToWin = 5;
+  (settings as any).maxPlayerCount = 6;
+  assert(
+    createNewTournament("Invalid Tournament settings", p1, settings) === null,
+    "tournament should be null because of invalid settings"
+  );
+
+  settings.maxPlayerCount = 8;
 
   const tournament: Tournament | null = createNewTournament("Test Tournament", p1, settings);
   assert(tournament !== null, "tournament should not be null");
@@ -212,7 +234,7 @@ export async function Test4(): Promise<void> {
 
   const settings: TournamentSettings = {
     maxPlayerCount: 16,
-    scoreToWin: 10000
+    scoreToWin: maxScoreToWin
   };
 
   const tournament: Tournament | null = createNewTournament("Test Tournament", players[0], settings);

@@ -1,7 +1,8 @@
 //import db from "../db/db";
 import { v4 as uuidv4 } from "uuid";
 import { Player } from "../types/player";
-import { Tournament, TournamentSettings } from "../types/tournament";
+import { Tournament, isValidTournamentSettings } from "../types/tournament";
+import { TournamentSettings } from "../shared/tournament/tournamentSettings";
 import { TournamentTree } from "./tournamentTree";
 import { getRandomPaddleModelId } from "../controllers/assetsController";
 
@@ -14,13 +15,19 @@ export function createNewTournament(
   owner: Player,
   settings: TournamentSettings
 ): Tournament | null {
+  // If the name is empty or only whitespace, return null
+  if (!name || name.trim() === "") return null;
+
+  // If the settings are not valid, return null
+  if (!isValidTournamentSettings(settings)) return null;
+
   // Search if the owner has already created a tournament
   const ownerTournament: Tournament | undefined = Array.from(tournaments.values()).find(
     (tournament: Tournament) => tournament.owner.uuid === owner.uuid
   );
-  if (ownerTournament) {
-    return null; // If a tournament already exists for this owner, return null
-  }
+
+  // If a tournament already exists for this owner, return null
+  if (ownerTournament) return null;
 
   const uuid: string = uuidv4();
   const tournament: Tournament = {
@@ -43,27 +50,29 @@ export function getTournament(uuid: string): Tournament | undefined {
   return tournaments.get(uuid);
 }
 
+// Return a list of tournaments a given player has joined
+export function getTournamentsForPlayer(player: Player): Tournament[] {
+  return Array.from(tournaments.values()).filter((tournament: Tournament) =>
+    tournament.players.some((p: Player) => p.uuid === player.uuid)
+  );
+}
+
 // Add a player to a tournament
 export function addPlayerToTournament(
   tournamentUUID: string,
   player: Player
 ): boolean {
   const tournament: Tournament | undefined = tournaments.get(tournamentUUID);
-  if (!tournament) {
-    return false;
-  }
+  if (!tournament) return false;
 
-  if (tournament.isClosed) {
-    return false; // Tournament is closed, cannot join
-  }
+  // Tournament is closed
+  if (tournament.isClosed) return false;
 
-  if (tournament.players.length >= tournament.settings.maxPlayerCount) {
-    return false; // Tournament is full
-  }
+  // Tournament is full
+  if (tournament.players.length >= tournament.settings.maxPlayerCount) return false;
 
-  if (tournament.players.find((p: Player) => p.uuid === player.uuid)) {
-    return false; // Player is already in the tournament
-  }
+  // Player is already in the tournament
+  if (tournament.players.find((p: Player) => p.uuid === player.uuid)) return false;
 
   tournament.players.push(player);
   tournament.playerCount++;
@@ -76,20 +85,17 @@ export function removePlayerFromTournament(
   player: Player
 ): boolean {
   const tournament: Tournament | undefined = tournaments.get(tournamentUUID);
-  if (!tournament) {
-    return false;
-  }
+  if (!tournament) return false;
 
-  if (tournament.isClosed) {
-    return false; // Tournament is closed, cannot quit
-  }
+  // Tournament is closed
+  if (tournament.isClosed) return false;
 
   const playerIndex: number = tournament.players.findIndex(
     (p: Player) => p.uuid === player.uuid
   );
-  if (playerIndex === -1) {
-    return false; // Player not found in the tournament
-  }
+
+  // Player not found in the tournament
+  if (playerIndex === -1) return false;
 
   tournament.players.splice(playerIndex, 1);
   tournament.playerCount--;
@@ -124,21 +130,16 @@ export function closeTournament(
   player: Player
 ): boolean {
   const tournament: Tournament | undefined = tournaments.get(tournamentUUID);
-  if (!tournament) {
-    return false;
-  }
+  if (!tournament) return false;
 
-  if (tournament.isClosed) {
-    return false; // Tournament is already closed
-  }
+  // Tournament is already closed
+  if (tournament.isClosed) return false;
 
-  if (tournament.owner.uuid !== player.uuid) {
-    return false; // Only the owner can close the tournament
-  }
+  // Only the owner can close the tournament
+  if (tournament.owner.uuid !== player.uuid) return false;
 
-  if (tournament.players.length < 3) {
-    return false; // Tournament must have at least 3 players to be closed
-  }
+  // Tournament must have at least 3 players to be closed
+  if (tournament.players.length < 3) return false;
 
   tournament.isClosed = true;
 
