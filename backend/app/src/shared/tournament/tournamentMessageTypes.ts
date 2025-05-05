@@ -19,13 +19,15 @@ export function isCreateMessage(data: any): data is CreateMessage {
 export type JoinMessage = {
   readonly type: "join";
   uuid: string; // The uuid of the tournament
+  name: string; // The name of the player
 };
 
 export function isJoinMessage(data: any): data is JoinMessage {
   return (
     data &&
     data.type === "join" &&
-    typeof data.uuid === "string" 
+    typeof data.uuid === "string" &&
+    typeof data.name === "string"
   );
 }
 
@@ -38,6 +40,6 @@ export function isLeaveMessage(data: any): data is LeaveMessage {
   return (
     data &&
     data.type === "leave" &&
-    typeof data.uuid === "string" 
+    typeof data.uuid === "string"
   );
 }

@@ -77,8 +77,11 @@ async function loadTournaments(): Promise<void> {
 
       joinButton.addEventListener("click", () => {
         if (tournament.joined) {
-          // TODO: desinscription;
-          console.log("désinscription");
+          const tournamentLeaveMessage: TournamentMessages.LeaveMessage = {
+            type: "leave",
+            uuid: tournament.uuid,
+          };
+          sendMessage("tournament", tournamentLeaveMessage);
           loadTournaments();
         } else {
           document
@@ -100,6 +103,7 @@ async function loadTournaments(): Promise<void> {
         const tournamentJoinMessage: TournamentMessages.JoinMessage = {
           type: "join",
           uuid: tournament.uuid,
+          name: "", // get name from input
         };
         sendMessage("tournament", tournamentJoinMessage);
         loadTournaments();
