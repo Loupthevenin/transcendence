@@ -17,6 +17,12 @@ BACK_DIR="/var/app"
 if [ "$INTEGRITY_TEST" = "true" ]; then
     cd $BACK_DIR
 
+    # Check if dependencies are missing before installing them
+    if [ ! -d "node_modules/typescript" ]; then
+        echo -e "${BLUE}Installing npm dependencies...${RESET}"
+        npm install
+    fi
+
     echo -e "${CYAN}Building the project...${RESET}"
     npm run build
 

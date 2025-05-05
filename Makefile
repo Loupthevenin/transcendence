@@ -37,15 +37,18 @@ logs:
 	@$(DOCKER) logs
 
 ps status:
-	@ docker ps
+	@docker ps
 
 clean:
-	(docker stop $$(docker ps -qa -f "label=project=transcendence"); \
+	@(docker stop $$(docker ps -qa -f "label=project=transcendence"); \
 	docker rm $$(docker ps -qa -f "label=project=transcendence"); \
 	docker rmi -f $$(docker images -f "label=project=transcendence" -qa); \
 	docker volume rm $$(docker volume ls -q); \
 	docker network rm $$(docker network ls -q)) 2>/dev/null || true
-	@rm -rf ./blockchain/artifacts/ ./blockchain/cache ./blockchain/typechain-types/ 2>/dev/null || true
+	@rm -rf ./backend/app/artifacts/ \
+			./blockchain/artifacts/ \
+			./blockchain/cache \
+			./blockchain/typechain-types/ 2>/dev/null || true
 
 fclean: clean
 	@if [ "$(shell id -u)" != "0" ]; then \
@@ -53,12 +56,14 @@ fclean: clean
 		exit 1; \
 	fi
 
-	rm -rf backend/app/node_modules frontend/node_modules blockchain/node_modules 2>/dev/null || true
-	rm -rf backend/app/package-lock.json frontend/package-lock.json blockchain/package-lock.json 2>/dev/null || true
+	find backend/app frontend blockchain \
+		-regex '.*/\(node_modules\|package-lock.json\)' \
+		-exec rm -rf {} + 2>/dev/null || true
 
 	(rm -rf ./backend/app/dist; \
-	rm -rf ./frontend/public/*.js ./frontend/public/**/*.js ./frontend/public/output.css; \
-	find ./frontend/public -type d -empty -delete) || true
+	rm -f ./frontend/public/output.css; \
+	find ./frontend/public -regex '.*\.js' -delete; \
+	find ./frontend/public -type d -empty -delete) 2>/dev/null || true
 
 re: fclean all
 
