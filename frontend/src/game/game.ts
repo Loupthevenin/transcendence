@@ -547,7 +547,7 @@ function gameLoop(deltaTime: number): void {
 }
 
 // Babylon.js setup
-export function initGameEnvironment(): void {
+export async function  initGameEnvironment(): Promise<void> {
   if (!canvas) {
     throw new Error("Canvas element is not created. Call CreateGameCanvas() first.");
   }
@@ -589,6 +589,7 @@ export function initGameEnvironment(): void {
     }).catch((error: any) => {
       console.error("An error occurred while loading model 'scene.glb' :", error);
     }).finally(() => loadingHandler.setLoaded(environmentSceneLoadingStateIndex));
+    //}).finally(() => setTimeout(() => loadingHandler.setLoaded(environmentSceneLoadingStateIndex), 5000)); // Delay of 5s for testing purposes
   } catch (error: any) {
     console.error("An error occurred while loading model 'scene.glb' :", error);
     loadingHandler.setLoaded(environmentSceneLoadingStateIndex);
@@ -780,6 +781,7 @@ export function initGameEnvironment(): void {
     scene.render();
   });
 
+  // Anonymous function to wait until the game environment is loaded to show the canvas
   // Handle window resizing
   window.addEventListener("resize", () => {
     if (engine) {
@@ -787,8 +789,9 @@ export function initGameEnvironment(): void {
     }
   });
 
-  // Anonymous function to wait until the game environment is loaded to show the canvas
-  new Promise<void>((resolve) => {
+  // Wait for the game environment to be fully loaded before showing the canvas
+  // and return a promise that resolves when the loading is complete
+  return new Promise<void>((resolve) => {
     const interval: NodeJS.Timeout = setInterval(() => {
       updateLoadingBar(loadingHandler.getLoadedProportion());
       if (loadingHandler.isAllLoaded()) {

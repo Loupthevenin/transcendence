@@ -106,6 +106,7 @@ export function setupWebSocket(): WebSocketServer {
 
     let player: Player;
 
+    // Check if the player was recently disconnected
     if (recentlyDisconnectedPlayers.has(playerUUID)) {
       player = recentlyDisconnectedPlayers.get(playerUUID)!.player;
       recentlyDisconnectedPlayers.delete(playerUUID);
@@ -113,6 +114,7 @@ export function setupWebSocket(): WebSocketServer {
       console.log(`[Reconnection] Player reconnected: ${player.username} (${playerUUID})`);
       player.room?.notifyReconnection(player);
     } else {
+      // Create a new player object
       player = {
         uuid: playerUUID,
         isBot: false,

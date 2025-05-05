@@ -93,12 +93,14 @@ export function setupReplay(root: HTMLElement): void {
 
     // Setup game canvas and environment
     root.appendChild(createGameCanvas());
-    initGameEnvironment();
 
-    // Use replay mode
-    ReplayMode(replayData.p1Skin, replayData.p2Skin);
-
-    mainLoop();
+    initGameEnvironment().then(() => {
+      if (replayData) {
+        // Use replay mode
+        ReplayMode(replayData.p1Skin, replayData.p2Skin);
+        mainLoop();
+      }
+    });
 
   }).catch((error: any) => {
     showError(error);
