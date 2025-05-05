@@ -60,6 +60,9 @@ export function getTournament(uuid: string): Tournament | undefined {
   return tournaments.get(uuid);
 }
 
+/**
+ * @returns return all the tournaments
+ */
 export function getTournaments(): Tournament[] {
   return Array.from(tournaments.values());
 }
@@ -98,6 +101,11 @@ export function addPlayerToTournament(
 
   tournament.players.push(player);
   tournament.playerCount++;
+
+  if (tournament.playerCount >= tournament.settings.maxPlayerCount) {
+    // Tournament is full, close it
+    close(tournament);
+  }
 }
 
 /**
@@ -130,8 +138,7 @@ function adjustPlayers(players: Player[]): void {
   let count: number = players.length;
   // Calculate the next power of 2
   // If the count is less or equal than 4, set it to 4 (minimum for a tournament)
-  const nextPowerOfTwo: number =
-    count <= 4 ? 4 : Math.pow(2, Math.ceil(Math.log2(count)));
+  const nextPowerOfTwo: number = count <= 4 ? 4 : Math.pow(2, Math.ceil(Math.log2(count)));
 
   let botCount: number = 1;
 
@@ -149,7 +156,29 @@ function adjustPlayers(players: Player[]): void {
 }
 
 /**
- * Close a tournament and prevent players from joining and quitting
+ * Close a tournament and generate the tournament tree
+ * @param tournament the tournament to close
+ */
+function close(tournament: Tournament): void {
+  if (tournament.isClosed) return;
+
+  tournament.isClosed = true;
+  tournament.playerCount = tournament.players.length;
+  // Ensure the number of players is a power of 2 by adding bot players if necessary
+  adjustPlayers(tournament.players);
+
+  try {
+    tournament.tree.generate(tournament.players);
+  } catch (error: any) {
+    console.error("An error occurred while generating the tournament tree:", error);
+    return;
+  }
+
+  // TODO: Notify all players that the tournament is closed and will start
+}
+
+/**
+ * Ask for a tournament closure
  * @returns nothing if the tournament was closed successfully, or an error message
  */
 export function closeTournament(
@@ -170,12 +199,6 @@ export function closeTournament(
   if (tournament.players.length < 3)
     return ERROR_MSG.NOT_ENOUGHT_PLAYER_TO_CLOSE_TOURNAMENT;
 
-  tournament.isClosed = true;
-
-  // Ensure the number of players is a power of 2 by adding bot players if necessary
-  adjustPlayers(tournament.players);
-  tournament.playerCount = tournament.players.length;
-
-  tournament.tree.generate(tournament.players);
+  close(tournament);
 }
 
