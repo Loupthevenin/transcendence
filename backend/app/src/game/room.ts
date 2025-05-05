@@ -295,7 +295,12 @@ export class Room {
    * Notify the room about the player reconnection.
    */
   public notifyReconnection(player: Player): void {
-    // TODO: send all message the player didn't receive cause of its disconnection
+    // TODO:
+    // game ended : send game result message
+    // game still running : send reconnection message (tell the player to load the game environment)
+    if (this.gameEnded) {
+    } else if (this.gameLaunched) {
+    }
   }
 
   /**
