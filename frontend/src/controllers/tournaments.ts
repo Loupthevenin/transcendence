@@ -69,9 +69,9 @@ async function loadTournaments(): Promise<void> {
       container.appendChild(card);
 
       const joinButton: HTMLButtonElement | null =
-        card.querySelector<HTMLButtonElement>("#join-tournament");
+        card.querySelector<HTMLButtonElement>(".join-tournament");
       const form: HTMLFormElement | null =
-        card.querySelector<HTMLFormElement>("#join-form");
+        card.querySelector<HTMLFormElement>(".join-form");
       if (!joinButton || !form) return;
 
       joinButton.addEventListener("click", () => {
