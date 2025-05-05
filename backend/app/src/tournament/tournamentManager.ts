@@ -43,6 +43,7 @@ export function createNewTournament(
     owner,
     playerCount: 0,
     players: [],
+    pseudoNames: new Map<string, string>(),
     settings,
     tree: new TournamentTree(settings.scoreToWin),
     isClosed: false,
@@ -84,7 +85,7 @@ export function getTournamentsForPlayer(player: Player): Tournament[] {
 export function addPlayerToTournament(
   tournamentUUID: string,
   player: Player,
-  username: string,
+  username?: string,
 ): string | undefined {
   const tournament: Tournament | undefined = tournaments.get(tournamentUUID);
   if (!tournament) return ERROR_MSG.TOURNAMENT_NOT_FOUND;
@@ -100,8 +101,8 @@ export function addPlayerToTournament(
   if (tournament.players.find((p: Player) => p.uuid === player.uuid))
     return ERROR_MSG.PLAYER_ALREADY_IN_TOURNAMENT;
 
-  // TODO: store the username given by the player
   tournament.players.push(player);
+  tournament.pseudoNames.set(player.uuid, username ?? player.username);
   tournament.playerCount++;
 
   if (tournament.playerCount >= tournament.settings.maxPlayerCount) {
@@ -132,6 +133,7 @@ export function removePlayerFromTournament(
   if (playerIndex === -1) return ERROR_MSG.PLAYER_NOT_IN_TOURNAMENT;
 
   tournament.players.splice(playerIndex, 1);
+  tournament.pseudoNames.delete(player.uuid);
   tournament.playerCount--;
 }
 

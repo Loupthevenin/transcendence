@@ -19,7 +19,7 @@ export function isCreateMessage(data: any): data is CreateMessage {
 export type JoinMessage = {
   readonly type: "join";
   uuid: string; // The uuid of the tournament
-  name: string; // The name of the player
+  username: string; // The username of the player
 };
 
 export function isJoinMessage(data: any): data is JoinMessage {
@@ -27,7 +27,7 @@ export function isJoinMessage(data: any): data is JoinMessage {
     data &&
     data.type === "join" &&
     typeof data.uuid === "string" &&
-    typeof data.name === "string"
+    typeof data.username === "string"
   );
 }
 
