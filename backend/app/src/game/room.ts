@@ -14,6 +14,7 @@ import {
   GameStartedMessage,
   GameResultMessage,
   DisconnectionMessage,
+  ReconnectionMessage,
 } from "../shared/game/gameMessageTypes";
 import { GameMessage, GameMessageData } from "../shared/messageType";
 import { Player } from "../types/player";
@@ -73,6 +74,7 @@ export class Room {
   private gameData: GameData;
   private gameStats: GameStats;
   private replayData: ReplayData;
+  private winner: string = "";
 
   private gameLaunched: boolean;
   private gameEnded: boolean;
@@ -252,6 +254,10 @@ export class Room {
    * @returns the index of player (p1 = 1, p2 = 2) or -1 if player isn't in this room.
    */
   public indexOfPlayer(player: Player): -1 | 1 | 2 {
+    if (!player) {
+      return -1;
+    }
+
     if (this.player1?.uuid === player.uuid) {
       return 1;
     } else if (this.player2?.uuid === player.uuid) {
@@ -295,11 +301,32 @@ export class Room {
    * Notify the room about the player reconnection.
    */
   public notifyReconnection(player: Player): void {
+    const playerId: -1 | 1 | 2 = this.indexOfPlayer(player);
+    if (playerId === -1) {
+      return;
+    }
+
     // TODO:
-    // game ended : send game result message
     // game still running : send reconnection message (tell the player to load the game environment)
+    // game ended : send game result message
+    const otherPlayerId: 1 | 2 = (playerId === 1 ? 2 : 1);
+    const reconnectionMessage: ReconnectionMessage = {
+      type: "reconnection",
+      id: playerId,
+      p1SkinId: player.paddleSkinId,
+      p2SkinId: this.getPlayer(otherPlayerId)!.paddleSkinId,
+    };
+    this.sendMessage(reconnectionMessage, [player.uuid]);
+
     if (this.gameEnded) {
-    } else if (this.gameLaunched) {
+      const gameResultMessage: GameResultMessage = {
+        type: "gameResult",
+        p1Score: this.gameData.p1Score,
+        p2Score: this.gameData.p2Score,
+        winner: this.winner,
+        gameStats: this.gameStats
+      };
+      this.sendMessage(gameResultMessage);  
     }
   }
 
@@ -479,13 +506,13 @@ export class Room {
     } else {
       winnerId = (this.gameData.p1Score > this.gameData.p2Score ? 1 : 2);
     }
-    const winner: string = winnerId === -1 ? "" : (this.getPlayer(winnerId)?.username ?? "");
+    this.winner = winnerId === -1 ? "" : (this.getPlayer(winnerId)?.username ?? "");
 
     const gameResultMessage: GameResultMessage = {
       type: "gameResult",
       p1Score: this.gameData.p1Score,
       p2Score: this.gameData.p2Score,
-      winner: winner,
+      winner: this.winner,
       gameStats: this.gameStats
     };
     this.sendMessage(gameResultMessage);
