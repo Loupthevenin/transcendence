@@ -17,8 +17,8 @@ function createCardTournament(tournament: TournamentInfo): HTMLElement {
             <p class="text-purple-200 mb-1">Joueurs inscrits : ${tournament.playerRegistered}/${tournament.maxPlayers}</p>
             <p class="text-purple-200">Statut : ${tournament.status}</p>
           </div>
-          <button class="join-tournament mt-6 ${isJoined ? "bg-gray-600 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"} text-white py-2 rounded-md transition-all" ${isFull || isJoined ? "disabled" : ""}>
-				${isJoined ? "Déjà inscrit" : "Rejoindre"}
+          <button class="join-tournament mt-6 ${isJoined ? "bg-red-600 hover:bg-red-700" : isFull ? "bg-gray-600 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"} text-white py-2 rounded-md transition-all" ${isFull && !isJoined ? "disabled" : ""}>
+				${isJoined ? "Se désinscrire" : isFull ? "Complet" : "Rejoindre"}
           </button>
         </div>
 		<form class="join-form hidden mt-4 bg-[#2a255c] p-4 rounded-lg shadow-md text-white space-y-4">
@@ -35,7 +35,7 @@ function createCardTournament(tournament: TournamentInfo): HTMLElement {
             <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-lg">
               Confirmer
             </button>
-            <button type="button" class="cancel-join bg-gray-600 hover:bg-gray-700 text-white font-semibold px-4 py-2 rounded-lg">
+            <button type="reset" class="cancel-join bg-gray-600 hover:bg-gray-700 text-white font-semibold px-4 py-2 rounded-lg">
               Annuler
             </button>
           </div>
@@ -76,12 +76,17 @@ async function loadTournaments(): Promise<void> {
       if (!joinButton || !form) return;
 
       joinButton.addEventListener("click", () => {
-        if (joinButton.disabled) return;
-        document
-          .querySelectorAll<HTMLFormElement>(".join-form")
-          .forEach((f: HTMLFormElement) => f.classList.add("hidden"));
-        form.classList.remove("hidden");
-        setDisplayNameInputs();
+        if (tournament.joined) {
+          // TODO: desinscription;
+          console.log("désinscription");
+          loadTournaments();
+        } else {
+          document
+            .querySelectorAll<HTMLFormElement>(".join-form")
+            .forEach((f: HTMLFormElement) => f.classList.add("hidden"));
+          form.classList.remove("hidden");
+          setDisplayNameInputs();
+        }
       });
 
       form.addEventListener("reset", () => {
@@ -97,6 +102,7 @@ async function loadTournaments(): Promise<void> {
           uuid: tournament.uuid,
         };
         sendMessage("tournament", tournamentJoinMessage);
+        loadTournaments();
       });
     });
   } catch (error: any) {
@@ -172,6 +178,7 @@ function createTournament(): void {
       } as TournamentSettings,
     };
     sendMessage("tournament", tournamentCreateMessage);
+    loadTournaments();
   });
 }
 
