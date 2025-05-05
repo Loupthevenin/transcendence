@@ -75,38 +75,6 @@ export function TournamentView(): HTMLElement {
       <!-- Tournois -->
       <div id="tournaments-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
 		<!-- insertion dynamique -->
-        <div class="bg-gray-800 p-6 rounded-lg shadow-xl flex flex-col justify-between">
-          <div>
-            <h2 class="text-2xl font-semibold text-indigo-300 mb-2">Tournoi #1</h2>
-            <p class="text-purple-200 mb-1">Joueurs inscrits : 8/8</p>
-            <p class="text-purple-200">Statut : En cours</p>
-          </div>
-          <button class="mt-6 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-md transition-all">
-            Rejoindre
-          </button>
-        </div>
-
-        <div class="bg-gray-800 p-6 rounded-lg shadow-xl flex flex-col justify-between">
-          <div>
-            <h2 class="text-2xl font-semibold text-indigo-300 mb-2">Tournoi #2</h2>
-            <p class="text-purple-200 mb-1">Joueurs inscrits : 6/8</p>
-            <p class="text-purple-200">Statut : En attente</p>
-          </div>
-          <button class="mt-6 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-md transition-all">
-            Rejoindre
-          </button>
-        </div>
-
-        <div class="bg-gray-800 p-6 rounded-lg shadow-xl flex flex-col justify-between">
-          <div>
-            <h2 class="text-2xl font-semibold text-indigo-300 mb-2">Tournoi #3</h2>
-            <p class="text-purple-200 mb-1">Joueurs inscrits : 4/8</p>
-            <p class="text-purple-200">Statut : En attente</p>
-          </div>
-          <button class="mt-6 bg-gray-600 text-white py-2 rounded-md cursor-not-allowed" disabled>
-            Déjà inscrit
-          </button>
-        </div>
       </div>
     </div>`;
   return container;
