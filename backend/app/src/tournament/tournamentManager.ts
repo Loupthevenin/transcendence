@@ -84,6 +84,7 @@ export function getTournamentsForPlayer(player: Player): Tournament[] {
 export function addPlayerToTournament(
   tournamentUUID: string,
   player: Player,
+  username: string,
 ): string | undefined {
   const tournament: Tournament | undefined = tournaments.get(tournamentUUID);
   if (!tournament) return ERROR_MSG.TOURNAMENT_NOT_FOUND;
@@ -99,6 +100,7 @@ export function addPlayerToTournament(
   if (tournament.players.find((p: Player) => p.uuid === player.uuid))
     return ERROR_MSG.PLAYER_ALREADY_IN_TOURNAMENT;
 
+  // TODO: store the username given by the player
   tournament.players.push(player);
   tournament.playerCount++;
 
