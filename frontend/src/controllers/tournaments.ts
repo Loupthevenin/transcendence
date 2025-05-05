@@ -53,9 +53,8 @@ async function loadTournaments(): Promise<void> {
     "tournaments-container",
   );
   if (!container) return;
-  // TODO: replace GET request by function get Info Tournament (const tournaments: Tournament[] = getInfo());
   try {
-    const res: Response = await fetch("/api/tournaments", {
+    const res: Response = await fetch("/api/tournaments/list", {
       method: "GET",
       headers: {
         authorization: `Bearer ${token}`,
@@ -63,7 +62,6 @@ async function loadTournaments(): Promise<void> {
     });
     if (!res.ok) return;
 
-    // TODO: here:
     const tournaments: Tournament[] = await res.json();
     container.innerHTML = "";
     tournaments.forEach((tournament: Tournament) => {
@@ -95,7 +93,7 @@ async function loadTournaments(): Promise<void> {
 
         const tournamentJoinMessage: TournamentMessages.JoinMessage = {
           type: "join",
-          uuid: tournament.uuid
+          uuid: tournament.uuid,
         };
         sendMessage("tournament", tournamentJoinMessage);
       });

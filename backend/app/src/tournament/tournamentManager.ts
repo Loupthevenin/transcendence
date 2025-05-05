@@ -17,21 +17,24 @@ const tournaments: Map<string, Tournament> = new Map();
 export function createNewTournament(
   name: string,
   owner: Player,
-  settings: TournamentSettings
+  settings: TournamentSettings,
 ): [Tournament | null, string | undefined] {
   // If the name is empty or only whitespace, return null
-  if (!name || name.trim() === "") return [null, ERROR_MSG.INVALID_TOURNAMENT_NAME];
+  if (!name || name.trim() === "")
+    return [null, ERROR_MSG.INVALID_TOURNAMENT_NAME];
 
   // If the settings are not valid, return null
-  if (!isValidTournamentSettings(settings)) return [null, ERROR_MSG.INVALID_TOURNAMENT_SETTINGS];
+  if (!isValidTournamentSettings(settings))
+    return [null, ERROR_MSG.INVALID_TOURNAMENT_SETTINGS];
 
   // Search if the owner has already created a tournament
-  const tournamentWithSameOwner: Tournament | undefined = Array.from(tournaments.values()).find(
-    (tournament: Tournament) => tournament.owner.uuid === owner.uuid
-  );
+  const tournamentWithSameOwner: Tournament | undefined = Array.from(
+    tournaments.values(),
+  ).find((tournament: Tournament) => tournament.owner.uuid === owner.uuid);
 
   // If a tournament already exists for this owner, return null
-  if (tournamentWithSameOwner) return [null, ERROR_MSG.ALREADY_OWNER_OF_TOURNAMENT];
+  if (tournamentWithSameOwner)
+    return [null, ERROR_MSG.ALREADY_OWNER_OF_TOURNAMENT];
 
   const uuid: string = uuidv4();
   const tournament: Tournament = {
@@ -42,7 +45,7 @@ export function createNewTournament(
     players: [],
     settings,
     tree: new TournamentTree(settings.scoreToWin),
-    isClosed: false
+    isClosed: false,
   };
 
   tournaments.set(uuid, tournament);
@@ -57,13 +60,17 @@ export function getTournament(uuid: string): Tournament | undefined {
   return tournaments.get(uuid);
 }
 
+export function getTournaments(): Tournament[] {
+  return Array.from(tournaments.values());
+}
+
 /**
  * @param player the player to search for
  * @returns the list of tournaments the player is in
  */
 export function getTournamentsForPlayer(player: Player): Tournament[] {
   return Array.from(tournaments.values()).filter((tournament: Tournament) =>
-    tournament.players.some((p: Player) => p.uuid === player.uuid)
+    tournament.players.some((p: Player) => p.uuid === player.uuid),
   );
 }
 
@@ -73,7 +80,7 @@ export function getTournamentsForPlayer(player: Player): Tournament[] {
  */
 export function addPlayerToTournament(
   tournamentUUID: string,
-  player: Player
+  player: Player,
 ): string | undefined {
   const tournament: Tournament | undefined = tournaments.get(tournamentUUID);
   if (!tournament) return ERROR_MSG.TOURNAMENT_NOT_FOUND;
@@ -82,10 +89,12 @@ export function addPlayerToTournament(
   if (tournament.isClosed) return ERROR_MSG.TOURNAMENT_CLOSED;
 
   // Tournament is full
-  if (tournament.players.length >= tournament.settings.maxPlayerCount) return ERROR_MSG.TOURNAMENT_FULL;
+  if (tournament.players.length >= tournament.settings.maxPlayerCount)
+    return ERROR_MSG.TOURNAMENT_FULL;
 
   // Player is already in the tournament
-  if (tournament.players.find((p: Player) => p.uuid === player.uuid)) return ERROR_MSG.PLAYER_ALREADY_IN_TOURNAMENT;
+  if (tournament.players.find((p: Player) => p.uuid === player.uuid))
+    return ERROR_MSG.PLAYER_ALREADY_IN_TOURNAMENT;
 
   tournament.players.push(player);
   tournament.playerCount++;
@@ -97,7 +106,7 @@ export function addPlayerToTournament(
  */
 export function removePlayerFromTournament(
   tournamentUUID: string,
-  player: Player
+  player: Player,
 ): string | undefined {
   const tournament: Tournament | undefined = tournaments.get(tournamentUUID);
   if (!tournament) return ERROR_MSG.TOURNAMENT_NOT_FOUND;
@@ -106,7 +115,7 @@ export function removePlayerFromTournament(
   if (tournament.isClosed) return ERROR_MSG.TOURNAMENT_CLOSED;
 
   const playerIndex: number = tournament.players.findIndex(
-    (p: Player) => p.uuid === player.uuid
+    (p: Player) => p.uuid === player.uuid,
   );
 
   // Player not found in the tournament
@@ -121,7 +130,8 @@ function adjustPlayers(players: Player[]): void {
   let count: number = players.length;
   // Calculate the next power of 2
   // If the count is less or equal than 4, set it to 4 (minimum for a tournament)
-  const nextPowerOfTwo: number = count <= 4 ? 4 : Math.pow(2, Math.ceil(Math.log2(count)));
+  const nextPowerOfTwo: number =
+    count <= 4 ? 4 : Math.pow(2, Math.ceil(Math.log2(count)));
 
   let botCount: number = 1;
 
@@ -132,7 +142,7 @@ function adjustPlayers(players: Player[]): void {
       username: `Bot ${botCount++}`,
       socket: null,
       room: null,
-      paddleSkinId: getRandomPaddleModelId()
+      paddleSkinId: getRandomPaddleModelId(),
     });
     count++;
   }
@@ -144,7 +154,7 @@ function adjustPlayers(players: Player[]): void {
  */
 export function closeTournament(
   tournamentUUID: string,
-  player: Player
+  player: Player,
 ): string | undefined {
   const tournament: Tournament | undefined = tournaments.get(tournamentUUID);
   if (!tournament) return ERROR_MSG.TOURNAMENT_NOT_FOUND;
@@ -153,10 +163,12 @@ export function closeTournament(
   if (tournament.isClosed) return ERROR_MSG.TOURNAMENT_CLOSED;
 
   // Only the owner can close the tournament
-  if (tournament.owner.uuid !== player.uuid) return ERROR_MSG.NOT_OWNER_OF_TOURNAMENT;
+  if (tournament.owner.uuid !== player.uuid)
+    return ERROR_MSG.NOT_OWNER_OF_TOURNAMENT;
 
   // Tournament must have at least 3 players to be closed
-  if (tournament.players.length < 3) return ERROR_MSG.NOT_ENOUGHT_PLAYER_TO_CLOSE_TOURNAMENT;
+  if (tournament.players.length < 3)
+    return ERROR_MSG.NOT_ENOUGHT_PLAYER_TO_CLOSE_TOURNAMENT;
 
   tournament.isClosed = true;
 
@@ -166,3 +178,4 @@ export function closeTournament(
 
   tournament.tree.generate(tournament.players);
 }
+
