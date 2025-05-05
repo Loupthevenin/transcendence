@@ -9,6 +9,7 @@ export type Tournament = {
   owner: Player; // The player who created the tournament
   playerCount: number;
   players: Player[];
+  pseudoNames: Map<string, string>; // Pseudo names of the players (key: pseudo)
   settings: TournamentSettings;
   tree: TournamentTree;
   isClosed: boolean; // Indicates if the tournament is closed for new players

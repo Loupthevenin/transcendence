@@ -174,8 +174,8 @@ export function setupWebSocket(): WebSocketServer {
               // TODO: send the tournament uuid back to the player to show him the tournament joining page
             }
           } else if (isJoinMessage(data)) {
-            console.log(`[Tournament - Join] : ${player.username}`, data);
-            error = addPlayerToTournament(data.uuid, player);
+            console.log(`[Tournament - Join] : ${player.username} as ${data.username}`, data);
+            error = addPlayerToTournament(data.uuid, player, data.username);
             errorType = ERROR_TYPE.TOURNAMENT_JOIN_FAILED;
           } else if (isLeaveMessage(data)) {
             console.log(`[Tournament - Leave] : ${player.username}`, data);

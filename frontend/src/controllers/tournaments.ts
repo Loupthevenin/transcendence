@@ -100,13 +100,16 @@ async function loadTournaments(): Promise<void> {
         e.preventDefault();
         form.classList.add("hidden");
 
-        const tournamentJoinMessage: TournamentMessages.JoinMessage = {
-          type: "join",
-          uuid: tournament.uuid,
-          name: "", // get name from input
-        };
-        sendMessage("tournament", tournamentJoinMessage);
-        loadTournaments();
+        const inputElement: HTMLInputElement | null = form.querySelector<HTMLInputElement>(".display-name-input");
+        if (inputElement) {
+          const tournamentJoinMessage: TournamentMessages.JoinMessage = {
+            type: "join",
+            uuid: tournament.uuid,
+            username: inputElement.value,
+          };
+          sendMessage("tournament", tournamentJoinMessage);
+          loadTournaments();
+        }
       });
     });
   } catch (error: any) {
