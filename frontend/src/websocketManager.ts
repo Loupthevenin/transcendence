@@ -1,4 +1,5 @@
 import ERROR_TYPE, { ERROR_MSG } from "@shared/errorType";
+import { isReconnectionMessage } from "@shared/game/gameMessageTypes";
 import { isErrorMessage, ChatMessageData, isChatMessage, GameMessageData, isGameMessage, TournamentMessageData, isTournamentMessage } from "@shared/messageType"
 
 // Define a mapping between event types and their corresponding data types
@@ -118,6 +119,10 @@ export function connectToServer(): void {
         const data: any = JSON.parse(event.data);
 
         if (isGameMessage(data)) {
+          if (isReconnectionMessage(data)) {
+            console.log("[WebSocket] Reconnection message received:", data);
+            // TODO: Handle game reconnection logic here
+          }
           notifySubscribers("game", data.data);
         } else if (isChatMessage(data)) {
           notifySubscribers("chat", data.data);
