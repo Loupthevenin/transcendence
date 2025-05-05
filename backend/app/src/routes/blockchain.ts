@@ -4,15 +4,15 @@ import { PRIVATE_KEY, CONTRACT_KEY } from "../config";
 
 import contractJson from "../../artifacts/contracts/TestContract.sol/TestContract.json";
 
-const provider = new JsonRpcProvider(
+const provider: JsonRpcProvider = new JsonRpcProvider(
   "https://api.avax-test.network/ext/bc/C/rpc",
 );
 
-const signer = new Wallet(PRIVATE_KEY, provider);
+const signer: Wallet = new Wallet(PRIVATE_KEY, provider);
 
 const abi = contractJson.abi;
 
-const contract = new Contract(CONTRACT_KEY, abi, signer);
+const contract: Contract = new Contract(CONTRACT_KEY, abi, signer);
 
 export default async function (
   app: FastifyInstance,
@@ -22,7 +22,7 @@ export default async function (
     try {
       const currentMessage = await contract.message();
       reply.send({ message: currentMessage });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       reply.status(500).send({ error: "Failed to fetch message" });
     }
@@ -36,7 +36,7 @@ export default async function (
       await tx.wait(); // Attendre confirmation
 
       reply.send({ status: "Message updated successfully" });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       reply.status(500).send({ error: "Failed to update message" });
     }

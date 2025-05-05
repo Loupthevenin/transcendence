@@ -937,15 +937,6 @@ export function SetReplayGameData(
   }
 }
 
-//// TO DELETE //// TO DELETE //// TO DELETE //// TO DELETE ////
-////////////////////////////////////////////////////////////////
-(window as any).BackToMenu = BackToMenu;
-// (window as any).SinglePlayer = SinglePlayer;
-// (window as any).LocalGame = LocalGame;
-// (window as any).OnlineGame = OnlineGame;
-////////////////////////////////////////////////////////////////
-
-
 //////// DEBUG ONLY
 
 let axesViewer: BABYLON.AxesViewer | null = null;

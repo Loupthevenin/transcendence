@@ -185,7 +185,7 @@ export async function Test1(): Promise<void> {
 
 export async function Test2(): Promise<void> {
   const players: Player[] = [];
-  for (let i = 0; i < 27; i++) {
+  for (let i: number = 0; i < 27; i++) {
     players.push({
       uuid: `player-${i}`,
       isBot: true,
@@ -229,7 +229,7 @@ export async function Test2(): Promise<void> {
 
 export async function Test3(): Promise<void> {
   const players: Player[] = [];
-  for (let i = 0; i < 50; i++) {
+  for (let i: number = 0; i < 50; i++) {
     players.push({
       uuid: `player-${i}`,
       isBot: true,
@@ -250,7 +250,7 @@ export async function Test3(): Promise<void> {
 
   if (!tournament) return;
 
-  for (let i = 0; i < 50; i++) {
+  for (let i: number = 0; i < 50; i++) {
     const error: string | undefined = addPlayerToTournament(tournament.uuid, players[i]);
     if (i < 16) {
       assert(error === undefined, `'${players[i].username}' should be added successfully`);
@@ -276,7 +276,7 @@ export async function Test3(): Promise<void> {
 
 export async function Test4(): Promise<void> {
   const players: Player[] = [];
-  for (let i = 0; i < 15; i++) {
+  for (let i: number = 0; i < 15; i++) {
     players.push({
       uuid: `player-${i}`,
       isBot: true,
@@ -297,7 +297,7 @@ export async function Test4(): Promise<void> {
 
   if (!tournament) return;
 
-  for (let i = 0; i < 15; i++) {
+  for (let i: number = 0; i < 15; i++) {
     assert(
       addPlayerToTournament(tournament.uuid, players[i]) === undefined,
       `'${players[i].username}' should be added successfully`

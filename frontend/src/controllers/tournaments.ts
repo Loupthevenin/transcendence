@@ -1,9 +1,10 @@
-import { UserProfile, Tournament } from "./types";
+import { UserProfile } from "./types";
 import { sendMessage } from "../websocketManager";
+import TournamentInfo from "@shared/tournament/tournamentInfo";
 import { TournamentSettings } from "@shared/tournament/tournamentSettings";
 import * as TournamentMessages from "@shared/tournament/tournamentMessageTypes";
 
-function createCardTournament(tournament: Tournament): HTMLElement {
+function createCardTournament(tournament: TournamentInfo): HTMLElement {
   const card: HTMLElement = document.createElement("div");
   card.className =
     "bg-gray-800 p-6 rounded-lg shadow-xl flex flex-col justify-between";
@@ -62,9 +63,9 @@ async function loadTournaments(): Promise<void> {
     });
     if (!res.ok) return;
 
-    const tournaments: Tournament[] = await res.json();
+    const tournaments: TournamentInfo[] = await res.json();
     container.innerHTML = "";
-    tournaments.forEach((tournament: Tournament) => {
+    tournaments.forEach((tournament: TournamentInfo) => {
       const card: HTMLElement = createCardTournament(tournament);
       container.appendChild(card);
 
