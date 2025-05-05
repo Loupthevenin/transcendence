@@ -66,6 +66,7 @@ export function sendMessage<K extends SendableMessageTypes>(msgEventType: K, dat
     console.error("[WebSocket] Not connected. Cannot send message.");
     return;
   }
+
   const message: { type: K; data: MessageEventMap[K]; } = {
     type: msgEventType,
     data: data
@@ -100,7 +101,7 @@ export function connectToServer(): void {
 
     // Handle connection open
     socket.onopen = () => {
-      console.log("[WebSocket] Connected to ", wsUrl);
+      console.log(`[WebSocket] Connected to '${wsHost}'`);
       notifySubscribers("onConnected", undefined);
 
       // Stop reconnection attempts once connected

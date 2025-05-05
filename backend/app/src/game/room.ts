@@ -22,8 +22,11 @@ import { snapshotReplayData, saveReplayDataToFile } from "../controllers/replayC
 
 export enum RoomType {
   Matchmaking,
+  FriendlyMatch,
   Tournament,
 }
+
+const DISCONNECT_TIMEOUT: number = 5000; // 5 seconds
 
 const rooms: Map<string, Room> = new Map();
 let roomCounter: number = 1;
@@ -332,8 +335,8 @@ export class Room {
       if (this.gameEnded) return reject("Game already ended");
       if (this.gameLaunched) return reject("Game already started");
       if (!this.isFull()) return reject("Room is not full");
-      if (!this.isPlayerAlive(this.player1)) return reject("Somehow the player 1 disconnected");
-      if (!this.isPlayerAlive(this.player2)) return reject("Somehow the player 2 disconnected");
+      if (!this.isPlayerAlive(this.player1)) return reject("Somehow the player 1 disconnected before the game start");
+      if (!this.isPlayerAlive(this.player2)) return reject("Somehow the player 2 disconnected before the game start");
 
       this.gameLaunched = true;
 
@@ -377,21 +380,51 @@ export class Room {
   private startMainLoop(): void {
     let previousTime: number = Date.now();
     let roomMainLoopInterval: NodeJS.Timeout;
+    let p1DisconnectionTimeout: number = 0;
+    let p2DisconnectionTimeout: number = 0;
 
     roomMainLoopInterval = setInterval(() => {
       // Stop the game if one player disconnects
-      if (
-        !this.isPlayerAlive(this.player1) ||
-        !this.isPlayerAlive(this.player2)
-      ) {
-        clearInterval(roomMainLoopInterval);
-        this.endGame(true);
-        return;
-      }
+      // if (
+      //   !this.isPlayerAlive(this.player1) ||
+      //   !this.isPlayerAlive(this.player2)
+      // ) {
+      //   clearInterval(roomMainLoopInterval);
+      //   this.endGame(true);
+      //   return;
+      // }
 
       const currentTime: number = Date.now(); // Get the current time
       const deltaTime: number = (currentTime - previousTime) / 1000; // Time elapsed in seconds
       previousTime = currentTime; // Update the previous time
+
+      // Check if player 1 is still alive
+      if (!this.isPlayerAlive(this.player1)) {
+        if (p1DisconnectionTimeout === 0) {
+          p1DisconnectionTimeout = currentTime + DISCONNECT_TIMEOUT;
+        } else if (currentTime > p1DisconnectionTimeout) {
+          // Player 1 has been disconnected for too long
+          clearInterval(roomMainLoopInterval);
+          this.endGame(1);
+          return;
+        }
+      } else {
+        p1DisconnectionTimeout = 0; // Reset the timeout if player 1 is alive
+      }
+
+      // Check if player 2 is still alive
+      if (!this.isPlayerAlive(this.player2)) {
+        if (p2DisconnectionTimeout === 0) {
+          p2DisconnectionTimeout = currentTime + DISCONNECT_TIMEOUT;
+        } else if (currentTime > p2DisconnectionTimeout) {
+          // Player 2 has been disconnected for too long
+          clearInterval(roomMainLoopInterval);
+          this.endGame(2);
+          return;
+        }
+      } else {
+        p2DisconnectionTimeout = 0; // Reset the timeout if player 2 is alive
+      }
 
       // Use the computed deltaTime to update the ball position
       updateBallPosition(this.gameData, this.gameStats, deltaTime);
@@ -419,7 +452,7 @@ export class Room {
   /**
    * End the game
    */
-  private endGame(disconnectionOccurred: boolean = false): void {
+  private endGame(disconnectedPlayer: -1 | 1 | 2 = -1): void {
     if (!this.gameLaunched) {
       throw new Error("Cannot end a game not launched");
     }
@@ -428,9 +461,8 @@ export class Room {
 
     let winnerId: -1 | 1 | 2;
 
-    if (disconnectionOccurred) {
-      const disconnectedPlayer: 1 | 2 = this.isPlayerAlive(this.player1) ? 2 : 1;
-      console.log(`[Room ${this.id}] : The player ${disconnectedPlayer} (${this.getPlayer(disconnectedPlayer)?.username ?? ""}) disconnected midgame`);
+    if (disconnectedPlayer !== -1) {
+      console.log(`[Room ${this.id}] : The player ${disconnectedPlayer} (${this.getPlayer(disconnectedPlayer)?.username ?? ""}) disconnected for too long`);
       const disconnectionMessage: DisconnectionMessage = {
         type: "disconnection",
         id: disconnectedPlayer
