@@ -75,9 +75,10 @@ export function setupReplay(root: HTMLElement): void {
 
       // Retrieve the 'time' argument (optional)
       const timeArg: string | null = urlParams.get("time");
-      if (timeArg && Number.isInteger(timeArg)) {
-        let time: number = Number(timeArg);
-        if (time > 0) {
+      if (timeArg) {
+        // Check if the time argument is a valid integer
+        let time: number = parseInt(timeArg, 10);
+        if (!isNaN(time) && time > 0 && time.toString() === timeArg) {
           // Convert time to milliseconds and clamp to the game duration
           time = Math.min(time * 1000, replayData.gameDuration);
           progressBar.value = time.toString();
