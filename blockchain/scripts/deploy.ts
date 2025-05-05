@@ -1,6 +1,6 @@
 import { ethers } from "hardhat";
 
-async function main() {
+async function main(): Promise<void> {
   const [deployer] = await ethers.getSigners();
   console.log("Deploying contract with account:", deployer.address);
   // const ScoreStorage = await ethers.getContractFactory("ScoreStorage");
@@ -9,14 +9,14 @@ async function main() {
   const contract = await TestContract.deploy();
   await contract.waitForDeployment();
 
-  const address = await contract.getAddress();
+  const address: string = await contract.getAddress();
   console.log("Contrat déployé : ", address);
   console.log("Message initial : ", await contract.message());
 }
 
 main()
   .then(() => process.exit(0))
-  .catch((error) => {
+  .catch((error: any) => {
     console.error(error);
     process.exit(1);
   });

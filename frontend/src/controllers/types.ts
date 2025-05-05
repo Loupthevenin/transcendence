@@ -3,12 +3,3 @@ export interface UserProfile {
   name: string;
   email: string;
 }
-
-export interface Tournament {
-  uuid: string;
-  name: string;
-  playerRegistered: number;
-  maxPlayers: number;
-  status: "Ongoing" | "Pending";
-  joined: boolean;
-}

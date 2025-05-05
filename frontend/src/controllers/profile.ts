@@ -213,7 +213,7 @@ function formatDate(dateStr: string): string {
     year: "numeric",
   });
 }
-(window as any).updateWinRate = updateWinRate;
+
 function updateWinRate(wins: number, draws: number, totalMatches: number): void {
   const winRateContainer: HTMLElement | null = document.getElementById("win-rate-container");
   const drawRateContainer: HTMLElement | null = document.getElementById("draw-rate-container");
