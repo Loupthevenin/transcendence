@@ -1,37 +1,51 @@
 import {
   BABYLON,
   GAME_CONSTANT,
-  GameData, newGameData,
-  GameStats, newGameStats,
-  disableSpecularOnMeshes
+  GameData,
+  newGameData,
+  GameStats,
+  newGameStats,
+  disableSpecularOnMeshes,
 } from "@shared/game/gameElements";
 import { Ball, updateBallPosition, resetBall } from "@shared/game/ball";
 import {
-  SkinChangeMessage,    isSkinChangeMessage,
+  SkinChangeMessage,
+  isSkinChangeMessage,
   PaddlePositionMessage,
-                        isGameStartedMessage,
-                        isGameDataMessage,
-  GameResultMessage,    isGameResultMessage,
-  DisconnectionMessage, isDisconnectionMessage,
+  isGameStartedMessage,
+  isGameDataMessage,
+  GameResultMessage,
+  isGameResultMessage,
+  DisconnectionMessage,
+  isDisconnectionMessage,
   MatchmakingMessage,
-  ReconnectionMessage
+  ReconnectionMessage,
 } from "@shared/game/gameMessageTypes";
-import { showSkinSelector, hideSkinSelector, getSelectedSkinId } from "./skinSelector";
+import {
+  showSkinSelector,
+  hideSkinSelector,
+  getSelectedSkinId,
+} from "./skinSelector";
 import { createDefaultSkin, loadPadddleSkin } from "./paddleSkinLoader";
-import { subscribeTo, unsubscribeTo, isConnected, sendMessage } from "../websocketManager";
-import { GameMessageData } from "@shared/messageType"
+import {
+  subscribeTo,
+  unsubscribeTo,
+  isConnected,
+  sendMessage,
+} from "../websocketManager";
+import { GameMessageData } from "@shared/messageType";
 import { LoadingHandler } from "./loadingHandler";
 import { showMenu, showInGameMenu } from "../controllers/gameMode";
 import { PositionData, ScoreData } from "@shared/game/replayData";
 import enableCanvasExtension from "../utils/canvasExtensionEnabler";
 
 enum GameMode {
-  MENU,         // Player is in the menu
+  MENU, // Player is in the menu
   SINGLEPLAYER, // Singleplayer mode
-  LOCAL,        // Local multiplayer mode
-  ONLINE,       // Online multiplayer mode
-  SPECTATING,   // The player is spectating a match
-  REPLAY        // The player is watching a replay of a match
+  LOCAL, // Local multiplayer mode
+  ONLINE, // Online multiplayer mode
+  SPECTATING, // The player is spectating a match
+  REPLAY, // The player is watching a replay of a match
 }
 
 let currentGameMode: GameMode = GameMode.MENU;
@@ -70,7 +84,8 @@ function createLoadingScreen(): void {
 
 // Update the loading bar
 function updateLoadingBar(proportion: number): void {
-  const loadingBar: HTMLElement | null = document.getElementById("gameLoadingBar");
+  const loadingBar: HTMLElement | null =
+    document.getElementById("gameLoadingBar");
   if (loadingBar) {
     loadingBar.style.width = `${proportion * 100}%`; // Adjust width based on proportion (0 to 1)
   }
@@ -116,7 +131,7 @@ function updateCameraMode(camera: BABYLON.ArcRotateCamera): void {
         camera.beta = BABYLON.Tools.ToRadians(0); // Vertical rotation
         break;
       }
-      // else do the default one
+    // else do the default one
     case GameMode.SINGLEPLAYER:
     case GameMode.LOCAL:
     case GameMode.SPECTATING:
@@ -130,8 +145,12 @@ function updateCameraMode(camera: BABYLON.ArcRotateCamera): void {
   camera.inputs.clear();
 
   // Set if the user can rotate the camera
-  if (currentGameMode === GameMode.SPECTATING || currentGameMode === GameMode.REPLAY) {
-    const rotateInput: BABYLON.ArcRotateCameraPointersInput = new BABYLON.ArcRotateCameraPointersInput();
+  if (
+    currentGameMode === GameMode.SPECTATING ||
+    currentGameMode === GameMode.REPLAY
+  ) {
+    const rotateInput: BABYLON.ArcRotateCameraPointersInput =
+      new BABYLON.ArcRotateCameraPointersInput();
     camera.inputs.add(rotateInput);
 
     // Disable movement and zoom
@@ -162,48 +181,60 @@ let scoreFontTextureTop: BABYLON.DynamicTexture;
 let scoreFontTextureBottom: BABYLON.DynamicTexture;
 
 function updateScoreText(): void {
-  function updateScoreFontTexture(fontTexture: BABYLON.DynamicTexture, leftScore: number, rightScore: number): void {
+  function updateScoreFontTexture(
+    fontTexture: BABYLON.DynamicTexture,
+    leftScore: number,
+    rightScore: number,
+  ): void {
     fontTexture.clear();
-  
+
     const text: string = `${leftScore} : ${rightScore}`;
     const fontSize: number = 80; // Font size in pixels
     const font: string = `bold ${fontSize}px Arial`;
-  
+
     // Set the font on the dynamic texture
     fontTexture.drawText("", 0, 0, font, "white", "transparent"); // Needed to set the font size
-  
+
     // Get the 2D context of the DynamicTexture
     const context: BABYLON.ICanvasRenderingContext = fontTexture.getContext();
     context.font = font;
-  
+
     // Measure the text dimensions
     const leftScoreWidth: number = context.measureText(`${leftScore} `).width; // Width of left score + space
-    const colonWidth: number = context.measureText(':').width; // Width of the colon
-  
+    const colonWidth: number = context.measureText(":").width; // Width of the colon
+
     // Calculate the centered position
     const textureWidth: number = fontTexture.getSize().width;
     const textureHeight: number = fontTexture.getSize().height;
     const x: number = textureWidth / 2 - (colonWidth / 2 + leftScoreWidth); // Position to align colon at the center
-    const y: number = (textureHeight + fontSize) / 2;       // Center vertically
-  
+    const y: number = (textureHeight + fontSize) / 2; // Center vertically
+
     // Draw the text centered
     fontTexture.drawText(text, x, y, font, "white", "transparent");
   }
 
   if (gameData) {
     if (scoreFontTextureTop) {
-      updateScoreFontTexture(scoreFontTextureTop, gameData.p1Score, gameData.p2Score);
+      updateScoreFontTexture(
+        scoreFontTextureTop,
+        gameData.p1Score,
+        gameData.p2Score,
+      );
     }
     if (scoreFontTextureBottom) {
-      updateScoreFontTexture(scoreFontTextureBottom, gameData.p2Score, gameData.p1Score);
+      updateScoreFontTexture(
+        scoreFontTextureBottom,
+        gameData.p2Score,
+        gameData.p1Score,
+      );
     }
   }
 }
 
 enum INPUT {
   NONE = 0b00,
-  UP =   0b01,
-  DOWN = 0b10
+  UP = 0b01,
+  DOWN = 0b10,
 }
 
 // Paddle movement variables
@@ -254,12 +285,18 @@ window.addEventListener("keyup", (event: KeyboardEvent) => {
 });
 
 type PaddleDraggingData = {
-  pointerId: number,
-  targetX: number | null
-}
+  pointerId: number;
+  targetX: number | null;
+};
 
-const paddle1DraggingData: PaddleDraggingData = { pointerId: -1, targetX: null };
-const paddle2DraggingData: PaddleDraggingData = { pointerId: -1, targetX: null };
+const paddle1DraggingData: PaddleDraggingData = {
+  pointerId: -1,
+  targetX: null,
+};
+const paddle2DraggingData: PaddleDraggingData = {
+  pointerId: -1,
+  targetX: null,
+};
 
 // Function to handle player drag input
 function handlePlayerDragInput(pointerInfo: BABYLON.PointerInfo): void {
@@ -272,66 +309,76 @@ function handlePlayerDragInput(pointerInfo: BABYLON.PointerInfo): void {
   const pointerId: number = (pointerInfo.event as any).pointerId;
 
   switch (pointerInfo.type) {
-      case BABYLON.PointerEventTypes.POINTERDOWN:
-          if (pointerInfo.pickInfo?.hit) {
-            const pickedMesh: BABYLON.Nullable<BABYLON.AbstractMesh> = pointerInfo.pickInfo.pickedMesh;
+    case BABYLON.PointerEventTypes.POINTERDOWN:
+      if (pointerInfo.pickInfo?.hit) {
+        const pickedMesh: BABYLON.Nullable<BABYLON.AbstractMesh> =
+          pointerInfo.pickInfo.pickedMesh;
 
-            // Check if pickedMesh is not null and cast it to BABYLON.Mesh
-            if (pickedMesh && pickedMesh instanceof BABYLON.Mesh) {
-              // Traverse up the parent chain to find the root node
-              let root: BABYLON.AbstractMesh | null = pickedMesh;
-              while (root.parent) {
-                root = root.parent as BABYLON.AbstractMesh;
+        // Check if pickedMesh is not null and cast it to BABYLON.Mesh
+        if (pickedMesh && pickedMesh instanceof BABYLON.Mesh) {
+          // Traverse up the parent chain to find the root node
+          let root: BABYLON.AbstractMesh | null = pickedMesh;
+          while (root.parent) {
+            root = root.parent as BABYLON.AbstractMesh;
+          }
+
+          if (root) {
+            if (root === paddle1Mesh) {
+              if (paddle1DraggingData.pointerId === -1) {
+                paddle1DraggingData.pointerId = pointerId;
               }
-
-              if (root) {
-                if (root === paddle1Mesh) {
-                  if (paddle1DraggingData.pointerId === -1) {
-                    paddle1DraggingData.pointerId = pointerId;
-                  }
-                } else if (root === paddle2Mesh) {
-                  if (paddle2DraggingData.pointerId === -1) {
-                    paddle2DraggingData.pointerId = pointerId;
-                  }
-                }
+            } else if (root === paddle2Mesh) {
+              if (paddle2DraggingData.pointerId === -1) {
+                paddle2DraggingData.pointerId = pointerId;
               }
             }
           }
-          break;
+        }
+      }
+      break;
 
-      case BABYLON.PointerEventTypes.POINTERUP:
-          if (paddle1DraggingData.pointerId === pointerId) {
-            paddle1DraggingData.pointerId = -1;
-            paddle1DraggingData.targetX = null;
-          } else if (paddle2DraggingData.pointerId === pointerId) {
-            paddle2DraggingData.pointerId = -1;
-            paddle2DraggingData.targetX = null;
-          }
-          break;
+    case BABYLON.PointerEventTypes.POINTERUP:
+      if (paddle1DraggingData.pointerId === pointerId) {
+        paddle1DraggingData.pointerId = -1;
+        paddle1DraggingData.targetX = null;
+      } else if (paddle2DraggingData.pointerId === pointerId) {
+        paddle2DraggingData.pointerId = -1;
+        paddle2DraggingData.targetX = null;
+      }
+      break;
 
-      case BABYLON.PointerEventTypes.POINTERMOVE:
-          let paddleDraggingData: PaddleDraggingData | null = null;
+    case BABYLON.PointerEventTypes.POINTERMOVE:
+      let paddleDraggingData: PaddleDraggingData | null = null;
 
-          // Get the correct paddle dragging data
-          if (paddle1DraggingData.pointerId === pointerId) {
-            paddleDraggingData = paddle1DraggingData;
-          } else if (paddle2DraggingData.pointerId === pointerId) {
-            paddleDraggingData = paddle2DraggingData;
-          }
+      // Get the correct paddle dragging data
+      if (paddle1DraggingData.pointerId === pointerId) {
+        paddleDraggingData = paddle1DraggingData;
+      } else if (paddle2DraggingData.pointerId === pointerId) {
+        paddleDraggingData = paddle2DraggingData;
+      }
 
-          // Assign the target X if found
-          if (paddleDraggingData) {
-            const pickInfo: BABYLON.PickingInfo = scene.pick(scene.pointerX, scene.pointerY);
-            if (pickInfo?.hit) {
-              paddleDraggingData.targetX = pickInfo.pickedPoint?.x ?? null;
-            }
-          }
-          break;
+      // Assign the target X if found
+      if (paddleDraggingData) {
+        const pickInfo: BABYLON.PickingInfo = scene.pick(
+          scene.pointerX,
+          scene.pointerY,
+        );
+        if (pickInfo?.hit) {
+          paddleDraggingData.targetX = pickInfo.pickedPoint?.x ?? null;
+        }
+      }
+      break;
   }
 }
 
 // Function to handle player input and update paddle position
-function handlePlayerInput(paddlePosition: BABYLON.Vector2, paddleMesh: BABYLON.Mesh, keyInput: INPUT, draggingData: PaddleDraggingData, deltaTime: number): void {
+function handlePlayerInput(
+  paddlePosition: BABYLON.Vector2,
+  paddleMesh: BABYLON.Mesh,
+  keyInput: INPUT,
+  draggingData: PaddleDraggingData,
+  deltaTime: number,
+): void {
   if (keyInput === 0 && draggingData.pointerId === -1) {
     return; // No key input, no movement
   }
@@ -339,11 +386,11 @@ function handlePlayerInput(paddlePosition: BABYLON.Vector2, paddleMesh: BABYLON.
   let deltaX: number = 0;
   if (draggingData.pointerId !== -1) {
     if (draggingData.targetX !== null) {
-      const distanceToTarget: number = (draggingData.targetX - paddlePosition.x);
+      const distanceToTarget: number = draggingData.targetX - paddlePosition.x;
       deltaX = Math.min(Math.max(distanceToTarget, -1), 1);
     }
   } else {
-    deltaX = ((keyInput & INPUT.UP) ? 1 : 0) - ((keyInput & INPUT.DOWN) ? 1 : 0);
+    deltaX = (keyInput & INPUT.UP ? 1 : 0) - (keyInput & INPUT.DOWN ? 1 : 0);
   }
 
   if (deltaX === 0) {
@@ -354,7 +401,10 @@ function handlePlayerInput(paddlePosition: BABYLON.Vector2, paddleMesh: BABYLON.
 
   // Update and clamp paddle positions to prevent them from going out of bounds
   paddlePosition.x = Math.min(
-    Math.max(paddlePosition.x + deltaX, GAME_CONSTANT.areaMinX + GAME_CONSTANT.paddleHalfWidth),
+    Math.max(
+      paddlePosition.x + deltaX,
+      GAME_CONSTANT.areaMinX + GAME_CONSTANT.paddleHalfWidth,
+    ),
     GAME_CONSTANT.areaMaxX - GAME_CONSTANT.paddleHalfWidth,
   );
 
@@ -363,10 +413,24 @@ function handlePlayerInput(paddlePosition: BABYLON.Vector2, paddleMesh: BABYLON.
 }
 
 // Function to handle AI input
-function handleAIInput(paddlePosition: BABYLON.Vector2, paddleMesh: BABYLON.Mesh, ball: Ball, deltaTime: number): void {
+function handleAIInput(
+  paddlePosition: BABYLON.Vector2,
+  paddleMesh: BABYLON.Mesh,
+  ball: Ball,
+  deltaTime: number,
+): void {
   // TODO: do some weird math to predict the ball position instead of the current one
-  const draggingData: PaddleDraggingData = { pointerId: -2, targetX: ball.position.x };
-  handlePlayerInput(paddlePosition, paddleMesh, INPUT.NONE, draggingData, deltaTime);
+  const draggingData: PaddleDraggingData = {
+    pointerId: -2,
+    targetX: ball.position.x,
+  };
+  handlePlayerInput(
+    paddlePosition,
+    paddleMesh,
+    INPUT.NONE,
+    draggingData,
+    deltaTime,
+  );
 }
 
 // global request trackers for each paddle
@@ -394,11 +458,13 @@ function setPaddleSkin(paddle: 1 | 2, skinId: string): void {
         paddle1Mesh.dispose(); // Delete the current mesh
       }
       paddle1Mesh = mesh;
-      mesh.position = new BABYLON.Vector3(0, GAME_CONSTANT.paddleDepth / 2, GAME_CONSTANT.paddleDefaultZPosition);
+      mesh.position = new BABYLON.Vector3(
+        0,
+        GAME_CONSTANT.paddleDepth / 2,
+        GAME_CONSTANT.paddleDefaultZPosition,
+      );
     });
-  }
-
-  else if (paddle === 2) {
+  } else if (paddle === 2) {
     const currentRequestId: number = ++paddle2SkinRequestId; // Increment and store the request ID
 
     // Create a temporary mesh will waiting for server response if there is no mesh
@@ -417,7 +483,11 @@ function setPaddleSkin(paddle: 1 | 2, skinId: string): void {
         paddle2Mesh.dispose(); // Delete the current mesh
       }
       paddle2Mesh = mesh;
-      mesh.position = new BABYLON.Vector3(0, GAME_CONSTANT.paddleDepth / 2, -GAME_CONSTANT.paddleDefaultZPosition);
+      mesh.position = new BABYLON.Vector3(
+        0,
+        GAME_CONSTANT.paddleDepth / 2,
+        -GAME_CONSTANT.paddleDefaultZPosition,
+      );
       mesh.rotation = new BABYLON.Vector3(0, Math.PI, 0);
     });
   }
@@ -430,7 +500,9 @@ let localSkinId: string = "";
 let lastSendTime: number = 0;
 const sendRateInterval: number = 1000 / 60; // 60 times per seconds
 
-export function handleGameReconnection(reconnectionData: ReconnectionMessage): void {
+export function handleGameReconnection(
+  reconnectionData: ReconnectionMessage,
+): void {
   playerId = reconnectionData.id; // Set the same player ID as before the disconnection
   setPaddleSkin(playerId, reconnectionData.selfSkinId); // Set the skin of the player's paddle
   setPaddleSkin(playerId === 1 ? 2 : 1, reconnectionData.otherSkinId); // Set the skin of the other player's paddle
@@ -450,16 +522,14 @@ function handleGameMessages(data: GameMessageData): void {
       const skinChangeMessage: SkinChangeMessage = {
         type: "skinId",
         id: data.id,
-        skinId: localSkinId
-      }
+        skinId: localSkinId,
+      };
       sendMessage("game", skinChangeMessage);
-    }
-    else if (isSkinChangeMessage(data)) {
+    } else if (isSkinChangeMessage(data)) {
       if (playerId !== data.id) {
         setPaddleSkin(data.id, data.skinId);
       }
-    }
-    else if (isGameDataMessage(data)) {
+    } else if (isGameDataMessage(data)) {
       // Update game data with the received data
       gameData.ball.position = data.data.ball.position;
       if (playerId !== 1) {
@@ -469,7 +539,10 @@ function handleGameMessages(data: GameMessageData): void {
         gameData.paddle2Position = data.data.paddle2Position;
       }
 
-      if (gameData.p1Score !== data.data.p1Score || gameData.p2Score !== data.data.p2Score) {
+      if (
+        gameData.p1Score !== data.data.p1Score ||
+        gameData.p2Score !== data.data.p2Score
+      ) {
         gameData.p1Score = data.data.p1Score;
         gameData.p2Score = data.data.p2Score;
         updateScoreText();
@@ -478,12 +551,10 @@ function handleGameMessages(data: GameMessageData): void {
       updateAllPositions();
 
       //lastUpdateTime = performance.now();
-    }
-    else if (isGameResultMessage(data)) {
+    } else if (isGameResultMessage(data)) {
       playerId = -1; // Reset player ID
       displayGameResult(data);
-    }
-    else if (isDisconnectionMessage(data)) {
+    } else if (isDisconnectionMessage(data)) {
       console.log(`Player ${data.id} disconnected !`);
       playerId = -1; // Reset player ID
       displayGameError(data);
@@ -501,15 +572,44 @@ function unregisterToGameMessages(): void {
   unsubscribeTo("game", handleGameMessages);
 }
 
+// FIX: Back to menu, loser player gameResult;
 function displayGameResult(gameResult: GameResultMessage): void {
-  // TODO: display a beautiful game result screen, showing final score
-  //       and the winner's nickname with a 'Back to menu' button
-  //       also display the game stats
-  console.log(`Game result: ${gameResult.p1Score} / ${gameResult.p2Score}`);
-  console.log(`The winner is '${gameResult.winner}'`);
-  console.log("Game Stats :", gameResult.gameStats);
+  const overlay: HTMLDivElement = document.createElement("div");
+  overlay.id = "game-result-screen";
+  overlay.className = `
+    fixed inset-0 bg-[#1e1b4b] bg-opacity-10 flex flex-col items-center justify-center text-white z-50 p-6 space-y-6
+  `;
 
-  BackToMenu();
+  const content: HTMLDivElement = document.createElement("div");
+  content.className = `
+    opacity-0 scale-90 transition-all duration-500 ease-out
+    flex flex-col items-center text-white p-6 space-y-6
+    bg-[#2a255c] rounded-xl shadow-2xl max-w-xl w-full
+  `;
+
+  content.innerHTML = `
+      <h2 class="text-4xl font-bold text-green-400 animate-bounce">🎉 Victoire de <span class="text-yellow-400">${gameResult.winner}</span> !</h2>
+      <p class="text-xl">Score final : <span class="font-semibold">${gameResult.p1Score} - ${gameResult.p2Score}</span></p>
+
+      <div class="bg-[#2a255c] p-4 rounded-lg shadow-lg w-full max-w-md">
+        <h3 class="text-2xl font-semibold text-indigo-300 mb-4">Statistiques</h3>
+        <ul class="space-y-2 text-sm">
+          ${Object.entries(gameResult.gameStats)
+            .map(
+              ([key, value]) =>
+                `<li><span class="text-indigo-400 font-medium">${key} :</span> ${value}</li>`,
+            )
+            .join("")}
+        </ul>
+      </div>
+`;
+  overlay.appendChild(content);
+  document.body.appendChild(overlay);
+
+  requestAnimationFrame(() => {
+    content.classList.remove("opacity-0", "scale-90");
+    content.classList.add("opacity-100", "scale-100");
+  });
 }
 
 function displayGameError(errorMessage: DisconnectionMessage): void {
@@ -556,20 +656,27 @@ function gameLoop(deltaTime: number): void {
   const previousP2Score: number = gameData.p2Score;
   updateBallPosition(gameData, gameStats, deltaTime, ballMesh);
 
-  if ( previousP1Score !== gameData.p1Score
-    || previousP2Score !== gameData.p2Score) {
+  if (
+    previousP1Score !== gameData.p1Score ||
+    previousP2Score !== gameData.p2Score
+  ) {
     updateScoreText();
   }
 
-  if (currentGameMode !== GameMode.MENU && currentGameMode !== GameMode.ONLINE) {
-    if ( gameData.p1Score >= GAME_CONSTANT.defaultScoreToWin
-      || gameData.p2Score >= GAME_CONSTANT.defaultScoreToWin) {
+  if (
+    currentGameMode !== GameMode.MENU &&
+    currentGameMode !== GameMode.ONLINE
+  ) {
+    if (
+      gameData.p1Score >= GAME_CONSTANT.defaultScoreToWin ||
+      gameData.p2Score >= GAME_CONSTANT.defaultScoreToWin
+    ) {
       const gameResult: GameResultMessage = {
         type: "gameResult",
         p1Score: gameData.p1Score,
         p2Score: gameData.p2Score,
         winner: gameData.p1Score > gameData.p2Score ? "Player 1" : "Player 2",
-        gameStats: gameStats
+        gameStats: gameStats,
       };
       displayGameResult(gameResult);
     }
@@ -577,9 +684,11 @@ function gameLoop(deltaTime: number): void {
 }
 
 // Babylon.js setup
-export async function  initGameEnvironment(): Promise<void> {
+export async function initGameEnvironment(): Promise<void> {
   if (!canvas) {
-    throw new Error("Canvas element is not created. Call CreateGameCanvas() first.");
+    throw new Error(
+      "Canvas element is not created. Call CreateGameCanvas() first.",
+    );
   }
   if (engine) {
     engine.dispose(); // Dispose of the previous engine if it exists
@@ -603,22 +712,37 @@ export async function  initGameEnvironment(): Promise<void> {
   updateCameraMode(camera);
 
   // Create an hemispheric light
-  light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
+  light = new BABYLON.HemisphericLight(
+    "light",
+    new BABYLON.Vector3(0, 1, 0),
+    scene,
+  );
   light.intensity = 1.0;
 
-  const environmentSceneLoadingStateIndex: number = loadingHandler.addLoadingState();
+  const environmentSceneLoadingStateIndex: number =
+    loadingHandler.addLoadingState();
 
   // Load the environment scene
   try {
-    BABYLON.ImportMeshAsync("/api/models/scene.glb", scene, { pluginExtension: ".glb" }).then((result: BABYLON.ISceneLoaderAsyncResult) => {
-      disableSpecularOnMeshes(result.meshes);
+    BABYLON.ImportMeshAsync("/api/models/scene.glb", scene, {
+      pluginExtension: ".glb",
+    })
+      .then((result: BABYLON.ISceneLoaderAsyncResult) => {
+        disableSpecularOnMeshes(result.meshes);
 
-      const sceneMesh: BABYLON.Mesh = result.meshes[0] as BABYLON.Mesh; // Get the root of the model
-      sceneMesh.position = new BABYLON.Vector3(0, 0, 0);
-      sceneMesh.rotation = new BABYLON.Vector3(0, 0, 0);
-    }).catch((error: any) => {
-      console.error("An error occurred while loading model 'scene.glb' :", error);
-    }).finally(() => loadingHandler.setLoaded(environmentSceneLoadingStateIndex));
+        const sceneMesh: BABYLON.Mesh = result.meshes[0] as BABYLON.Mesh; // Get the root of the model
+        sceneMesh.position = new BABYLON.Vector3(0, 0, 0);
+        sceneMesh.rotation = new BABYLON.Vector3(0, 0, 0);
+      })
+      .catch((error: any) => {
+        console.error(
+          "An error occurred while loading model 'scene.glb' :",
+          error,
+        );
+      })
+      .finally(() =>
+        loadingHandler.setLoaded(environmentSceneLoadingStateIndex),
+      );
     //}).finally(() => setTimeout(() => loadingHandler.setLoaded(environmentSceneLoadingStateIndex), 5000)); // Delay of 5s for testing purposes
   } catch (error: any) {
     console.error("An error occurred while loading model 'scene.glb' :", error);
@@ -633,8 +757,10 @@ export async function  initGameEnvironment(): Promise<void> {
   );
   ground.rotation.y = Math.PI / 2;
 
-  const groundTextureLoadingStateIndex: number = loadingHandler.addLoadingState();
-  const groundTextureLoadedCallback: () => void = () => loadingHandler.setLoaded(groundTextureLoadingStateIndex);
+  const groundTextureLoadingStateIndex: number =
+    loadingHandler.addLoadingState();
+  const groundTextureLoadedCallback: () => void = () =>
+    loadingHandler.setLoaded(groundTextureLoadingStateIndex);
 
   const groundMaterial: BABYLON.StandardMaterial = new BABYLON.StandardMaterial(
     "groundMaterial",
@@ -648,7 +774,7 @@ export async function  initGameEnvironment(): Promise<void> {
       samplingMode: BABYLON.Texture.NEAREST_SAMPLINGMODE,
       onLoad: groundTextureLoadedCallback,
       onError: groundTextureLoadedCallback,
-    }
+    },
   );
   ground.material = groundMaterial;
 
@@ -674,7 +800,9 @@ export async function  initGameEnvironment(): Promise<void> {
   ballMesh.material = ballMaterial;
 
   // Helper function to create the both score display
-  function createScoreDisplay(suffix: "Top" | "Bottom"): BABYLON.DynamicTexture {
+  function createScoreDisplay(
+    suffix: "Top" | "Bottom",
+  ): BABYLON.DynamicTexture {
     const scoreFontTexture: BABYLON.DynamicTexture = new BABYLON.DynamicTexture(
       "scoreFontTexture" + suffix,
       { width: 512, height: 128 },
@@ -685,13 +813,18 @@ export async function  initGameEnvironment(): Promise<void> {
     const scorePlane: BABYLON.Mesh = BABYLON.MeshBuilder.CreatePlane(
       "scorePlane" + suffix,
       { width: 4, height: 1 },
-      scene
+      scene,
     );
     const side: -1 | 1 = suffix === "Bottom" ? -1 : 1;
     scorePlane.position = new BABYLON.Vector3(3.6 * side, 0, 0);
-    scorePlane.rotation = new BABYLON.Vector3(Math.PI / 2, Math.PI / 2 * side, 0);
+    scorePlane.rotation = new BABYLON.Vector3(
+      Math.PI / 2,
+      (Math.PI / 2) * side,
+      0,
+    );
 
-    const scoreMaterial: BABYLON.StandardMaterial = new BABYLON.StandardMaterial("scoreMaterial" + suffix, scene);
+    const scoreMaterial: BABYLON.StandardMaterial =
+      new BABYLON.StandardMaterial("scoreMaterial" + suffix, scene);
     scoreMaterial.specularColor = BABYLON.Color3.Black();
     scoreMaterial.diffuseTexture = scoreFontTexture;
     scoreMaterial.opacityTexture = scoreFontTexture; // Enable transparency
@@ -721,14 +854,14 @@ export async function  initGameEnvironment(): Promise<void> {
           gameData.paddle1Position,
           paddle1Mesh,
           gameData.ball,
-          deltaTime
+          deltaTime,
         );
 
         handleAIInput(
           gameData.paddle2Position,
           paddle2Mesh,
           gameData.ball,
-          deltaTime
+          deltaTime,
         );
 
         camera.alpha += GAME_CONSTANT.cameraRotationSpeed * deltaTime;
@@ -741,14 +874,14 @@ export async function  initGameEnvironment(): Promise<void> {
           paddle1Mesh,
           paddle1Input,
           paddle1DraggingData,
-          deltaTime
-        )
+          deltaTime,
+        );
 
         handleAIInput(
           gameData.paddle2Position,
           paddle2Mesh,
           gameData.ball,
-          deltaTime
+          deltaTime,
         );
 
         gameLoop(deltaTime);
@@ -760,16 +893,16 @@ export async function  initGameEnvironment(): Promise<void> {
           paddle1Mesh,
           paddle1Input,
           paddle1DraggingData,
-          deltaTime
-        )
+          deltaTime,
+        );
 
         handlePlayerInput(
           gameData.paddle2Position,
           paddle2Mesh,
           paddle2Input,
           paddle2DraggingData,
-          deltaTime
-        )
+          deltaTime,
+        );
 
         gameLoop(deltaTime);
         break;
@@ -778,14 +911,16 @@ export async function  initGameEnvironment(): Promise<void> {
         if (playerId === 1 || playerId === 2) {
           if (paddle1Input !== 0) {
             const isPlayer1: boolean = playerId === 1;
-            const pos: BABYLON.Vector2 = isPlayer1 ? gameData.paddle1Position : gameData.paddle2Position;
+            const pos: BABYLON.Vector2 = isPlayer1
+              ? gameData.paddle1Position
+              : gameData.paddle2Position;
             handlePlayerInput(
               pos,
               isPlayer1 ? paddle1Mesh : paddle2Mesh,
               isPlayer1 ? paddle1Input : ~paddle1Input, // If we are the 2e player inverse the input since the view is inverted
               isPlayer1 ? paddle1DraggingData : paddle2DraggingData,
-              deltaTime
-            )
+              deltaTime,
+            );
 
             const now: number = performance.now();
             if (now - lastSendTime >= sendRateInterval) {
@@ -794,7 +929,7 @@ export async function  initGameEnvironment(): Promise<void> {
               // Send the local paddle position to the server
               const paddleData: PaddlePositionMessage = {
                 type: "paddlePosition",
-                position: new BABYLON.Vector2(pos.x, pos.y)
+                position: new BABYLON.Vector2(pos.x, pos.y),
               };
               sendMessage("game", paddleData);
             }
@@ -886,7 +1021,9 @@ export function LocalGame(): void {
 // Launch the game in online mode against a remote player
 export function OnlineGame(autoMatchmaking: boolean = true): void {
   if (!isConnected()) {
-    console.error("You are not connected to the server, cannot start an online game");
+    console.error(
+      "You are not connected to the server, cannot start an online game",
+    );
     return;
   }
   currentGameMode = GameMode.ONLINE;
@@ -903,7 +1040,7 @@ export function OnlineGame(autoMatchmaking: boolean = true): void {
   if (autoMatchmaking) {
     const matchmakingMessage: MatchmakingMessage = {
       type: "matchmaking",
-      username: `Player-${localSkinId}`
+      username: `Player-${localSkinId}`,
     };
     sendMessage("game", matchmakingMessage);
   }
@@ -912,7 +1049,9 @@ export function OnlineGame(autoMatchmaking: boolean = true): void {
 // Launch the game in spectating mode to watch match of other remote players
 export function SpectatingMode(): void {
   if (!isConnected()) {
-    console.error("You are not connected to the server, cannot spectate other game");
+    console.error(
+      "You are not connected to the server, cannot spectate other game",
+    );
     return;
   }
   currentGameMode = GameMode.SPECTATING;
@@ -947,7 +1086,7 @@ export function ReplayMode(p1Skin: string, p2Skin: string): void {
 
 export function SetReplayGameData(
   positionData: PositionData | undefined,
-  scoreData: ScoreData | undefined
+  scoreData: ScoreData | undefined,
 ): void {
   if (currentGameMode !== GameMode.REPLAY) {
     return;
@@ -964,7 +1103,10 @@ export function SetReplayGameData(
   }
 
   if (scoreData) {
-    if (gameData.p1Score !== scoreData[0] || gameData.p2Score !== scoreData[1]) {
+    if (
+      gameData.p1Score !== scoreData[0] ||
+      gameData.p2Score !== scoreData[1]
+    ) {
       gameData.p1Score = scoreData[0];
       gameData.p2Score = scoreData[1];
       updateScoreText();
