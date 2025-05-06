@@ -106,7 +106,8 @@ async function loadTournaments(): Promise<void> {
         e.preventDefault();
         form.classList.add("hidden");
 
-        const inputElement: HTMLInputElement | null = form.querySelector<HTMLInputElement>(".display-name-input");
+        const inputElement: HTMLInputElement | null =
+          form.querySelector<HTMLInputElement>(".display-name-input");
         if (inputElement) {
           const tournamentJoinMessage: TournamentMessages.JoinMessage = {
             type: "join",
@@ -215,6 +216,74 @@ export function tournamentsHandlers(container: HTMLElement): void {
   createTournament();
 }
 
+function generateTournamentTree(size: 4 | 8 | 16 | 32): MatchNode {
+  const NAMES = [
+    "Alice",
+    "Bob",
+    "Charlie",
+    "David",
+    "Eve",
+    "Frank",
+    "Grace",
+    "Heidi",
+    "Ivan",
+    "Judy",
+    "Mallory",
+    "Niaj",
+    "Olivia",
+    "Peggy",
+    "Rupert",
+    "Sybil",
+    "Trent",
+    "Victor",
+    "Walter",
+    "Yasmine",
+    "Zoe",
+    "Quentin",
+    "Laura",
+    "Xavier",
+    "Yuri",
+    "Sophie",
+    "Martin",
+    "Clara",
+    "Noah",
+    "Liam",
+    "Emma",
+    "Lucas",
+  ];
+
+  function getRandomNamePool(count: number): string[] {
+    const shuffled = [...NAMES].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count);
+  }
+
+  function buildMatchTree(players: Player[]): MatchNode {
+    if (players.length === 1) {
+      return {
+        player: players[0],
+        left: null,
+        right: null,
+      };
+    }
+
+    const half = players.length / 2;
+    const left = buildMatchTree(players.slice(0, half));
+    const right = buildMatchTree(players.slice(half));
+
+    const winner = Math.random() < 0.5 ? left.player : right.player;
+
+    return {
+      player: winner,
+      left,
+      right,
+    };
+  }
+
+  const playerNames = getRandomNamePool(size);
+  const players = playerNames.map((name) => ({ username: name }));
+  return buildMatchTree(players);
+}
+
 function renderMatch(match: MatchNode) {
   const wrapper: HTMLDivElement = document.createElement("div");
   wrapper.className = "node-wrapper";
@@ -229,11 +298,15 @@ function renderMatch(match: MatchNode) {
   const isP1Winner = winner && p1 === winner;
   const isP2Winner = winner && p2 === winner;
 
+  const p1Class: string =
+    p1 === "En attente" ? "waiting" : isP1Winner ? "winner" : "loser";
+  const p2Class: string =
+    p2 === "En attente" ? "waiting" : isP2Winner ? "winner" : "loser";
+
   matchBox.innerHTML = `
-    <div style="color: ${isP1Winner ? "#48bb78" : winner ? "#f87171" : "#fff"};">${p1}</div>
-    <div style="font-size: 12px; color: #aaa;">vs</div>
-    <div style="color: ${isP2Winner ? "#48bb78" : winner ? "#f87171" : "#fff"};">${p2}</div>
-  `;
+  <div class="${p1Class}">${p1}</div>
+  <div class="${p2Class}">${p2}</div>
+`;
 
   wrapper.appendChild(matchBox);
 
@@ -281,86 +354,7 @@ export async function tournamentProgress(
     const data: any = await res.json();
     console.log(data.tree.root);
 
-    const fakeTree4: MatchNode = {
-      player: { username: "Alice" },
-      left: {
-        player: { username: "Alice" },
-        left: { player: { username: "Alice" }, left: null, right: null },
-        right: { player: { username: "Bob" }, left: null, right: null },
-      },
-      right: {
-        player: { username: "Charlie" },
-        left: { player: { username: "Charlie" }, left: null, right: null },
-        right: { player: { username: "David" }, left: null, right: null },
-      },
-    };
-
-    // function genNode(name: string): MatchNode {
-    //   return { player: { username: name }, left: null, right: null };
-    // }
-
-    // const fakeTree16: MatchNode = {
-    //   player: { username: "Final" },
-    //   left: {
-    //     player: { username: "Semi 1" },
-    //     left: {
-    //       player: { username: "Quarter 1" },
-    //       left: {
-    //         player: { username: "Eighth 1" },
-    //         left: genNode("P1"),
-    //         right: genNode("P2"),
-    //       },
-    //       right: {
-    //         player: { username: "Eighth 2" },
-    //         left: genNode("P3"),
-    //         right: genNode("P4"),
-    //       },
-    //     },
-    //     right: {
-    //       player: { username: "Quarter 2" },
-    //       left: {
-    //         player: { username: "Eighth 3" },
-    //         left: genNode("P5"),
-    //         right: genNode("P6"),
-    //       },
-    //       right: {
-    //         player: { username: "Eighth 4" },
-    //         left: genNode("P7"),
-    //         right: genNode("P8"),
-    //       },
-    //     },
-    //   },
-    //   right: {
-    //     player: { username: "Semi 2" },
-    //     left: {
-    //       player: { username: "Quarter 3" },
-    //       left: {
-    //         player: { username: "Eighth 5" },
-    //         left: genNode("P9"),
-    //         right: genNode("P10"),
-    //       },
-    //       right: {
-    //         player: { username: "Eighth 6" },
-    //         left: genNode("P11"),
-    //         right: genNode("P12"),
-    //       },
-    //     },
-    //     right: {
-    //       player: { username: "Quarter 4" },
-    //       left: {
-    //         player: { username: "Eighth 7" },
-    //         left: genNode("P13"),
-    //         right: genNode("P14"),
-    //       },
-    //       right: {
-    //         player: { username: "Eighth 8" },
-    //         left: genNode("P15"),
-    //         right: genNode("P16"),
-    //       },
-    //     },
-    //   },
-    // };
-    bracket.appendChild(renderMatch(fakeTree4));
+    bracket.appendChild(renderMatch(generateTournamentTree(8)));
   } catch (error) {
     console.error("Error tournament progress : ", error);
   }
