@@ -11,6 +11,14 @@ compile-blockchain:
 		--env-file .env \
 		blockchain
 
+# Create Contract
+deploy-blockchain:
+	@docker build -t blockchain ./blockchain
+	@docker run --rm \
+		-v ${PWD}/blockchain:/app \
+		--env-file .env \
+		blockchain npx hardhat run scripts/deploy.ts --network hardhat
+
 build:
 	@mkdir -p ./db
 	@$(DOCKER) build
