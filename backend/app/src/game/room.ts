@@ -203,9 +203,17 @@ export class Room {
       return; // Do nothing if the player is not in the room
     }
     player.room = null; // Clear the player's room reference
-    if (this.player1?.uuid === player.uuid) {
+    if (
+      this.player1 &&
+      this.player1.uuid === player.uuid &&
+      this.player1.room === this
+    ) {
       this.player1 = null;
-    } else if (this.player2?.uuid === player.uuid) {
+    } else if (
+      this.player2 &&
+      this.player2.uuid === player.uuid &&
+      this.player2.room === this
+    ) {
       this.player2 = null;
     }
   }
@@ -215,10 +223,14 @@ export class Room {
    */
   private clear(): void {
     if (this.player1) {
-      this.player1.room = null;
+      if (this.player1.room === this) {
+        this.player1.room = null;
+      }
       this.player1 = null;
     } else if (this.player2) {
-      this.player2.room = null;
+      if (this.player2.room === this) {
+        this.player2.room = null;
+      }
       this.player2 = null;
     }
   }
@@ -306,17 +318,15 @@ export class Room {
       return;
     }
 
-    // TODO:
-    // game still running : send reconnection message (tell the player to load the game environment)
-    // game ended : send game result message
-    const otherPlayerId: 1 | 2 = (playerId === 1 ? 2 : 1);
+    const otherPlayerId: 1 | 2 = playerId === 1 ? 2 : 1;
     const reconnectionMessage: ReconnectionMessage = {
       type: "reconnection",
       id: playerId,
-      p1SkinId: player.paddleSkinId,
-      p2SkinId: this.getPlayer(otherPlayerId)!.paddleSkinId,
+      selfSkinId: player.paddleSkinId,
+      otherSkinId: this.getPlayer(otherPlayerId)?.paddleSkinId ?? ""
     };
-    this.sendMessage(reconnectionMessage, [player.uuid]);
+
+    player.socket?.send(this.stringifyGameMessageData(reconnectionMessage));
 
     if (this.gameEnded) {
       const gameResultMessage: GameResultMessage = {
@@ -326,8 +336,16 @@ export class Room {
         winner: this.winner,
         gameStats: this.gameStats
       };
-      this.sendMessage(gameResultMessage);  
+      player.socket?.send(this.stringifyGameMessageData(gameResultMessage));  
     }
+  }
+
+  private stringifyGameMessageData(data: GameMessageData): string {
+    const message: GameMessage = {
+      type: "game",
+      data: data,
+    };
+    return JSON.stringify(message);
   }
 
   /**
@@ -335,11 +353,7 @@ export class Room {
    * @param message The message to send.
    */
   public sendMessage(data: GameMessageData, excludedPlayerUUID?: string[]): void {
-    const message: GameMessage = {
-      type: "game",
-      data: data,
-    };
-    const msg: string = JSON.stringify(message);
+    const msg: string = this.stringifyGameMessageData(data);
 
     if (
       this.player1 &&
@@ -384,19 +398,19 @@ export class Room {
       snapshotReplayData(this.replayData, 0, this.gameData);
 
       if (this.player1?.socket) {
-        const gameStartedMessage1: GameMessage = {
-          type: "game",
-          data: { type: "gameStarted", id: 1 } as GameStartedMessage,
+        const gameStartedMessage: GameStartedMessage = {
+          type: "gameStarted",
+          id: 1
         };
-        this.player1.socket.send(JSON.stringify(gameStartedMessage1));
+        this.player1.socket.send(this.stringifyGameMessageData(gameStartedMessage));
       }
 
       if (this.player2?.socket) {
-        const gameStartedMessage2: GameMessage = {
-          type: "game",
-          data: { type: "gameStarted", id: 2 } as GameStartedMessage,
+        const gameStartedMessage: GameStartedMessage = {
+          type: "gameStarted",
+          id: 2
         };
-        this.player2.socket.send(JSON.stringify(gameStartedMessage2));
+        this.player2.socket.send(this.stringifyGameMessageData(gameStartedMessage));
       }
 
       this.startMainLoop();

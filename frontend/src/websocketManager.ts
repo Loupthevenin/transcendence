@@ -1,6 +1,8 @@
 import ERROR_TYPE, { ERROR_MSG } from "@shared/errorType";
 import { isReconnectionMessage } from "@shared/game/gameMessageTypes";
 import { isErrorMessage, ChatMessageData, isChatMessage, GameMessageData, isGameMessage, TournamentMessageData, isTournamentMessage } from "@shared/messageType"
+import { navigateTo } from "./router";
+import { handleGameReconnection, OnlineGame } from "./game/game";
 
 // Define a mapping between event types and their corresponding data types
 type MessageEventMap = {
@@ -119,9 +121,14 @@ export function connectToServer(): void {
         const data: any = JSON.parse(event.data);
 
         if (isGameMessage(data)) {
-          if (isReconnectionMessage(data)) {
-            console.log("[WebSocket] Reconnection message received:", data);
-            // TODO: Handle game reconnection logic here
+          if (isReconnectionMessage(data.data)) {
+            console.log("[WebSocket] Reconnection to game in progress...");
+            if (location.pathname !== "/") {
+              // Go to root if not already there
+              navigateTo("/");
+            }
+            OnlineGame(false);
+            handleGameReconnection(data.data);
           }
           notifySubscribers("game", data.data);
         } else if (isChatMessage(data)) {

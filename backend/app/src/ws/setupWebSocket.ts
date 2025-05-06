@@ -138,15 +138,22 @@ export function setupWebSocket(): WebSocketServer {
           const data: GameMessageData = msgData.data;
 
           if (isMatchmakingMessage(data)) {
-            console.log(`[Matchmaking] : ${player.username} (${playerUUID})`);
-            addPlayerToMatchmaking(player);
+            // Check if the player is already in a room
+            if (player.room) {
+              sendErrorMessage(ws, ERROR_MSG.ALREADY_IN_ROOM, ERROR_TYPE.MATCHMAKING_REFUSED);
+            } else {
+              console.log(`[Matchmaking] : ${player.username} (${playerUUID})`);
+              addPlayerToMatchmaking(player);
+            }
           } else if (isSkinChangeMessage(data)) {
             if (player.room) {
               // Check if the player who send the message is the owner of the paddle
               if (data.id === player.room.indexOfPlayer(player)) {
-                player.paddleSkinId = data.skinId;
-                if (player.room.isGameLaunched()) {
-                  player.room.notifySkinUpdate(player);
+                if (player.paddleSkinId !== data.skinId) {
+                  player.paddleSkinId = data.skinId;
+                  if (player.room.isGameLaunched()) {
+                    player.room.notifySkinUpdate(player);
+                  }
                 }
               }
             }

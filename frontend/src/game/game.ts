@@ -13,7 +13,8 @@ import {
                         isGameDataMessage,
   GameResultMessage,    isGameResultMessage,
   DisconnectionMessage, isDisconnectionMessage,
-  MatchmakingMessage
+  MatchmakingMessage,
+  ReconnectionMessage
 } from "@shared/game/gameMessageTypes";
 import { showSkinSelector, hideSkinSelector, getSelectedSkinId } from "./skinSelector";
 import { createDefaultSkin, loadPadddleSkin } from "./paddleSkinLoader";
@@ -368,14 +369,27 @@ function handleAIInput(paddlePosition: BABYLON.Vector2, paddleMesh: BABYLON.Mesh
   handlePlayerInput(paddlePosition, paddleMesh, INPUT.NONE, draggingData, deltaTime);
 }
 
+// global request trackers for each paddle
+let paddle1SkinRequestId: number = 0;
+let paddle2SkinRequestId: number = 0;
+
 // Function to set the skin id of the given paddle
 function setPaddleSkin(paddle: 1 | 2, skinId: string): void {
   if (paddle === 1) {
+    const currentRequestId: number = ++paddle1SkinRequestId; // Increment and store the request ID
+
     // Create a temporary mesh will waiting for server response if there is no mesh
     if (!paddle1Mesh) {
       paddle1Mesh = createDefaultSkin(scene);
     }
+
     loadPadddleSkin(skinId, scene).then((mesh: BABYLON.Mesh) => {
+      if (currentRequestId !== paddle1SkinRequestId) {
+        // If this request is outdated, ignore it
+        mesh.dispose(); // Dispose of the new mesh since it won't be used
+        return;
+      }
+
       if (paddle1Mesh) {
         paddle1Mesh.dispose(); // Delete the current mesh
       }
@@ -385,11 +399,20 @@ function setPaddleSkin(paddle: 1 | 2, skinId: string): void {
   }
 
   else if (paddle === 2) {
+    const currentRequestId: number = ++paddle2SkinRequestId; // Increment and store the request ID
+
     // Create a temporary mesh will waiting for server response if there is no mesh
     if (!paddle2Mesh) {
       paddle2Mesh = createDefaultSkin(scene);
     }
+
     loadPadddleSkin(skinId, scene).then((mesh: BABYLON.Mesh) => {
+      if (currentRequestId !== paddle2SkinRequestId) {
+        // If this request is outdated, ignore it
+        mesh.dispose(); // Dispose of the new mesh since it won't be used
+        return;
+      }
+
       if (paddle2Mesh) {
         paddle2Mesh.dispose(); // Delete the current mesh
       }
@@ -406,6 +429,13 @@ let localSkinId: string = "";
 // Variables to limit the websocket messages send to the server in the main loop
 let lastSendTime: number = 0;
 const sendRateInterval: number = 1000 / 60; // 60 times per seconds
+
+export function handleGameReconnection(reconnectionData: ReconnectionMessage): void {
+  playerId = reconnectionData.id; // Set the same player ID as before the disconnection
+  setPaddleSkin(playerId, reconnectionData.selfSkinId); // Set the skin of the player's paddle
+  setPaddleSkin(playerId === 1 ? 2 : 1, reconnectionData.otherSkinId); // Set the skin of the other player's paddle
+  updateCameraMode(camera);
+}
 
 function handleGameMessages(data: GameMessageData): void {
   //console.log("Received:", data);
@@ -854,7 +884,7 @@ export function LocalGame(): void {
 }
 
 // Launch the game in online mode against a remote player
-export function OnlineGame(): void {
+export function OnlineGame(autoMatchmaking: boolean = true): void {
   if (!isConnected()) {
     console.error("You are not connected to the server, cannot start an online game");
     return;
@@ -870,11 +900,13 @@ export function OnlineGame(): void {
   setPaddleSkin(1, localSkinId);
 
   registerToGameMessages();
-  const matchmakingMessage: MatchmakingMessage = {
-    type: "matchmaking",
-    username: `Player-${localSkinId}`
-  };
-  sendMessage("game", matchmakingMessage);
+  if (autoMatchmaking) {
+    const matchmakingMessage: MatchmakingMessage = {
+      type: "matchmaking",
+      username: `Player-${localSkinId}`
+    };
+    sendMessage("game", matchmakingMessage);
+  }
 }
 
 // Launch the game in spectating mode to watch match of other remote players
