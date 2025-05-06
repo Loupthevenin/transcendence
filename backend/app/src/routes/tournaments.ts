@@ -1,6 +1,9 @@
 import { FastifyInstance, FastifyPluginOptions } from "fastify";
 import { requireToken } from "../hook/requireToken";
-import { tournamentsController } from "../controllers/tournamentController";
+import {
+  tournamentsController,
+  tournamentProgression,
+} from "../controllers/tournamentController";
 
 export default async function (
   app: FastifyInstance,
@@ -8,4 +11,5 @@ export default async function (
 ) {
   app.addHook("onRequest", requireToken);
   app.get("/list", tournamentsController);
+  app.get("/tournament", tournamentProgression);
 }

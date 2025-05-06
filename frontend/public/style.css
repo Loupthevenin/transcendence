@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "./sidebar.css";
 @import "./google.css";
+@import "./tournaments.css";
 
 body {
   margin: 0;

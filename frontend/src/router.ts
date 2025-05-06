@@ -5,7 +5,7 @@ import { ModeLayout } from "./layout/mode";
 import { TwoFAView } from "./views/2fa";
 import { ProfileView } from "./views/profile";
 import { Generate404Page } from "./views/404";
-import { TournamentView } from "./views/tournaments";
+import { TournamentView, TournamentProgressView } from "./views/tournaments";
 import { ReplayView } from "./views/replay";
 
 import { initSideBarNavigation } from "./controllers/navbar";
@@ -59,6 +59,14 @@ const routes: Record<string, Route> = {
       const mod = await import("./controllers/tournaments");
       initSideBarNavigation();
       mod.tournamentsHandlers(root);
+    },
+  },
+  "/tournaments/tournament": {
+    view: () => MainLayout(TournamentProgressView()),
+    setup: async (root: HTMLElement) => {
+      const mod = await import("./controllers/tournaments");
+      initSideBarNavigation();
+      mod.tournamentProgress(root);
     },
   },
   "/replay": {
