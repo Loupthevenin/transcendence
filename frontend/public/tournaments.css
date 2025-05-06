@@ -4,7 +4,11 @@
   gap: 40px;
   padding: 40px;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  width: 100%;
 }
 
 .match {

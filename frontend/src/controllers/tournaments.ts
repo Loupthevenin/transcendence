@@ -354,7 +354,7 @@ export async function tournamentProgress(
     const data: any = await res.json();
     console.log(data.tree.root);
 
-    bracket.appendChild(renderMatch(generateTournamentTree(8)));
+    bracket.appendChild(renderMatch(generateTournamentTree(32)));
   } catch (error) {
     console.error("Error tournament progress : ", error);
   }
