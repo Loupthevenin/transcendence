@@ -81,7 +81,7 @@ export function TournamentView(): HTMLElement {
 
 export function TournamentProgressView(): HTMLElement {
   const container: HTMLElement = document.createElement("div");
-  container.className = "flex-1 flex items-center justify-center text-white";
+  container.className = "bracket-tournament";
   container.id = "bracket";
   container.innerHTML = ``;
   return container;
