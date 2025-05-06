@@ -28,6 +28,10 @@ export function createDefaultSkin(scene: BABYLON.Scene): BABYLON.Mesh {
 // Load the paddle skin and return it, return the default paddle skin if an error occured
 // if skinId is empty, load a random skin
 export async function loadPadddleSkin(skinId: string, scene: BABYLON.Scene): Promise<BABYLON.Mesh> {
+  if (!skinId || skinId === "") {
+    skinId = ""; // Avoid skinId being undefined or null
+  }
+
   return new Promise<BABYLON.Mesh>(async (resolve) => {
     try {
       const result: BABYLON.ISceneLoaderAsyncResult =

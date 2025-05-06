@@ -91,8 +91,8 @@ export function isDisconnectionMessage(data: any): data is DisconnectionMessage 
 export type ReconnectionMessage = {
   readonly type: "reconnection";
   id: 1 | 2; // The player's index in the room to know which paddle to control
-  p1SkinId: string; // The player1's paddle skin ID
-  p2SkinId: string; // The player2's paddle skin ID
+  selfSkinId: string; // The player paddle skin ID
+  otherSkinId: string; // The other player paddle skin ID
 };
 
 export function isReconnectionMessage(data: any): data is ReconnectionMessage {
@@ -100,8 +100,8 @@ export function isReconnectionMessage(data: any): data is ReconnectionMessage {
     data &&
     data.type === "reconnection" &&
     (data.id === 1 || data.id === 2) &&
-    typeof data.p1SkinId === "string" &&
-    typeof data.p2SkinId === "string"
+    typeof data.selfSkinId === "string" &&
+    typeof data.otherSkinId === "string"
   );
 }
 
