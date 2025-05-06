@@ -71,11 +71,18 @@ export function TournamentView(): HTMLElement {
   </div>
 </form>
       </div>
-
       <!-- Tournois -->
       <div id="tournaments-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
 		<!-- insertion dynamique -->
       </div>
     </div>`;
+  return container;
+}
+
+export function TournamentProgressView(): HTMLElement {
+  const container: HTMLElement = document.createElement("div");
+  container.className = "flex-1 flex items-center justify-center text-white";
+  container.id = "bracket";
+  container.innerHTML = ``;
   return container;
 }

@@ -3,6 +3,7 @@ import { sendMessage } from "../websocketManager";
 import TournamentInfo from "@shared/tournament/tournamentInfo";
 import { TournamentSettings } from "@shared/tournament/tournamentSettings";
 import * as TournamentMessages from "@shared/tournament/tournamentMessageTypes";
+import { navigateTo } from "../router";
 
 function createCardTournament(tournament: TournamentInfo): HTMLElement {
   const card: HTMLElement = document.createElement("div");
@@ -10,16 +11,19 @@ function createCardTournament(tournament: TournamentInfo): HTMLElement {
     "bg-gray-800 p-6 rounded-lg shadow-xl flex flex-col justify-between";
   const isFull: boolean = tournament.playerRegistered >= tournament.maxPlayers;
   const isJoined: boolean = tournament.joined;
+  const isRunning: boolean = tournament.status === "Ongoing";
+  console.log(isRunning);
   card.innerHTML = `
-        <div class="bg-gray-800 p-6 rounded-lg shadow-xl flex flex-col justify-between">
-          <div>
+		<div>
             <h2 class="text-2xl font-semibold text-indigo-300 mb-2">${tournament.name}</h2>
             <p class="text-purple-200 mb-1">Joueurs inscrits : ${tournament.playerRegistered}/${tournament.maxPlayers}</p>
             <p class="text-purple-200">Statut : ${tournament.status}</p>
-          </div>
           <button class="join-tournament mt-6 ${isJoined ? "bg-red-600 hover:bg-red-700" : isFull ? "bg-gray-600 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"} text-white py-2 rounded-md transition-all" ${isFull && !isJoined ? "disabled" : ""}>
 				${isJoined ? "Se désinscrire" : isFull ? "Complet" : "Rejoindre"}
           </button>
+       <button class="view-progress bg-blue-600 hover:bg-blue-700 text-white py-2 mt-2 rounded-md transition-all">
+              Voir la progression
+        </button>
         </div>
 		<form class="join-form hidden mt-4 bg-[#2a255c] p-4 rounded-lg shadow-md text-white space-y-4">
           <div>
@@ -73,7 +77,9 @@ async function loadTournaments(): Promise<void> {
         card.querySelector<HTMLButtonElement>(".join-tournament");
       const form: HTMLFormElement | null =
         card.querySelector<HTMLFormElement>(".join-form");
-      if (!joinButton || !form) return;
+      const progressButton: HTMLButtonElement | null =
+        card.querySelector<HTMLButtonElement>(".view-progress");
+      if (!joinButton || !form || !progressButton) return;
 
       joinButton.addEventListener("click", () => {
         if (tournament.joined) {
@@ -110,6 +116,9 @@ async function loadTournaments(): Promise<void> {
           sendMessage("tournament", tournamentJoinMessage);
           loadTournaments();
         }
+      });
+      progressButton.addEventListener("click", () => {
+        navigateTo(`/tournaments/tournament?uuid=${tournament.uuid}`);
       });
     });
   } catch (error: any) {
@@ -189,8 +198,170 @@ function createTournament(): void {
   });
 }
 
+type Player = {
+  username: string;
+  isBot?: boolean;
+};
+
+type MatchNode = {
+  player: Player | null;
+  left: MatchNode | null;
+  right: MatchNode | null;
+};
+
 export function tournamentsHandlers(container: HTMLElement): void {
   loadTournaments();
   setDisplayNameInputs();
   createTournament();
+}
+
+function renderMatch(match: MatchNode) {
+  const wrapper: HTMLDivElement = document.createElement("div");
+  wrapper.className = "node-wrapper";
+
+  const matchBox: HTMLDivElement = document.createElement("div");
+  matchBox.className = "node";
+
+  const p1: string = match.left?.player?.username ?? "En attente";
+  const p2: string = match.right?.player?.username ?? "En attente";
+  const winner: string | undefined = match.player?.username;
+
+  const isP1Winner = winner && p1 === winner;
+  const isP2Winner = winner && p2 === winner;
+
+  matchBox.innerHTML = `
+    <div style="color: ${isP1Winner ? "#48bb78" : winner ? "#f87171" : "#fff"};">${p1}</div>
+    <div style="font-size: 12px; color: #aaa;">vs</div>
+    <div style="color: ${isP2Winner ? "#48bb78" : winner ? "#f87171" : "#fff"};">${p2}</div>
+  `;
+
+  wrapper.appendChild(matchBox);
+
+  if (match.left || match.right) {
+    const branch = document.createElement("div");
+    branch.className = "branch";
+
+    if (match.left) branch.appendChild(renderMatch(match.left));
+    if (match.right) branch.appendChild(renderMatch(match.right));
+
+    wrapper.appendChild(branch);
+  }
+
+  return wrapper;
+}
+
+export async function tournamentProgress(
+  container: HTMLElement,
+): Promise<void> {
+  const token: string | null = localStorage.getItem("auth_token");
+  if (!token) {
+    alert("Pas de token !");
+    return;
+  }
+  const params: URLSearchParams = new URLSearchParams(window.location.search);
+  const uuid: string | null = params.get("uuid");
+  if (!uuid) return;
+
+  const bracket: HTMLDivElement = document.getElementById(
+    "bracket",
+  ) as HTMLDivElement;
+  if (!bracket) return;
+
+  try {
+    const res: Response = await fetch(
+      `/api/tournaments/tournament?uuid=${uuid}`,
+      {
+        method: "GET",
+        headers: {
+          authorization: `Bearer ${token}`,
+        },
+      },
+    );
+    if (!res.ok) return;
+    const data: any = await res.json();
+    console.log(data.tree.root);
+
+    const fakeTree4: MatchNode = {
+      player: { username: "Alice" },
+      left: {
+        player: { username: "Alice" },
+        left: { player: { username: "Alice" }, left: null, right: null },
+        right: { player: { username: "Bob" }, left: null, right: null },
+      },
+      right: {
+        player: { username: "Charlie" },
+        left: { player: { username: "Charlie" }, left: null, right: null },
+        right: { player: { username: "David" }, left: null, right: null },
+      },
+    };
+
+    // function genNode(name: string): MatchNode {
+    //   return { player: { username: name }, left: null, right: null };
+    // }
+
+    // const fakeTree16: MatchNode = {
+    //   player: { username: "Final" },
+    //   left: {
+    //     player: { username: "Semi 1" },
+    //     left: {
+    //       player: { username: "Quarter 1" },
+    //       left: {
+    //         player: { username: "Eighth 1" },
+    //         left: genNode("P1"),
+    //         right: genNode("P2"),
+    //       },
+    //       right: {
+    //         player: { username: "Eighth 2" },
+    //         left: genNode("P3"),
+    //         right: genNode("P4"),
+    //       },
+    //     },
+    //     right: {
+    //       player: { username: "Quarter 2" },
+    //       left: {
+    //         player: { username: "Eighth 3" },
+    //         left: genNode("P5"),
+    //         right: genNode("P6"),
+    //       },
+    //       right: {
+    //         player: { username: "Eighth 4" },
+    //         left: genNode("P7"),
+    //         right: genNode("P8"),
+    //       },
+    //     },
+    //   },
+    //   right: {
+    //     player: { username: "Semi 2" },
+    //     left: {
+    //       player: { username: "Quarter 3" },
+    //       left: {
+    //         player: { username: "Eighth 5" },
+    //         left: genNode("P9"),
+    //         right: genNode("P10"),
+    //       },
+    //       right: {
+    //         player: { username: "Eighth 6" },
+    //         left: genNode("P11"),
+    //         right: genNode("P12"),
+    //       },
+    //     },
+    //     right: {
+    //       player: { username: "Quarter 4" },
+    //       left: {
+    //         player: { username: "Eighth 7" },
+    //         left: genNode("P13"),
+    //         right: genNode("P14"),
+    //       },
+    //       right: {
+    //         player: { username: "Eighth 8" },
+    //         left: genNode("P15"),
+    //         right: genNode("P16"),
+    //       },
+    //     },
+    //   },
+    // };
+    bracket.appendChild(renderMatch(fakeTree4));
+  } catch (error) {
+    console.error("Error tournament progress : ", error);
+  }
 }
