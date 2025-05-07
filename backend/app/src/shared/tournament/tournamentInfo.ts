@@ -1,7 +1,7 @@
 type TournamentInfo = {
-  ownerUuid: string;
   uuid: string;
   name: string;
+  ownerUuid: string;
   playerRegistered: number;
   maxPlayers: number;
   status: "Ongoing" | "Pending";
