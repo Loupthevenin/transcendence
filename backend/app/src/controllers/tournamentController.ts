@@ -18,7 +18,7 @@ export async function tournamentsController(
       ({
         uuid: t.uuid,
         name: t.name,
-        ownerUuid: t.owner.uuid,
+        isOwner: t.owner.uuid === uuid,
         playerRegistered: t.playerCount,
         maxPlayers: t.settings.maxPlayerCount,
         status: t.isClosed ? "Ongoing" : "Pending",
