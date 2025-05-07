@@ -1,64 +1,46 @@
-import { BackToMenu, SinglePlayer, LocalGame, OnlineGame } from "../game/game";
+import { SinglePlayer, LocalGame, OnlineGame } from "../game/game";
 import { subscribeTo, unsubscribeTo, isConnected } from "../websocketManager";
 import nodeRemovalObserver from "../utils/nodeRemovalObserver";
+import { isSidebarOpen, toggleSidebar } from "./navbar";
 
-const menuDisplayConfig: Record<string, Record<string, string>> = {
-  "showMenu": {
-    "back to menu": "none",
-    "singleplayer": "inline-block",
-    "local": "inline-block",
-    "online": "inline-block"
-  },
-  "showInGameMenu": {
-    "back to menu": "inline-block",
-    "singleplayer": "none",
-    "local": "none",
-    "online": "none"
-  }
-};
-
-function applyButtonConfig(config: Record<string, string>): void {
-  Object.entries(config).forEach(([id, display] : [string, string]) => {
-    const button: HTMLElement | null = document.getElementById(id);
-    if (button) {
-      button.style.display = display;
-    }
-  });
+export function showGameModeSelectionMenu(): void {
+  document.getElementById("menu-mode")?.classList.remove("hidden");
 }
 
-export function showMenu(): void {
-  applyButtonConfig(menuDisplayConfig["showMenu"]);
-}
-
-export function showInGameMenu(): void {
-  applyButtonConfig(menuDisplayConfig["showInGameMenu"]);
+export function hideGameModeSelectionMenu(): void {
+  document.getElementById("menu-mode")?.classList.add("hidden");
 }
 
 export function listenerButtonGameMode(): void {
   const modeActions: Record<string, () => void> = {
-    "back to menu": BackToMenu,
     "singleplayer": SinglePlayer,
     "local": LocalGame,
     "online": OnlineGame
   };
 
   Object.keys(modeActions).forEach((mode: string) => {
-    const button: HTMLElement | null = document.getElementById(mode);
+    const button: HTMLElement | null = document.getElementById("game-mode-" + mode);
     if (button) {
-      button.addEventListener("click", modeActions[mode]);
+      const callback: () => void = modeActions[mode];
+      button.addEventListener("click", () => {
+        if (isSidebarOpen()) {
+          toggleSidebar();
+        }
+        callback();
+      });
 
-      if (mode == "online") {
+      if (mode === "online") {
         setupOnlineButton(button);
       }
     }
   });
 
-  showMenu();
+  showGameModeSelectionMenu();
 }
 
 // Setup the event and the nodeRemovalObserver of the online button
 function setupOnlineButton(button: HTMLElement): void {
-  // Define the default appearance
+  // Set the current appearance
   updateOnlineButtonAppearance();
 
   subscribeTo("onConnected", updateOnlineButtonAppearance);
@@ -73,7 +55,7 @@ function setupOnlineButton(button: HTMLElement): void {
 
 // Update the appearance of the online button, when the user connects/disconnects from the websocket
 function updateOnlineButtonAppearance(): void {
-  const onlineButton: HTMLElement | null = document.getElementById("online");
+  const onlineButton: HTMLElement | null = document.getElementById("game-mode-online");
   if (onlineButton) {
     if (isConnected()) {
       onlineButton.classList.remove("bg-gray-400", "cursor-not-allowed", "hover:bg-gray-400");

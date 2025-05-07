@@ -16,7 +16,7 @@ export function ButtonMode(mode: string): HTMLElement {
     text-center 
     capitalize
   `;
-  button.id = mode;
+  button.id = "game-mode-" + mode;
   button.textContent = mode;
   return button;
 }
