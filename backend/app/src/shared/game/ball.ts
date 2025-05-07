@@ -139,7 +139,8 @@ export function updateBallPosition(gameData: GameData, gameStats: GameStats, del
       handleCollision(earliestCollision, ballPos, ballVel);
       if (earliestCollision.isPaddle) {
         gameStats.ballExchangesCount++;
-        if (gameStats.ballExchangesCount % 5 === 0) {
+        shiftBallDirection(ballVel);
+        if (gameStats.ballExchangesCount % 4 === 0) {
           scaleMagnitude(ballVel, GAME_CONSTANT.ballSpeedFactor, 0, GAME_CONSTANT.ballMaxSpeed);
         }
       }
@@ -171,19 +172,42 @@ export function updateBallPosition(gameData: GameData, gameStats: GameStats, del
   }
 }
 
+const excludedAngles: Array<number> = [
+    0,                 // 0 degrees
+    Math.PI / 2,       // 90 degrees
+    Math.PI,           // 180 degrees
+    (3 * Math.PI) / 2, // 270 degrees
+    Math.PI * 2,       // 360 degrees
+];
+const anglesMargin: number = BABYLON.Tools.ToRadians(15); // Margin of excluded angles
+
+// slightly shifts the direction of the ball
+function shiftBallDirection(ballVel: BABYLON.Vector2): void {
+  const magnitude: number = ballVel.length(); // Preserve speed
+  const angleRad: number = Math.atan2(ballVel.y, ballVel.x); // Get current direction
+
+  let newAngleRad: number;
+
+  // Generate a random angle offset until it is not in the excluded angles
+  do {
+      // Generate a random angle offset within ± GAME_CONSTANT.ballMaximumDegreesShift degrees
+      const angleOffset: number = (Math.random() * GAME_CONSTANT.ballMaximumDegreesShift * 2 - GAME_CONSTANT.ballMaximumDegreesShift);
+      // Convert degrees to radians and add it to the current angle
+      newAngleRad = angleRad + angleOffset * (Math.PI / 180);
+  } while (excludedAngles.some(excludedAngle => {
+      return newAngleRad >= excludedAngle - anglesMargin
+          && newAngleRad <= excludedAngle + anglesMargin;
+  }));
+
+  // Apply modification to the ball velocity
+  ballVel.x = magnitude * Math.cos(newAngleRad);
+  ballVel.y = magnitude * Math.sin(newAngleRad);
+}
+
 // Reset ball position and velocity
 export function resetBall(ball: Ball): void {
   ball.position.x = 0;
   ball.position.y = 0;
-
-  const excludedAngles: Array<number> = [
-      0,                 // 0 degrees
-      Math.PI / 2,       // 90 degrees
-      Math.PI,           // 180 degrees
-      (3 * Math.PI) / 2, // 270 degrees
-      Math.PI * 2,       // 360 degrees
-  ];
-  const margin: number = BABYLON.Tools.ToRadians(15); // Margin of excluded angles
 
   let angle: number;
 
@@ -191,8 +215,8 @@ export function resetBall(ball: Ball): void {
   do {
       angle = Math.random() * Math.PI * 2; // Random angle in radians
   } while (excludedAngles.some(excludedAngle => {
-    return angle >= excludedAngle - margin
-        && angle <= excludedAngle + margin;
+    return angle >= excludedAngle - anglesMargin
+        && angle <= excludedAngle + anglesMargin;
   }))
 
   ball.velocity.x = Math.cos(angle) * GAME_CONSTANT.ballDefaultSpeed;
