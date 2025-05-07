@@ -10,6 +10,7 @@ import {
   isLeaveGameMessage,
 } from "../shared/game/gameMessageTypes";
 import {
+  isCloseMessage,
   isCreateMessage,
   isJoinMessage,
   isLeaveMessage,
@@ -29,7 +30,8 @@ import db from "../db/db";
 import {
   createNewTournament,
   addPlayerToTournament,
-  removePlayerFromTournament
+  removePlayerFromTournament,
+  closeTournament
 } from "../tournament/tournamentManager";
 import { Tournament } from "../types/tournament";
 
@@ -187,6 +189,10 @@ export function setupWebSocket(): WebSocketServer {
             console.log(`[Tournament - Leave] : ${player.username}\n`, data);
             error = removePlayerFromTournament(data.uuid, player);
             errorType = ERROR_TYPE.TOURNAMENT_LEAVE_FAILED;
+          } else if (isCloseMessage(data)) {
+            console.log(`[Tournament - Close] : ${player.username}\n`, data);
+            error = closeTournament(data.uuid, player);
+            errorType = ERROR_TYPE.TOURNAMENT_CLOSE_FAILED;
           }
 
           // If an error occurred, send it to the player

@@ -5,6 +5,7 @@ const ERROR_TYPE = {
   TOURNAMENT_CREATION_FAILED: "TOURNAMENT_CREATION_FAILED",
   TOURNAMENT_JOIN_FAILED: "TOURNAMENT_JOIN_FAILED",
   TOURNAMENT_LEAVE_FAILED: "TOURNAMENT_LEAVE_FAILED",
+  TOURNAMENT_CLOSE_FAILED: "TOURNAMENT_CLOSE_FAILED",
 } as const;
 
 type ERROR_TYPE = (typeof ERROR_TYPE)[keyof typeof ERROR_TYPE];
@@ -15,9 +16,9 @@ export const ERROR_MSG = {
   TOKEN_MISSING_OR_INVALID: "Token is missing or invalid",
   ALREADY_CONNECTED: "Already connected",
   ALREADY_IN_ROOM: "Already inside a room",
-  TOURNAMENT_FULL: "TOURNAMENT_FULL",
-  TOURNAMENT_NOT_FOUND: "TOURNAMENT_NOT_FOUND",
-  TOURNAMENT_CLOSED: "TOURNAMENT_CLOSED",
+  TOURNAMENT_FULL: "The tournament is full",
+  TOURNAMENT_NOT_FOUND: "The tournament has not been found",
+  TOURNAMENT_CLOSED: "The tournament is closed",
   PLAYER_NOT_IN_TOURNAMENT: "Player is not in the tournament",
   PLAYER_ALREADY_IN_TOURNAMENT: "Player is already in the tournament",
   NOT_OWNER_OF_TOURNAMENT: "You are not the owner of this tournament",

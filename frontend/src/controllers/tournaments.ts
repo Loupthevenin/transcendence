@@ -140,7 +140,11 @@ async function loadTournaments(): Promise<void> {
         card.querySelector<HTMLButtonElement>(".close-tournament");
       if (!closeTournament) return;
       closeTournament.addEventListener("click", () => {
-        // TODO: close Tournament;
+        const tournamentCloseMessage: TournamentMessages.CloseMessage = {
+          type: "close",
+          uuid: tournament.uuid
+        };
+        sendMessage("tournament", tournamentCloseMessage);
       });
     });
   } catch (error: any) {

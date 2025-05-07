@@ -43,3 +43,16 @@ export function isLeaveMessage(data: any): data is LeaveMessage {
     typeof data.uuid === "string"
   );
 }
+
+export type CloseMessage = {
+  readonly type: "close";
+  uuid: string; // The uuid of the tournament
+};
+
+export function isCloseMessage(data: any): data is CloseMessage {
+  return (
+    data &&
+    data.type === "close" &&
+    typeof data.uuid === "string"
+  );
+}
