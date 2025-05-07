@@ -66,7 +66,6 @@ app.register(require("./routes/profile"), { prefix: "/api/profile" });
 app.register(require("./routes/replay"), { prefix: "/api/replay" });
 app.register(require("./routes/models"), { prefix: "/api/models" });
 app.register(require("./routes/textures"), { prefix: "/api/textures" });
-app.register(require("./routes/blockchain"), { prefix: "/api/blockchain" });
 app.register(require("./routes/tournaments"), { prefix: "/api/tournaments" });
 
 if (NODE_ENV === "development") {
