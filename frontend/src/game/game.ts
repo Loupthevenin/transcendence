@@ -36,7 +36,10 @@ import {
 } from "../websocketManager";
 import { GameMessageData } from "@shared/messageType";
 import { LoadingHandler } from "./loadingHandler";
-import { showGameModeSelectionMenu, hideGameModeSelectionMenu } from "../controllers/gameMode";
+import {
+  showGameModeSelectionMenu,
+  hideGameModeSelectionMenu,
+} from "../controllers/gameMode";
 import { PositionData, ScoreData } from "@shared/game/replayData";
 import enableCanvasExtension from "../utils/canvasExtensionEnabler";
 
@@ -85,7 +88,8 @@ function createLoadingScreen(): void {
 
 // Update the loading bar
 function updateLoadingBar(proportion: number): void {
-  const loadingBar: HTMLElement | null = document.getElementById("gameLoadingBar");
+  const loadingBar: HTMLElement | null =
+    document.getElementById("gameLoadingBar");
   if (loadingBar) {
     loadingBar.style.width = `${proportion * 100}%`; // Adjust width based on proportion (0 to 1)
   }
@@ -723,7 +727,8 @@ export async function initGameEnvironment(): Promise<void> {
   );
   light.intensity = 1.0;
 
-  const environmentSceneLoadingStateIndex: number = loadingHandler.addLoadingState();
+  const environmentSceneLoadingStateIndex: number =
+    loadingHandler.addLoadingState();
 
   // Load the environment scene
   try {
@@ -743,8 +748,10 @@ export async function initGameEnvironment(): Promise<void> {
           error,
         );
       })
-      .finally(() => loadingHandler.setLoaded(environmentSceneLoadingStateIndex));
-      //}).finally(() => setTimeout(() => loadingHandler.setLoaded(environmentSceneLoadingStateIndex), 5000)); // Delay of 5s for testing purposes
+      .finally(() =>
+        loadingHandler.setLoaded(environmentSceneLoadingStateIndex),
+      );
+    //}).finally(() => setTimeout(() => loadingHandler.setLoaded(environmentSceneLoadingStateIndex), 5000)); // Delay of 5s for testing purposes
   } catch (error: any) {
     console.error("An error occurred while loading model 'scene.glb' :", error);
     loadingHandler.setLoaded(environmentSceneLoadingStateIndex);
@@ -981,7 +988,7 @@ export function LeaveOnlineGameIfNeeded(): void {
   if (currentGameMode === GameMode.ONLINE) {
     // Tell the server we quit the game
     const LeaveGameMessage: LeaveGameMessage = {
-      type: "leaveGame"
+      type: "leaveGame",
     };
     sendMessage("game", LeaveGameMessage);
   }
@@ -1002,6 +1009,13 @@ export function BackToMenu(): void {
   showSkinSelector();
   setPaddleSkin(1, "");
   setPaddleSkin(2, "");
+
+  const gameResult: HTMLDivElement | null = document.getElementById(
+    "game-result-screen",
+  ) as HTMLDivElement;
+  if (gameResult) {
+    gameResult.remove();
+  }
 }
 
 // Launch the game in single player against an AI opponent
@@ -1035,7 +1049,9 @@ export function LocalGame(): void {
 // Launch the game in online mode against a remote player
 export function OnlineGame(autoMatchmaking: boolean = true): void {
   if (!isConnected()) {
-    console.error("You are not connected to the server, cannot start an online game");
+    console.error(
+      "You are not connected to the server, cannot start an online game",
+    );
     return;
   }
 
@@ -1062,7 +1078,9 @@ export function OnlineGame(autoMatchmaking: boolean = true): void {
 // Launch the game in spectating mode to watch match of other remote players
 export function SpectatingMode(): void {
   if (!isConnected()) {
-    console.error("You are not connected to the server, cannot spectate other game");
+    console.error(
+      "You are not connected to the server, cannot spectate other game",
+    );
     return;
   }
 
