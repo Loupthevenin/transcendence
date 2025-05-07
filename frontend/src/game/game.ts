@@ -35,7 +35,7 @@ import {
 } from "../websocketManager";
 import { GameMessageData } from "@shared/messageType";
 import { LoadingHandler } from "./loadingHandler";
-import { showMenu, showInGameMenu } from "../controllers/gameMode";
+import { showGameModeSelectionMenu, hideGameModeSelectionMenu } from "../controllers/gameMode";
 import { PositionData, ScoreData } from "@shared/game/replayData";
 import enableCanvasExtension from "../utils/canvasExtensionEnabler";
 
@@ -981,7 +981,7 @@ export function BackToMenu(): void {
   currentGameMode = GameMode.MENU;
   updateCameraMode(camera);
   unregisterToGameMessages();
-  showMenu();
+  showGameModeSelectionMenu();
 
   resetGame();
 
@@ -995,7 +995,7 @@ export function SinglePlayer(): void {
   currentGameMode = GameMode.SINGLEPLAYER;
   updateCameraMode(camera);
   unregisterToGameMessages();
-  showInGameMenu();
+  hideGameModeSelectionMenu();
 
   resetGame();
 
@@ -1009,7 +1009,7 @@ export function LocalGame(): void {
   currentGameMode = GameMode.LOCAL;
   updateCameraMode(camera);
   unregisterToGameMessages();
-  showInGameMenu();
+  hideGameModeSelectionMenu();
 
   resetGame();
 
@@ -1028,7 +1028,7 @@ export function OnlineGame(autoMatchmaking: boolean = true): void {
   }
   currentGameMode = GameMode.ONLINE;
   updateCameraMode(camera);
-  showInGameMenu();
+  hideGameModeSelectionMenu();
 
   resetGame();
 

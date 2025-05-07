@@ -6,7 +6,6 @@ export function ModeLayout(): HTMLElement {
     "absolute right-8 top-1/2 transform -translate-y-1/2 flex flex-col space-y-4 z-1001";
   container.id = "menu-mode";
 
-  container.appendChild(ButtonMode("back to menu"));
   container.appendChild(ButtonMode("singleplayer"));
   container.appendChild(ButtonMode("local"));
   container.appendChild(ButtonMode("online"));
