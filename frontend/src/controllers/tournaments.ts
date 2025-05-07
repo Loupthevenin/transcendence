@@ -12,7 +12,6 @@ function createCardTournament(tournament: TournamentInfo): HTMLElement {
   const isFull: boolean = tournament.playerRegistered >= tournament.maxPlayers;
   const isJoined: boolean = tournament.joined;
   const isRunning: boolean = tournament.status === "Ongoing";
-  console.log(isRunning);
   // TODO: checking OwnerUuid
   const isOwnerUuid: boolean = tournament.ownerUuid ? true : false;
   card.innerHTML = `
@@ -23,9 +22,13 @@ function createCardTournament(tournament: TournamentInfo): HTMLElement {
           <button class="join-tournament w-full mt-6 ${isJoined ? "bg-red-600 hover:bg-red-700" : isFull ? "bg-gray-600 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"} text-white py-2 rounded-md transition-all" ${isFull && !isJoined ? "disabled" : ""}>
 				${isJoined ? "Se désinscrire" : isFull ? "Complet" : "Rejoindre"}
           </button>
-       <button class="view-progress w-full bg-blue-600 hover:bg-blue-700 text-white py-2 mt-2 rounded-md transition-all">
+		${
+      isRunning
+        ? `<button class="view-progress w-full bg-blue-600 hover:bg-blue-700 text-white py-2 mt-2 rounded-md transition-all">
               Voir la progression
-        </button>
+			</button>`
+        : ""
+    }
 		${
       !isRunning && isOwnerUuid && tournament.playerRegistered >= 3
         ? `<button class="close-tournament w-full bg-red-700 hover:bg-red-800 text-white py-2 mt-2 rounded-md transition-all">
