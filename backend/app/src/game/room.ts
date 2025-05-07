@@ -87,7 +87,8 @@ export class Room {
   private gameLaunched: boolean;
   private gameEnded: boolean;
 
-  private gameEndedCallback?: (gameResult: GameResultMessage) => void = undefined;
+  private gameEndedCallback?: (gameResult: GameResultMessage) => void =
+    undefined;
 
   private scoreToWin: number = GAME_CONSTANT.defaultScoreToWin;
 
@@ -411,9 +412,13 @@ export class Room {
       if (this.gameLaunched) return reject("Game already started");
       if (!this.isFull()) return reject("Room is not full");
       if (!this.isPlayerAlive(this.player1))
-        return reject("Somehow the player 1 disconnected before the game start");
+        return reject(
+          "Somehow the player 1 disconnected before the game start",
+        );
       if (!this.isPlayerAlive(this.player2))
-        return reject("Somehow the player 2 disconnected before the game start");
+        return reject(
+          "Somehow the player 2 disconnected before the game start",
+        );
 
       this.gameLaunched = true;
 
@@ -554,7 +559,8 @@ export class Room {
     } else {
       winnerId = this.gameData.p1Score > this.gameData.p2Score ? 1 : 2;
     }
-    this.winner = winnerId === -1 ? "" : (this.getPlayer(winnerId)?.username ?? "");
+    this.winner =
+      winnerId === -1 ? "" : (this.getPlayer(winnerId)?.username ?? "");
 
     const gameResultMessage: GameResultMessage = {
       type: "gameResult",
@@ -572,6 +578,9 @@ export class Room {
     this.clear();
   }
 
+  /**
+   * Save the game result in blockchain
+   */
   private async saveToBlockchain(): Promise<void> {
     if (!this.player1 || !this.player2 || !this.gameEnded) return;
 
@@ -611,7 +620,8 @@ export class Room {
 
     const uuid: string = uuidv4();
     // Save the match replay
-    this.replayData.gameDuration = this.gameStats.gameEndTime - this.gameStats.gameStartTime;
+    this.replayData.gameDuration =
+      this.gameStats.gameEndTime - this.gameStats.gameStartTime;
     saveReplayDataToFile(this.replayData, uuid);
 
     // Save the match result in the database
