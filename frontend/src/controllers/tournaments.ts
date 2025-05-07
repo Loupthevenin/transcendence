@@ -11,9 +11,7 @@ function createCardTournament(tournament: TournamentInfo): HTMLElement {
     "bg-gray-800 p-6 rounded-lg shadow-xl flex flex-col justify-between";
   const isFull: boolean = tournament.playerRegistered >= tournament.maxPlayers;
   const isJoined: boolean = tournament.joined;
-  const isRunning: boolean = tournament.status === "Ongoing";
-  // TODO: checking OwnerUuid
-  const isOwnerUuid: boolean = tournament.ownerUuid ? true : false;
+  const isClosed: boolean = tournament.status === "Ongoing";
   card.innerHTML = `
 		<div>
             <h2 class="text-2xl font-semibold text-indigo-300 mb-2">${tournament.name}</h2>
@@ -23,14 +21,14 @@ function createCardTournament(tournament: TournamentInfo): HTMLElement {
 				${isJoined ? "Se désinscrire" : isFull ? "Complet" : "Rejoindre"}
           </button>
 		${
-      isRunning
+      isClosed
         ? `<button class="view-progress w-full bg-blue-600 hover:bg-blue-700 text-white py-2 mt-2 rounded-md transition-all">
               Voir la progression
 			</button>`
         : ""
     }
 		${
-      !isRunning && isOwnerUuid && tournament.playerRegistered >= 3
+      !isClosed && tournament.isOwner && tournament.playerRegistered >= 3
         ? `<button class="close-tournament w-full bg-red-700 hover:bg-red-800 text-white py-2 mt-2 rounded-md transition-all">
 					Clôturer le tournoi
 				</button>`
@@ -145,6 +143,7 @@ async function loadTournaments(): Promise<void> {
           uuid: tournament.uuid
         };
         sendMessage("tournament", tournamentCloseMessage);
+        loadTournaments();
       });
     });
   } catch (error: any) {
