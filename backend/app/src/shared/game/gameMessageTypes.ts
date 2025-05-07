@@ -117,3 +117,14 @@ export function isMatchmakingMessage(data: any): data is MatchmakingMessage {
     typeof data.username === "string"
   );
 }
+
+export type LeaveGameMessage = {
+  readonly type: "leaveGame";
+};
+
+export function isLeaveGameMessage(data: any): data is LeaveGameMessage {
+  return (
+    data &&
+    data.type === "leaveGame"
+  );
+}

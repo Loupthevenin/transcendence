@@ -25,7 +25,8 @@ export type GameMessageData =
   | GameMessages.GameResultMessage
   | GameMessages.DisconnectionMessage
   | GameMessages.ReconnectionMessage
-  | GameMessages.MatchmakingMessage;
+  | GameMessages.MatchmakingMessage
+  | GameMessages.LeaveGameMessage;
 
 export type GameMessage = {
   readonly type: "game";
