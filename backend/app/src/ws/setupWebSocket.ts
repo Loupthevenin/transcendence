@@ -7,6 +7,7 @@ import {
   isSkinChangeMessage,
   isPaddlePositionMessage,
   isMatchmakingMessage,
+  isLeaveGameMessage,
 } from "../shared/game/gameMessageTypes";
 import {
   isCreateMessage,
@@ -137,7 +138,13 @@ export function setupWebSocket(): WebSocketServer {
         if (isGameMessage(msgData)) {
           const data: GameMessageData = msgData.data;
 
-          if (isMatchmakingMessage(data)) {
+          if (isLeaveGameMessage(data)) {
+            console.log(`[LeaveMessage] : ${player.username} (${playerUUID})`);
+            if (player.room) {
+              player.room.removePlayer(player);
+            }
+          }
+          else if (isMatchmakingMessage(data)) {
             // Check if the player is already in a room
             if (player.room) {
               sendErrorMessage(ws, ERROR_MSG.ALREADY_IN_ROOM, ERROR_TYPE.MATCHMAKING_REFUSED);
@@ -214,6 +221,7 @@ export function setupWebSocket(): WebSocketServer {
         if (!player.room.isGameLaunched()) {
           player.room?.removePlayer(player);
         }
+        // If the game is launched the room handle by itself
       }
       players.delete(playerUUID);
       console.log(`Player disconnected: ${player.username} (${playerUUID})`);

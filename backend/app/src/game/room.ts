@@ -36,12 +36,10 @@ export enum RoomType {
 const DISCONNECT_TIMEOUT: number = 5000; // 5 seconds
 
 const rooms: Map<string, Room> = new Map();
-let roomCounter: number = 1;
 
 export function createNewRoom(type: RoomType): Room {
-  const roomId: string = `room-${roomCounter++}`;
-  const room: Room = new Room(roomId, type);
-  rooms.set(roomId, room);
+  const room: Room = new Room(type);
+  rooms.set(room.getId(), room);
   return room;
 }
 
@@ -72,32 +70,38 @@ function startGameIfRoomFull(room: Room): void {
 }
 
 export class Room {
+  private static roomCounter: number = 1;
+
   private readonly id: string;
   private readonly type: RoomType;
   private player1: Player | null;
   private player2: Player | null;
+  private player1Left: boolean;
+  private player2Left: boolean;
 
   private gameData: GameData;
   private gameStats: GameStats;
   private replayData: ReplayData;
-  private winner: string = "";
+  private winner: string;
 
   private gameLaunched: boolean;
   private gameEnded: boolean;
 
-  private gameEndedCallback?: (gameResult: GameResultMessage) => void =
-    undefined;
+  private gameEndedCallback?: (gameResult: GameResultMessage) => void = undefined;
 
   private scoreToWin: number = GAME_CONSTANT.defaultScoreToWin;
 
-  public constructor(id: string, type: RoomType) {
-    this.id = id;
+  public constructor(type: RoomType) {
+    this.id = `room-${Room.roomCounter++}`;
     this.type = type;
     this.player1 = null; // Start with no players
     this.player2 = null;
+    this.player1Left = false;
+    this.player2Left = false;
     this.gameData = newGameData();
     this.gameStats = newGameStats();
     this.replayData = newReplayData();
+    this.winner = "";
     this.gameLaunched = false;
     this.gameEnded = false;
   }
@@ -211,18 +215,25 @@ export class Room {
     if (!this.containsPlayer(player)) {
       return; // Do nothing if the player is not in the room
     }
-    player.room = null; // Clear the player's room reference
-    if (
-      this.player1 &&
-      this.player1.uuid === player.uuid &&
-      this.player1.room === this
-    ) {
+
+    if (player.room === this) {
+      player.room = null; // Clear the player's room reference
+    }
+
+    if (this.gameLaunched) {
+      // If the game is launched we need to end the game
+      // and we need to keep the player reference for the end of the game
+      if (this.player1?.uuid === player.uuid) {
+        this.player1Left = true;
+      } else if (this.player2?.uuid === player.uuid) {
+        this.player2Left = true;
+      }
+      return; // return to avoid removing player reference
+    }
+
+    if (this.player1?.uuid === player.uuid) {
       this.player1 = null;
-    } else if (
-      this.player2 &&
-      this.player2.uuid === player.uuid &&
-      this.player2.room === this
-    ) {
+    } else if (this.player2?.uuid === player.uuid) {
       this.player2 = null;
     }
   }
@@ -374,6 +385,7 @@ export class Room {
     if (
       this.player1 &&
       this.isPlayerAlive(this.player1) &&
+      !this.player1Left &&
       !excludedPlayerUUID?.includes(this.player1.uuid)
     ) {
       this.player1!.socket?.send(msg);
@@ -382,6 +394,7 @@ export class Room {
     if (
       this.player2 &&
       this.isPlayerAlive(this.player2) &&
+      !this.player2Left &&
       !excludedPlayerUUID?.includes(this.player2.uuid)
     ) {
       this.player2!.socket?.send(msg);
@@ -398,13 +411,9 @@ export class Room {
       if (this.gameLaunched) return reject("Game already started");
       if (!this.isFull()) return reject("Room is not full");
       if (!this.isPlayerAlive(this.player1))
-        return reject(
-          "Somehow the player 1 disconnected before the game start",
-        );
+        return reject("Somehow the player 1 disconnected before the game start");
       if (!this.isPlayerAlive(this.player2))
-        return reject(
-          "Somehow the player 2 disconnected before the game start",
-        );
+        return reject("Somehow the player 2 disconnected before the game start");
 
       this.gameLaunched = true;
 
@@ -458,25 +467,17 @@ export class Room {
     let p2DisconnectionTimeout: number = 0;
 
     roomMainLoopInterval = setInterval(() => {
-      // Stop the game if one player disconnects
-      // if (
-      //   !this.isPlayerAlive(this.player1) ||
-      //   !this.isPlayerAlive(this.player2)
-      // ) {
-      //   clearInterval(roomMainLoopInterval);
-      //   this.endGame(true);
-      //   return;
-      // }
-
       const currentTime: number = Date.now(); // Get the current time
       const deltaTime: number = (currentTime - previousTime) / 1000; // Time elapsed in seconds
       previousTime = currentTime; // Update the previous time
 
       // Check if player 1 is still alive
-      if (!this.isPlayerAlive(this.player1)) {
+      if (!this.isPlayerAlive(this.player1) || this.player1Left) {
         if (p1DisconnectionTimeout === 0) {
           p1DisconnectionTimeout = currentTime + DISCONNECT_TIMEOUT;
-        } else if (currentTime > p1DisconnectionTimeout) {
+        }
+
+        if (currentTime > p1DisconnectionTimeout || this.player1Left) {
           // Player 1 has been disconnected for too long
           clearInterval(roomMainLoopInterval);
           this.endGame(1);
@@ -487,10 +488,12 @@ export class Room {
       }
 
       // Check if player 2 is still alive
-      if (!this.isPlayerAlive(this.player2)) {
+      if (!this.isPlayerAlive(this.player2) || this.player2Left) {
         if (p2DisconnectionTimeout === 0) {
           p2DisconnectionTimeout = currentTime + DISCONNECT_TIMEOUT;
-        } else if (currentTime > p2DisconnectionTimeout) {
+        }
+
+        if (currentTime > p2DisconnectionTimeout || this.player2Left) {
           // Player 2 has been disconnected for too long
           clearInterval(roomMainLoopInterval);
           this.endGame(2);
@@ -551,8 +554,7 @@ export class Room {
     } else {
       winnerId = this.gameData.p1Score > this.gameData.p2Score ? 1 : 2;
     }
-    this.winner =
-      winnerId === -1 ? "" : (this.getPlayer(winnerId)?.username ?? "");
+    this.winner = winnerId === -1 ? "" : (this.getPlayer(winnerId)?.username ?? "");
 
     const gameResultMessage: GameResultMessage = {
       type: "gameResult",
@@ -591,7 +593,7 @@ export class Room {
       );
       await tx.wait();
       console.log("Match stored on blockchain", tx.hash);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to store match on blockchain: ", error);
     }
   }
@@ -609,8 +611,7 @@ export class Room {
 
     const uuid: string = uuidv4();
     // Save the match replay
-    this.replayData.gameDuration =
-      this.gameStats.gameEndTime - this.gameStats.gameStartTime;
+    this.replayData.gameDuration = this.gameStats.gameEndTime - this.gameStats.gameStartTime;
     saveReplayDataToFile(this.replayData, uuid);
 
     // Save the match result in the database
@@ -629,8 +630,9 @@ export class Room {
       winnerId === 1 ? "A" : winnerId === 2 ? "B" : "draw",
       RoomType[this.type],
     );
+
     // Save the match result in the blockchain
-    if (RoomType[this.type] === "Tournament") {
+    if (this.type === RoomType.Tournament) {
       this.saveToBlockchain();
     }
   }

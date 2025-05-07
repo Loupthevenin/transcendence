@@ -20,6 +20,7 @@ import {
   isDisconnectionMessage,
   MatchmakingMessage,
   ReconnectionMessage,
+  LeaveGameMessage,
 } from "@shared/game/gameMessageTypes";
 import {
   showSkinSelector,
@@ -84,8 +85,7 @@ function createLoadingScreen(): void {
 
 // Update the loading bar
 function updateLoadingBar(proportion: number): void {
-  const loadingBar: HTMLElement | null =
-    document.getElementById("gameLoadingBar");
+  const loadingBar: HTMLElement | null = document.getElementById("gameLoadingBar");
   if (loadingBar) {
     loadingBar.style.width = `${proportion * 100}%`; // Adjust width based on proportion (0 to 1)
   }
@@ -719,8 +719,7 @@ export async function initGameEnvironment(): Promise<void> {
   );
   light.intensity = 1.0;
 
-  const environmentSceneLoadingStateIndex: number =
-    loadingHandler.addLoadingState();
+  const environmentSceneLoadingStateIndex: number = loadingHandler.addLoadingState();
 
   // Load the environment scene
   try {
@@ -740,10 +739,8 @@ export async function initGameEnvironment(): Promise<void> {
           error,
         );
       })
-      .finally(() =>
-        loadingHandler.setLoaded(environmentSceneLoadingStateIndex),
-      );
-    //}).finally(() => setTimeout(() => loadingHandler.setLoaded(environmentSceneLoadingStateIndex), 5000)); // Delay of 5s for testing purposes
+      .finally(() => loadingHandler.setLoaded(environmentSceneLoadingStateIndex));
+      //}).finally(() => setTimeout(() => loadingHandler.setLoaded(environmentSceneLoadingStateIndex), 5000)); // Delay of 5s for testing purposes
   } catch (error: any) {
     console.error("An error occurred while loading model 'scene.glb' :", error);
     loadingHandler.setLoaded(environmentSceneLoadingStateIndex);
@@ -946,7 +943,6 @@ export async function initGameEnvironment(): Promise<void> {
     scene.render();
   });
 
-  // Anonymous function to wait until the game environment is loaded to show the canvas
   // Handle window resizing
   window.addEventListener("resize", () => {
     if (engine) {
@@ -976,8 +972,22 @@ export async function initGameEnvironment(): Promise<void> {
   });
 }
 
+// Send a leave message to server if needed, and set 'currentGameMode' to MENU
+export function LeaveOnlineGameIfNeeded(): void {
+  if (currentGameMode === GameMode.ONLINE) {
+    // Tell the server we quit the game
+    const LeaveGameMessage: LeaveGameMessage = {
+      type: "leaveGame"
+    };
+    sendMessage("game", LeaveGameMessage);
+  }
+  currentGameMode = GameMode.MENU;
+}
+
 // Quit the game and go back to the menu
 export function BackToMenu(): void {
+  LeaveOnlineGameIfNeeded();
+
   currentGameMode = GameMode.MENU;
   updateCameraMode(camera);
   unregisterToGameMessages();
@@ -1021,11 +1031,10 @@ export function LocalGame(): void {
 // Launch the game in online mode against a remote player
 export function OnlineGame(autoMatchmaking: boolean = true): void {
   if (!isConnected()) {
-    console.error(
-      "You are not connected to the server, cannot start an online game",
-    );
+    console.error("You are not connected to the server, cannot start an online game");
     return;
   }
+
   currentGameMode = GameMode.ONLINE;
   updateCameraMode(camera);
   hideGameModeSelectionMenu();
@@ -1049,25 +1058,19 @@ export function OnlineGame(autoMatchmaking: boolean = true): void {
 // Launch the game in spectating mode to watch match of other remote players
 export function SpectatingMode(): void {
   if (!isConnected()) {
-    console.error(
-      "You are not connected to the server, cannot spectate other game",
-    );
+    console.error("You are not connected to the server, cannot spectate other game");
     return;
   }
+
   currentGameMode = GameMode.SPECTATING;
   updateCameraMode(camera);
-  //showInGameMenu();
+  hideGameModeSelectionMenu();
 
   resetGame();
 
-  //hideSkinSelector();
+  hideSkinSelector();
 
   registerToGameMessages();
-  // const matchmakingMessage: MatchmakingMessage = {
-  //   type: "matchmaking",
-  //   username: `Player-${localSkinId}`
-  // };
-  // sendMessage("game", matchmakingMessage);
 }
 
 // Setup the game to replay mode
@@ -1076,7 +1079,6 @@ export function ReplayMode(p1Skin: string, p2Skin: string): void {
   updateCameraMode(camera);
   // TODO: show a menu to come back before if a 'replay' button was pressed
   //       else send back to '/'
-  // showInGameMenu();
 
   resetGame();
 
@@ -1116,21 +1118,21 @@ export function SetReplayGameData(
 
 //////// DEBUG ONLY
 
-let axesViewer: BABYLON.AxesViewer | null = null;
+// let axesViewer: BABYLON.AxesViewer | null = null;
 
-// Function to enable or disable the AxesViewer
-function ToggleAxesViewer(size: number = 1): void {
-  if (!scene) {
-    return;
-  }
-  if (axesViewer) {
-    axesViewer.dispose();
-    axesViewer = null;
-    console.log("AxesViewer disabled.");
-  } else {
-    axesViewer = new BABYLON.AxesViewer(scene, size);
-    console.log("AxesViewer enabled.");
-  }
-}
-// Expose the function to the console
-(window as any).ToggleAxesViewer = ToggleAxesViewer;
+// // Function to enable or disable the AxesViewer
+// function ToggleAxesViewer(size: number = 1): void {
+//   if (!scene) {
+//     return;
+//   }
+//   if (axesViewer) {
+//     axesViewer.dispose();
+//     axesViewer = null;
+//     console.log("AxesViewer disabled.");
+//   } else {
+//     axesViewer = new BABYLON.AxesViewer(scene, size);
+//     console.log("AxesViewer enabled.");
+//   }
+// }
+// // Expose the function to the console
+// (window as any).ToggleAxesViewer = ToggleAxesViewer;
