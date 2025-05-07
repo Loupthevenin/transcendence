@@ -1,4 +1,4 @@
-import Database from "better-sqlite3";
+import Database, { Statement } from "better-sqlite3";
 import { DB_PATH, NODE_ENV } from "../config";
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
@@ -38,10 +38,10 @@ db.exec(`
 `);
 
 if (NODE_ENV === "development") {
-  const passwordPlain = "test";
-  const hashedPassword = bcrypt.hashSync(passwordPlain, 10); // HASH SYNC
+  const passwordPlain: string = "test";
+  const hashedPassword: string = bcrypt.hashSync(passwordPlain, 10); // HASH SYNC
 
-  const insertUser = db.prepare(`
+  const insertUser: Statement = db.prepare(`
     INSERT OR IGNORE INTO users (uuid, name, email, password, is_verified)
     VALUES (@uuid, @name, @email, @password, @is_verified)
   `);
