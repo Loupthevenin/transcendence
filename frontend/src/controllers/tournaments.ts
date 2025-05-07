@@ -13,6 +13,8 @@ function createCardTournament(tournament: TournamentInfo): HTMLElement {
   const isJoined: boolean = tournament.joined;
   const isRunning: boolean = tournament.status === "Ongoing";
   console.log(isRunning);
+  // TODO: checking OwnerUuid
+  const isOwnerUuid: boolean = tournament.ownerUuid ? true : false;
   card.innerHTML = `
 		<div>
             <h2 class="text-2xl font-semibold text-indigo-300 mb-2">${tournament.name}</h2>
@@ -24,6 +26,13 @@ function createCardTournament(tournament: TournamentInfo): HTMLElement {
        <button class="view-progress w-full bg-blue-600 hover:bg-blue-700 text-white py-2 mt-2 rounded-md transition-all">
               Voir la progression
         </button>
+		${
+      !isRunning && isOwnerUuid && tournament.playerRegistered >= 3
+        ? `<button class="close-tournament w-full bg-red-700 hover:bg-red-800 text-white py-2 mt-2 rounded-md transition-all">
+					Clôturer le tournoi
+				</button>`
+        : ""
+    }
         </div>
 		<form class="join-form hidden mt-4 bg-[#2a255c] p-4 rounded-lg shadow-md text-white space-y-4">
           <div>
@@ -120,6 +129,13 @@ async function loadTournaments(): Promise<void> {
       });
       progressButton.addEventListener("click", () => {
         navigateTo(`/tournaments/tournament?uuid=${tournament.uuid}`);
+      });
+
+      const closeTournament: HTMLButtonElement | null =
+        card.querySelector<HTMLButtonElement>(".close-tournament");
+      if (!closeTournament) return;
+      closeTournament.addEventListener("click", () => {
+        // TODO: close Tournament;
       });
     });
   } catch (error: any) {
