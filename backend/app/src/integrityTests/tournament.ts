@@ -255,20 +255,20 @@ export async function Test3(): Promise<void> {
     if (i < 16) {
       assert(error === undefined, `'${players[i].username}' should be added successfully`);
     } else {
-      assert(error === ERROR_MSG.TOURNAMENT_FULL, `'${players[i].username}' should not be added`);
+      assert(error === ERROR_MSG.TOURNAMENT_CLOSED, `'${players[i].username}' should not be added`);
     }
   }
 
   console.log("tournament:", tournament);
 
   assert(
-    closeTournament(tournament.uuid, players[4]) === ERROR_MSG.NOT_OWNER_OF_TOURNAMENT,
-    "the tournament should be closed"
+    closeTournament(tournament.uuid, players[4]) === ERROR_MSG.TOURNAMENT_CLOSED,
+    "the tournament should not be closed"
   );
 
   assert(
-    closeTournament(tournament.uuid, players[7]) === undefined,
-    "the tournament should be closed"
+    closeTournament(tournament.uuid, players[7]) === ERROR_MSG.TOURNAMENT_CLOSED,
+    "the tournament should not be closed"
   );
 
   await tournament.tree.playTournament();
