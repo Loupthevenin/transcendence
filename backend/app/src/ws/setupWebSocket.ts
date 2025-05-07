@@ -139,7 +139,6 @@ export function setupWebSocket(): WebSocketServer {
           const data: GameMessageData = msgData.data;
 
           if (isLeaveGameMessage(data)) {
-            console.log(`[LeaveMessage] : ${player.username} (${playerUUID})`);
             if (player.room) {
               player.room.removePlayer(player);
             }
@@ -153,16 +152,9 @@ export function setupWebSocket(): WebSocketServer {
               addPlayerToMatchmaking(player);
             }
           } else if (isSkinChangeMessage(data)) {
-            if (player.room) {
-              // Check if the player who send the message is the owner of the paddle
-              if (data.id === player.room.indexOfPlayer(player)) {
-                if (player.paddleSkinId !== data.skinId) {
-                  player.paddleSkinId = data.skinId;
-                  if (player.room.isGameLaunched()) {
-                    player.room.notifySkinUpdate(player);
-                  }
-                }
-              }
+            player.paddleSkinId = data.skinId;
+            if (player.room?.isGameLaunched()) {
+              player.room.notifySkinUpdate(player);
             }
           } else if (isPaddlePositionMessage(data)) {
             // Update paddle positions if condition meeted
@@ -179,7 +171,7 @@ export function setupWebSocket(): WebSocketServer {
           let errorType: ERROR_TYPE | undefined = undefined;
 
           if (isCreateMessage(data)) {
-            console.log(`[Tournament - Create] : ${player.username}`, data);
+            console.log(`[Tournament - Create] : ${player.username}\n`, data);
             const [tournament, err]: [Tournament | null, string | undefined] = createNewTournament(data.name, player, data.settings);
             if (err) {
               error = err;
@@ -188,11 +180,11 @@ export function setupWebSocket(): WebSocketServer {
               // TODO: send the tournament uuid back to the player to show him the tournament joining page
             }
           } else if (isJoinMessage(data)) {
-            console.log(`[Tournament - Join] : ${player.username} as ${data.username}`, data);
+            console.log(`[Tournament - Join] : ${player.username} as ${data.username}\n`, data);
             error = addPlayerToTournament(data.uuid, player, data.username);
             errorType = ERROR_TYPE.TOURNAMENT_JOIN_FAILED;
           } else if (isLeaveMessage(data)) {
-            console.log(`[Tournament - Leave] : ${player.username}`, data);
+            console.log(`[Tournament - Leave] : ${player.username}\n`, data);
             error = removePlayerFromTournament(data.uuid, player);
             errorType = ERROR_TYPE.TOURNAMENT_LEAVE_FAILED;
           }
