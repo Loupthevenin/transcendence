@@ -18,10 +18,10 @@ function createCardTournament(tournament: TournamentInfo): HTMLElement {
             <h2 class="text-2xl font-semibold text-indigo-300 mb-2">${tournament.name}</h2>
             <p class="text-purple-200 mb-1">Joueurs inscrits : ${tournament.playerRegistered}/${tournament.maxPlayers}</p>
             <p class="text-purple-200">Statut : ${tournament.status}</p>
-          <button class="join-tournament mt-6 ${isJoined ? "bg-red-600 hover:bg-red-700" : isFull ? "bg-gray-600 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"} text-white py-2 rounded-md transition-all" ${isFull && !isJoined ? "disabled" : ""}>
+          <button class="join-tournament w-full mt-6 ${isJoined ? "bg-red-600 hover:bg-red-700" : isFull ? "bg-gray-600 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"} text-white py-2 rounded-md transition-all" ${isFull && !isJoined ? "disabled" : ""}>
 				${isJoined ? "Se désinscrire" : isFull ? "Complet" : "Rejoindre"}
           </button>
-       <button class="view-progress bg-blue-600 hover:bg-blue-700 text-white py-2 mt-2 rounded-md transition-all">
+       <button class="view-progress w-full bg-blue-600 hover:bg-blue-700 text-white py-2 mt-2 rounded-md transition-all">
               Voir la progression
         </button>
         </div>
