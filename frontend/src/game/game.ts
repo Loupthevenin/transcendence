@@ -581,7 +581,6 @@ function unregisterToGameMessages(): void {
   unsubscribeTo("game", handleGameMessages);
 }
 
-// FIX: Back to menu, loser player gameResult;
 function displayGameResult(gameResult: GameResultMessage): void {
   const overlay: HTMLDivElement = document.createElement("div");
   overlay.id = "game-result-screen";
@@ -610,6 +609,9 @@ function displayGameResult(gameResult: GameResultMessage): void {
           <li><span class="text-indigo-400 font-medium">player 2 distance travelled :</span> ${gameResult.gameStats.paddle2DistanceTravelled}</li>
         </ul>
       </div>
+	<button id="back-to-menu" class="mt-4 bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-lg shadow-md transition">
+      Retour au menu
+    </button>
 `;
   overlay.appendChild(content);
   document.body.appendChild(overlay);
@@ -617,6 +619,14 @@ function displayGameResult(gameResult: GameResultMessage): void {
   requestAnimationFrame(() => {
     content.classList.remove("opacity-0", "scale-90");
     content.classList.add("opacity-100", "scale-100");
+  });
+  const backToMenu: HTMLButtonElement | null = document.getElementById(
+    "back-to-menu",
+  ) as HTMLButtonElement;
+  if (!backToMenu) return;
+
+  backToMenu.addEventListener("click", () => {
+    BackToMenu();
   });
 }
 
