@@ -8,7 +8,7 @@ import { Generate404Page } from "./views/404";
 import { TournamentView, TournamentProgressView } from "./views/tournaments";
 import { ReplayView } from "./views/replay";
 
-import { initSideBarNavigation } from "./controllers/navbar";
+import { initSideBarNavigation, isSidebarOpen, toggleSidebar } from "./controllers/navbar";
 import { handleGoogleCallback } from "./controllers/google";
 import { listenerButtonGameMode } from "./controllers/gameMode";
 import { createGameCanvas, initGameEnvironment, BackToMenu } from "./game/game";
@@ -107,7 +107,17 @@ export function hasTokenStored(): boolean {
 }
 
 export async function navigateTo(path: string): Promise<void> {
-  history.pushState(null, "", path);
+  if (location.pathname === "/" && path === "/") {
+    // If we are already on the root path, and we want to go to the root path again
+    // use BackToMenu() instead of renderRoute()
+    BackToMenu();
+    if (isSidebarOpen()) {
+      toggleSidebar();
+    }
+    return;
+  }
+
+  history.pushState(null, "", path); // add the new URL to the history stack and change the URL without reloading
   await renderRoute();
 }
 
