@@ -15,6 +15,7 @@ export async function tournamentsController(
   const result: TournamentInfo[] = tournaments.map(
     (t: Tournament) =>
       ({
+        ownerUuid: t.owner.uuid,
         uuid: t.uuid,
         name: t.name,
         playerRegistered: t.playerCount,
