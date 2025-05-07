@@ -88,7 +88,7 @@ async function loadTournaments(): Promise<void> {
         card.querySelector<HTMLFormElement>(".join-form");
       const progressButton: HTMLButtonElement | null =
         card.querySelector<HTMLButtonElement>(".view-progress");
-      if (!joinButton || !form || !progressButton) return;
+      if (!joinButton || !form) return;
 
       joinButton.addEventListener("click", () => {
         if (tournament.joined) {
@@ -127,9 +127,11 @@ async function loadTournaments(): Promise<void> {
           loadTournaments();
         }
       });
-      progressButton.addEventListener("click", () => {
-        navigateTo(`/tournaments/tournament?uuid=${tournament.uuid}`);
-      });
+      if (progressButton) {
+        progressButton.addEventListener("click", () => {
+          navigateTo(`/tournaments/tournament?uuid=${tournament.uuid}`);
+        });
+      }
 
       const closeTournament: HTMLButtonElement | null =
         card.querySelector<HTMLButtonElement>(".close-tournament");
