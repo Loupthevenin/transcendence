@@ -19,7 +19,13 @@ import {
 import { GameMessage, GameMessageData } from "../shared/messageType";
 import { Player } from "../types/player";
 import { ReplayData, newReplayData } from "../shared/game/replayData";
-import { snapshotReplayData, saveReplayDataToFile } from "../controllers/replayController";
+import {
+  snapshotReplayData,
+  saveReplayDataToFile,
+} from "../controllers/replayController";
+import { JsonRpcProvider, Wallet, Contract } from "ethers";
+import { PRIVATE_KEY, CONTRACT_KEY } from "../config";
+import contractJson from "../../artifacts/contracts/ScoreStorage.sol/ScoreStorage.json";
 
 export enum RoomType {
   Matchmaking,
@@ -58,10 +64,10 @@ export function addPlayerToMatchmaking(player: Player): void {
 // Start the game if room is full
 function startGameIfRoomFull(room: Room): void {
   if (room.isFull()) {
-      room.startGame().catch((error: any) => {
-        console.error(`Error starting game in room '${room.getId()}':`, error);
-        room.dispose();
-      });
+    room.startGame().catch((error: any) => {
+      console.error(`Error starting game in room '${room.getId()}':`, error);
+      room.dispose();
+    });
   }
 }
 
@@ -79,7 +85,8 @@ export class Room {
   private gameLaunched: boolean;
   private gameEnded: boolean;
 
-  private gameEndedCallback?: (gameResult: GameResultMessage) => void = undefined;
+  private gameEndedCallback?: (gameResult: GameResultMessage) => void =
+    undefined;
 
   private scoreToWin: number = GAME_CONSTANT.defaultScoreToWin;
 
@@ -157,7 +164,9 @@ export class Room {
   /**
    * @param gameEndedCallback The callback to call when the game ends.
    */
-  public setGameEndedCallback(gameEndedCallback: (gameResult: GameResultMessage) => void): void {
+  public setGameEndedCallback(
+    gameEndedCallback: (gameResult: GameResultMessage) => void,
+  ): void {
     this.gameEndedCallback = gameEndedCallback;
   }
 
@@ -257,7 +266,9 @@ export class Room {
    * @returns True if the room contains the player, otherwise false.
    */
   public containsPlayer(player: Player): boolean {
-    return this.player1?.uuid === player.uuid || this.player2?.uuid === player.uuid;
+    return (
+      this.player1?.uuid === player.uuid || this.player2?.uuid === player.uuid
+    );
   }
 
   /**
@@ -283,7 +294,9 @@ export class Room {
    * @returns True if player exist and is still connected, otherwise false.
    */
   public isPlayerAlive(player: Player | null | undefined): boolean {
-    return !!player && (player.isBot || player.socket?.readyState === WebSocket.OPEN);
+    return (
+      !!player && (player.isBot || player.socket?.readyState === WebSocket.OPEN)
+    );
   }
 
   /**
@@ -323,7 +336,7 @@ export class Room {
       type: "reconnection",
       id: playerId,
       selfSkinId: player.paddleSkinId,
-      otherSkinId: this.getPlayer(otherPlayerId)?.paddleSkinId ?? ""
+      otherSkinId: this.getPlayer(otherPlayerId)?.paddleSkinId ?? "",
     };
 
     player.socket?.send(this.stringifyGameMessageData(reconnectionMessage));
@@ -334,9 +347,9 @@ export class Room {
         p1Score: this.gameData.p1Score,
         p2Score: this.gameData.p2Score,
         winner: this.winner,
-        gameStats: this.gameStats
+        gameStats: this.gameStats,
       };
-      player.socket?.send(this.stringifyGameMessageData(gameResultMessage));  
+      player.socket?.send(this.stringifyGameMessageData(gameResultMessage));
     }
   }
 
@@ -352,7 +365,10 @@ export class Room {
    * Sends a message to both players.
    * @param message The message to send.
    */
-  public sendMessage(data: GameMessageData, excludedPlayerUUID?: string[]): void {
+  public sendMessage(
+    data: GameMessageData,
+    excludedPlayerUUID?: string[],
+  ): void {
     const msg: string = this.stringifyGameMessageData(data);
 
     if (
@@ -381,8 +397,14 @@ export class Room {
       if (this.gameEnded) return reject("Game already ended");
       if (this.gameLaunched) return reject("Game already started");
       if (!this.isFull()) return reject("Room is not full");
-      if (!this.isPlayerAlive(this.player1)) return reject("Somehow the player 1 disconnected before the game start");
-      if (!this.isPlayerAlive(this.player2)) return reject("Somehow the player 2 disconnected before the game start");
+      if (!this.isPlayerAlive(this.player1))
+        return reject(
+          "Somehow the player 1 disconnected before the game start",
+        );
+      if (!this.isPlayerAlive(this.player2))
+        return reject(
+          "Somehow the player 2 disconnected before the game start",
+        );
 
       this.gameLaunched = true;
 
@@ -400,22 +422,28 @@ export class Room {
       if (this.player1?.socket) {
         const gameStartedMessage: GameStartedMessage = {
           type: "gameStarted",
-          id: 1
+          id: 1,
         };
-        this.player1.socket.send(this.stringifyGameMessageData(gameStartedMessage));
+        this.player1.socket.send(
+          this.stringifyGameMessageData(gameStartedMessage),
+        );
       }
 
       if (this.player2?.socket) {
         const gameStartedMessage: GameStartedMessage = {
           type: "gameStarted",
-          id: 2
+          id: 2,
         };
-        this.player2.socket.send(this.stringifyGameMessageData(gameStartedMessage));
+        this.player2.socket.send(
+          this.stringifyGameMessageData(gameStartedMessage),
+        );
       }
 
       this.startMainLoop();
 
-      console.log(`Game started: ${this.id} (${RoomType[this.type]}) with p1 '${this.player1?.username}' and p2 '${this.player2?.username}'`);
+      console.log(
+        `Game started: ${this.id} (${RoomType[this.type]}) with p1 '${this.player1?.username}' and p2 '${this.player2?.username}'`,
+      );
       resolve();
     });
   }
@@ -481,7 +509,8 @@ export class Room {
       this.sendMessage(gameDataMessage);
 
       // Snapshot the current game data
-      const elapsedTimeSinceStart: number = currentTime - this.gameStats.gameStartTime;
+      const elapsedTimeSinceStart: number =
+        currentTime - this.gameStats.gameStartTime;
       snapshotReplayData(this.replayData, elapsedTimeSinceStart, this.gameData);
 
       // Stop the game if one player reaches enought points
@@ -508,26 +537,29 @@ export class Room {
     let winnerId: -1 | 1 | 2;
 
     if (disconnectedPlayer !== -1) {
-      console.log(`[Room ${this.id}] : The player ${disconnectedPlayer} (${this.getPlayer(disconnectedPlayer)?.username ?? ""}) disconnected for too long`);
+      console.log(
+        `[Room ${this.id}] : The player ${disconnectedPlayer} (${this.getPlayer(disconnectedPlayer)?.username ?? ""}) disconnected for too long`,
+      );
       const disconnectionMessage: DisconnectionMessage = {
         type: "disconnection",
-        id: disconnectedPlayer
+        id: disconnectedPlayer,
       };
       this.sendMessage(disconnectionMessage);
-      winnerId = (disconnectedPlayer === 1 ? 2 : 1);
+      winnerId = disconnectedPlayer === 1 ? 2 : 1;
     } else if (this.gameData.p1Score === this.gameData.p2Score) {
       winnerId = -1; // If the match ended by a draw
     } else {
-      winnerId = (this.gameData.p1Score > this.gameData.p2Score ? 1 : 2);
+      winnerId = this.gameData.p1Score > this.gameData.p2Score ? 1 : 2;
     }
-    this.winner = winnerId === -1 ? "" : (this.getPlayer(winnerId)?.username ?? "");
+    this.winner =
+      winnerId === -1 ? "" : (this.getPlayer(winnerId)?.username ?? "");
 
     const gameResultMessage: GameResultMessage = {
       type: "gameResult",
       p1Score: this.gameData.p1Score,
       p2Score: this.gameData.p2Score,
       winner: this.winner,
-      gameStats: this.gameStats
+      gameStats: this.gameStats,
     };
     this.sendMessage(gameResultMessage);
 
@@ -538,17 +570,47 @@ export class Room {
     this.clear();
   }
 
+  private async saveToBlockchain(): Promise<void> {
+    if (!this.player1 || !this.player2 || !this.gameEnded) return;
+
+    const provider: JsonRpcProvider = new JsonRpcProvider(
+      "https://api.avax-test.network/ext/bc/C/rpc",
+    );
+    const signer: Wallet = new Wallet(PRIVATE_KEY, provider);
+    const abi = contractJson.abi;
+    const contract: Contract = new Contract(CONTRACT_KEY, abi, signer);
+
+    try {
+      const tx = await contract.storeMatch(
+        this.player1.username,
+        this.player2.username,
+        this.gameData.p1Score,
+        this.gameData.p2Score,
+        this.winner,
+        Math.floor(Date.now() / 1000),
+      );
+      await tx.wait();
+      console.log("Match stored on blockchain", tx.hash);
+    } catch (error) {
+      console.error("Failed to store match on blockchain: ", error);
+    }
+  }
+
   /**
    * Save the game result and data in the database
    */
   private saveGameSessionData(winnerId: -1 | 1 | 2): void {
-    if (!this.gameEnded) throw new Error("Cannot save the data of a game not ended");
-    if (!this.player1) console.warn("[WARNING] missing player 1, this should not happen !");
-    if (!this.player2) console.warn("[WARNING] missing player 2, this should not happen !");
+    if (!this.gameEnded)
+      throw new Error("Cannot save the data of a game not ended");
+    if (!this.player1)
+      console.warn("[WARNING] missing player 1, this should not happen !");
+    if (!this.player2)
+      console.warn("[WARNING] missing player 2, this should not happen !");
 
     const uuid: string = uuidv4();
     // Save the match replay
-    this.replayData.gameDuration = this.gameStats.gameEndTime - this.gameStats.gameStartTime;
+    this.replayData.gameDuration =
+      this.gameStats.gameEndTime - this.gameStats.gameStartTime;
     saveReplayDataToFile(this.replayData, uuid);
 
     // Save the match result in the database
@@ -564,9 +626,13 @@ export class Room {
       this.player2?.uuid ?? "",
       this.gameData.p1Score,
       this.gameData.p2Score,
-      winnerId === 1 ? "A" : (winnerId === 2 ? "B" : "draw"),
+      winnerId === 1 ? "A" : winnerId === 2 ? "B" : "draw",
       RoomType[this.type],
     );
+    // Save the match result in the blockchain
+    if (RoomType[this.type] === "Tournament") {
+      this.saveToBlockchain();
+    }
   }
 
   /**
