@@ -511,6 +511,10 @@ export function handleGameReconnection(
 
 function handleGameMessages(data: GameMessageData): void {
   //console.log("Received:", data);
+
+  // Avoid modifying data if not in an online mode
+  if (currentGameMode !== GameMode.ONLINE) return;
+
   try {
     if (isGameStartedMessage(data)) {
       playerId = data.id; // Set the player ID based on the server response
@@ -526,6 +530,7 @@ function handleGameMessages(data: GameMessageData): void {
       };
       sendMessage("game", skinChangeMessage);
     } else if (isSkinChangeMessage(data)) {
+      // Only modify other's skin
       if (playerId !== data.id) {
         setPaddleSkin(data.id, data.skinId);
       }
@@ -594,12 +599,11 @@ function displayGameResult(gameResult: GameResultMessage): void {
       <div class="bg-[#2a255c] p-4 rounded-lg shadow-lg w-full max-w-md">
         <h3 class="text-2xl font-semibold text-indigo-300 mb-4">Statistiques</h3>
         <ul class="space-y-2 text-sm">
-          ${Object.entries(gameResult.gameStats)
-            .map(
-              ([key, value]) =>
-                `<li><span class="text-indigo-400 font-medium">${key} :</span> ${value}</li>`,
-            )
-            .join("")}
+          <li><span class="text-indigo-400 font-medium">game duration :</span> ${Math.floor((gameResult.gameStats.gameEndTime - gameResult.gameStats.gameStartTime) / 1000)}</li>
+          <li><span class="text-indigo-400 font-medium">ball exchanges count :</span> ${gameResult.gameStats.ballExchangesCount}</li>
+          <li><span class="text-indigo-400 font-medium">ball collisions count :</span> ${gameResult.gameStats.ballCollisionsCount}</li>
+          <li><span class="text-indigo-400 font-medium">player 1 distance travelled :</span> ${gameResult.gameStats.paddle1DistanceTravelled}</li>
+          <li><span class="text-indigo-400 font-medium">player 2 distance travelled :</span> ${gameResult.gameStats.paddle2DistanceTravelled}</li>
         </ul>
       </div>
 `;
