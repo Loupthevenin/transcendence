@@ -18,6 +18,7 @@ import {
 } from "../shared/game/gameMessageTypes";
 import { GameMessage, GameMessageData } from "../shared/messageType";
 import { Player } from "../types/player";
+import { handleAIInput } from "../shared/inputHandler";
 import { ReplayData, newReplayData } from "../shared/game/replayData";
 import {
   snapshotReplayData,
@@ -512,6 +513,25 @@ export class Room {
         }
       } else {
         p2DisconnectionTimeout = 0; // Reset the timeout if player 2 is alive
+      }
+
+      // If the player is a bot update his paddle position
+      if (this.player1?.isBot) {
+        handleAIInput(
+          this.gameData.paddle1Position,
+          undefined,
+          this.gameData.ball,
+          deltaTime,
+        );
+      }
+
+      if (this.player2?.isBot) {
+        handleAIInput(
+          this.gameData.paddle2Position,
+          undefined,
+          this.gameData.ball,
+          deltaTime,
+        );
       }
 
       // Use the computed deltaTime to update the ball position
