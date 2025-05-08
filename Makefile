@@ -17,7 +17,7 @@ deploy-blockchain:
 	@docker run --rm \
 		-v ${PWD}/blockchain:/app \
 		--env-file .env \
-		blockchain npx hardhat run scripts/deploy.ts --network fuji
+		blockchain npm run deploy
 
 build:
 	@mkdir -p ./db
