@@ -17,9 +17,13 @@ function createCardTournament(tournament: TournamentInfo): HTMLElement {
             <h2 class="text-2xl font-semibold text-indigo-300 mb-2">${tournament.name}</h2>
             <p class="text-purple-200 mb-1">Joueurs inscrits : ${tournament.playerRegistered}/${tournament.maxPlayers}</p>
             <p class="text-purple-200">Statut : ${tournament.status}</p>
-          <button class="join-tournament w-full mt-6 ${isJoined ? "bg-red-600 hover:bg-red-700" : isFull ? "bg-gray-600 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"} text-white py-2 rounded-md transition-all" ${isFull && !isJoined ? "disabled" : ""}>
+		${
+      !isClosed
+        ? `<button class="join-tournament w-full mt-6 ${isJoined ? "bg-red-600 hover:bg-red-700" : isFull ? "bg-gray-600 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"} text-white py-2 rounded-md transition-all" ${isFull && !isJoined ? "disabled" : ""}>
 				${isJoined ? "Se désinscrire" : isFull ? "Complet" : "Rejoindre"}
-          </button>
+          </button>`
+        : ""
+    }
 		${
       isClosed
         ? `<button class="view-progress w-full bg-blue-600 hover:bg-blue-700 text-white py-2 mt-2 rounded-md transition-all">
@@ -89,45 +93,48 @@ async function loadTournaments(): Promise<void> {
         card.querySelector<HTMLFormElement>(".join-form");
       const progressButton: HTMLButtonElement | null =
         card.querySelector<HTMLButtonElement>(".view-progress");
-      if (!joinButton || !form) return;
 
-      joinButton.addEventListener("click", () => {
-        if (tournament.joined) {
-          const tournamentLeaveMessage: TournamentMessages.LeaveMessage = {
-            type: "leave",
-            uuid: tournament.uuid,
-          };
-          sendMessage("tournament", tournamentLeaveMessage);
-          loadTournaments();
-        } else {
-          document
-            .querySelectorAll<HTMLFormElement>(".join-form")
-            .forEach((f: HTMLFormElement) => f.classList.add("hidden"));
-          form.classList.remove("hidden");
-          setDisplayNameInputs();
-        }
-      });
+      if (joinButton && form) {
+        joinButton.addEventListener("click", () => {
+          if (tournament.joined) {
+            const tournamentLeaveMessage: TournamentMessages.LeaveMessage = {
+              type: "leave",
+              uuid: tournament.uuid,
+            };
+            sendMessage("tournament", tournamentLeaveMessage);
+            loadTournaments();
+          } else {
+            document
+              .querySelectorAll<HTMLFormElement>(".join-form")
+              .forEach((f: HTMLFormElement) => f.classList.add("hidden"));
+            form.classList.remove("hidden");
+            setDisplayNameInputs();
+          }
+        });
+      }
 
-      form.addEventListener("reset", () => {
-        form.classList.add("hidden");
-      });
+      if (form) {
+        form.addEventListener("reset", () => {
+          form.classList.add("hidden");
+        });
 
-      form.addEventListener("submit", (e: SubmitEvent) => {
-        e.preventDefault();
-        form.classList.add("hidden");
+        form.addEventListener("submit", (e: SubmitEvent) => {
+          e.preventDefault();
+          form.classList.add("hidden");
 
-        const inputElement: HTMLInputElement | null =
-          form.querySelector<HTMLInputElement>(".display-name-input");
-        if (inputElement) {
-          const tournamentJoinMessage: TournamentMessages.JoinMessage = {
-            type: "join",
-            uuid: tournament.uuid,
-            username: inputElement.value,
-          };
-          sendMessage("tournament", tournamentJoinMessage);
-          loadTournaments();
-        }
-      });
+          const inputElement: HTMLInputElement | null =
+            form.querySelector<HTMLInputElement>(".display-name-input");
+          if (inputElement) {
+            const tournamentJoinMessage: TournamentMessages.JoinMessage = {
+              type: "join",
+              uuid: tournament.uuid,
+              username: inputElement.value,
+            };
+            sendMessage("tournament", tournamentJoinMessage);
+            loadTournaments();
+          }
+        });
+      }
       if (progressButton) {
         progressButton.addEventListener("click", () => {
           navigateTo(`/tournaments/tournament?uuid=${tournament.uuid}`);
@@ -140,7 +147,7 @@ async function loadTournaments(): Promise<void> {
       closeTournament.addEventListener("click", () => {
         const tournamentCloseMessage: TournamentMessages.CloseMessage = {
           type: "close",
-          uuid: tournament.uuid
+          uuid: tournament.uuid,
         };
         sendMessage("tournament", tournamentCloseMessage);
         loadTournaments();
