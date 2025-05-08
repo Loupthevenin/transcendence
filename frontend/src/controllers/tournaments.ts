@@ -306,11 +306,7 @@ export function tournamentsHandlers(container: HTMLElement): void {
 
 function renderMatch(match: MatchNode): HTMLDivElement | null {
   // If the match node is considered empty
-  if (
-    !match.player1 &&
-    !match.player2 &&
-    !match.left &&
-    !match.right) {
+  if (!match.player1 && !match.player2 && !match.left && !match.right) {
     return null;
   }
 
@@ -325,19 +321,31 @@ function renderMatch(match: MatchNode): HTMLDivElement | null {
   const p2: string = match.player2 ? match.player2.username : "En attente";
 
   // Determine winners by checking if the player's uuid matches the winnerUUID
-  const isP1Winner: boolean = !!(match.player1 && match.player1.uuid === match.winnerUUID);
-  const isP2Winner: boolean = !!(match.player2 && match.player2.uuid === match.winnerUUID);
+  const isP1Winner: boolean = !!(
+    match.player1 && match.player1.uuid === match.winnerUUID
+  );
+  const isP2Winner: boolean = !!(
+    match.player2 && match.player2.uuid === match.winnerUUID
+  );
 
   // Set styling classes based on whether a player's name is set and if they win or lose
   const p1Class: string =
-    (!match.player1 || !match.winnerUUID) ? "waiting" : isP1Winner ? "winner" : "loser";
+    !match.player1 || !match.winnerUUID
+      ? "waiting"
+      : isP1Winner
+        ? "winner"
+        : "loser";
   const p2Class: string =
-    (!match.player2 || !match.winnerUUID) ? "waiting" : isP2Winner ? "winner" : "loser";
+    !match.player2 || !match.winnerUUID
+      ? "waiting"
+      : isP2Winner
+        ? "winner"
+        : "loser";
 
   matchBox.innerHTML = `
-    <div class="${p1Class}">${p1}</div>
-    <div class="${p2Class}">${p2}</div>
-  `;
+  <div class="${p1Class}" title="${p1}">${p1}</div>
+  <div class="${p2Class}" title="${p2}">${p2}</div>
+`;
 
   wrapper.appendChild(matchBox);
 
@@ -393,7 +401,7 @@ export async function tournamentProgress(
     );
 
     if (!res.ok) return;
-    const tree: MatchNode | null = await res.json() as MatchNode | null;
+    const tree: MatchNode | null = (await res.json()) as MatchNode | null;
     console.log(tree);
 
     if (tree) {
