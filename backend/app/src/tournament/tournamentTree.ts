@@ -2,6 +2,8 @@ import { GameResultMessage } from "../shared/game/gameMessageTypes";
 import { GAME_CONSTANT } from "../shared/game/gameElements";
 import { Room, RoomType, createNewRoom } from "../game/room";
 import { Player } from "../types/player";
+import { isLaunchMatchMessage, LaunchMatchMessage } from "../shared/tournament/tournamentMessageTypes";
+import { isTournamentMessage, TournamentMessage } from "../shared/messageType";
 
 export type MatchNode = {
   player: Player | null;
@@ -56,10 +58,16 @@ export class TournamentTree {
     if (!this.root) throw new Error("Tournament tree has not been generated yet.");
 
     return new Promise<void>(async (resolve) => {
+      let isFirstRound: boolean = true;
       let currentRoundNodes: MatchNode[] = this.getBottomMatches(); // Start with the first round
 
       while (currentRoundNodes.length > 0) {
+        if (!isFirstRound) {
+          // 10s of pause before the next round
+          await new Promise(res => setTimeout(res, 10_000));
+        }
         await this.playRound(currentRoundNodes); // Play all matches in the round
+        isFirstRound = false;
         currentRoundNodes = this.getNextRound(currentRoundNodes); // Move to the next round
         // this.printTree(); ////////////////////////////////////////
       }
@@ -72,6 +80,7 @@ export class TournamentTree {
   // Play all matches in the current round asynchronously
   private async playRound(nodes: MatchNode[]): Promise<void> {
     await Promise.all(nodes.map((node: MatchNode) => this.playMatchAsync(node)));
+    console.log("Round ended\n");
   }
 
   // Collect all the matches from the bottom of the tree (first round)
@@ -129,29 +138,96 @@ export class TournamentTree {
         throw new Error("Cannot play match for a node with missing players.");
       }
 
-      if (node.left.player.isBot && node.right.player.isBot) {
+      const player1: Player = node.left.player;
+      const player2: Player = node.right.player;
+
+      if (player1.isBot && player2.isBot) {
         // Both players are bots, so randomly select a winner
         this.handleMatchEnded(node, Math.random() < 0.5 ? "A" : "B");
         return resolve(); // Resolve immediately
       }
 
       const room: Room = createNewRoom(RoomType.Tournament);
-      room.addPlayer(node.left.player);
-      room.addPlayer(node.right.player);
+      const errorOccured: (error: any, winPriority?: 1 | 2) => void = (error: any, winPriority?: 1 | 2) => {
+        // If the game cannot be started
+        console.error(`Error starting game in room '${room.getId()}':`, error);
+        room.dispose();
+        if (winPriority) {
+          // If there is a winner priority then take it
+          this.handleMatchEnded(node, winPriority === 1 ? "A" : "B");
+        } else {
+          // Else select the winner randomly to avoid blocking the tournament
+          this.handleMatchEnded(node, Math.random() < 0.5 ? "A" : "B");
+        }
+        resolve(); // Resolve even if there's an error
+      };
 
+      if (!room.addPlayer(player1)) {
+        errorOccured(`Player 1 (${player1.username}) cannot be added to the room`, 2);
+        return;
+      }
+      if (!room.addPlayer(player2)) {
+        errorOccured(`Player 2 (${player2.username}) cannot be added to the room`, 1);
+        return;
+      }
+
+      room.setScoreToWin(this.scoreToWin);
       room.setGameEndedCallback((gameResult: GameResultMessage) => {
         this.handleMatchEnded(node, gameResult.winner === node.right!.player!.username ? "B" : "A");
         resolve(); // Resolve once the match is over
       });
-      room.setScoreToWin(this.scoreToWin);
 
-      room.startGame().catch((error: any) => {
-        console.error(`Error starting game in room '${room.getId()}':`, error);
-        room.dispose();
-        // If the game cannot be started, select the winner randomly to avoid blocking the tournament
-        this.handleMatchEnded(node, Math.random() < 0.5 ? "A" : "B");
-        resolve(); // Resolve even if there's an error
-      });
+      const launchMatchMessage: string = JSON.stringify({
+          type: "tournament",
+          data: { type: "launchMatch" } as LaunchMatchMessage,
+        } as TournamentMessage
+      );
+
+      type MatchStartError = {
+        msg: string;
+        playerId: 1 | 2;
+      }
+
+      const waitForResponse: (player: Player, playerId: 1 | 2) => Promise<void> = (player: Player, playerId: 1 | 2): Promise<void> => {
+        return new Promise((res, rej) => {
+          // If its a bot resolve immediatly
+          if (player.isBot) {
+            res();
+          }
+
+          const responseListener: (message: any) => void = (message: any) => {
+            const data: any = JSON.parse(message);
+            if (isTournamentMessage(data) && isLaunchMatchMessage(data.data)) {
+              clearTimeout(timeoutHandler); // Clear the timeout if response is received
+              player.socket?.removeListener("message", responseListener);
+              res();
+            }
+          };
+
+          // Set a timeout to reject the promise if no response arrives
+          const timeoutHandler: NodeJS.Timeout = setTimeout(() => {
+            player.socket?.removeListener("message", responseListener);
+            rej({
+              msg: `Timeout waiting for response from '${player.username}'`,
+              playerId
+            } as MatchStartError);
+          }, 10_000); // 10s
+
+          player.socket?.on("message", responseListener);
+          player.socket?.send(launchMatchMessage);
+        });
+      };
+
+      Promise.all([waitForResponse(player1, 1), waitForResponse(player2, 2)])
+        .then(() => room.startGame())
+        .catch((error: any) => {
+          // Check if the error is typeof MatchStartError
+          if (typeof error.msg === "string" && (error.playerId === 1 || error.playerId === 2)) {
+            errorOccured((error as MatchStartError).msg, (error as MatchStartError).playerId);
+          } else {
+            errorOccured(error);
+          }
+        });
     });
   }
 

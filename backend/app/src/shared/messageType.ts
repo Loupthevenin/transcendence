@@ -62,7 +62,8 @@ export type TournamentMessageData =
   | TournamentMessages.CreateMessage
   | TournamentMessages.JoinMessage
   | TournamentMessages.LeaveMessage
-  | TournamentMessages.CloseMessage;
+  | TournamentMessages.CloseMessage
+  | TournamentMessages.LaunchMatchMessage;
 
 export type TournamentMessage = {
   readonly type: "tournament";

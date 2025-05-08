@@ -179,6 +179,7 @@ function close(tournament: Tournament): void {
   }
 
   // TODO: Notify all players that the tournament is closed and will start
+  tournament.tree.playTournament();
 }
 
 /**

@@ -56,19 +56,19 @@ export async function tournamentProgression(
   }
 }
 
-// Helper to convert a Player to PlayerInfo
-function convertPlayer(player: Player, pseudoNames: Map<string, string>): PlayerInfo {
-  return {
-    uuid: player.uuid,
-    username: pseudoNames.get(player.uuid) ?? player.username,
-    isBot: player.isBot,
-  };
-}
-
-// Recursive converter function from MatchNode1 to MatchNodeInfo.
+// Recursive converter function from back MatchNode to front MatchNode.
 function convertMatchNode(node: MatchNode | null, pseudoNames: Map<string, string>): MatchNodeInfo | null {
   if (node === null) {
     return null;
+  }
+
+  // Helper to convert a Player to PlayerInfo
+  function convertPlayer(player: Player): PlayerInfo {
+    return {
+      uuid: player.uuid,
+      username: pseudoNames.get(player.uuid) ?? player.username,
+      isBot: player.isBot,
+    };
   }
 
   // Recursively convert children nodes.
@@ -82,12 +82,12 @@ function convertMatchNode(node: MatchNode | null, pseudoNames: Map<string, strin
 
     // Extract player1 from the left child. If there is one assigned to the left match, convert it.
     player1: node.left && node.left.player 
-      ? convertPlayer(node.left.player, pseudoNames)
+      ? convertPlayer(node.left.player)
       : null,
 
     // Similarly for player2 from the right child.
     player2: node.right && node.right.player 
-      ? convertPlayer(node.right.player, pseudoNames)
+      ? convertPlayer(node.right.player)
       : null,
 
     left: leftConverted,

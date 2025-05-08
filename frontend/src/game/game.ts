@@ -42,6 +42,7 @@ import {
 } from "../controllers/gameMode";
 import { PositionData, ScoreData } from "@shared/game/replayData";
 import enableCanvasExtension from "../utils/canvasExtensionEnabler";
+import { LaunchMatchMessage } from "@shared/tournament/tournamentMessageTypes";
 
 enum GameMode {
   MENU, // Player is in the menu
@@ -513,6 +514,21 @@ export function handleGameReconnection(
   updateCameraMode(camera);
 }
 
+export function handleTournamentGameLaunch(): void {
+  playerId = -1; // Set the player ID to -1 to wait for game start
+  setPaddleSkin(1, getSelectedSkinId()); // Set the skin of the player's paddle
+  updateCameraMode(camera);
+
+  const interval: NodeJS.Timeout = setInterval(() => {
+    updateLoadingBar(loadingHandler.getLoadedProportion());
+    if (loadingHandler.isAllLoaded()) {
+      clearInterval(interval); // Stop checking once loaded
+      // Loading ended, we can send back the request
+      sendMessage("tournament", { type: "launchMatch" } as LaunchMatchMessage);
+    }
+  }, 50); // Check every 50ms
+}
+
 function handleGameMessages(data: GameMessageData): void {
   //console.log("Received:", data);
 
@@ -522,11 +538,8 @@ function handleGameMessages(data: GameMessageData): void {
   try {
     if (isGameStartedMessage(data)) {
       playerId = data.id; // Set the player ID based on the server response
-      if (playerId === 2) {
-        // if we are the 2e player then set our skin to the 2e paddle and rotate camera
-        setPaddleSkin(2, localSkinId);
-        updateCameraMode(camera);
-      }
+      setPaddleSkin(playerId, localSkinId);
+      updateCameraMode(camera);
       const skinChangeMessage: SkinChangeMessage = {
         type: "skinId",
         id: data.id,
@@ -628,6 +641,13 @@ function displayGameResult(gameResult: GameResultMessage): void {
   backToMenu.addEventListener("click", () => {
     BackToMenu();
   });
+}
+
+function deleteGameResult(): void {
+  const gameResult: HTMLElement | null = document.getElementById("game-result-screen");
+  if (gameResult) {
+    gameResult.remove();
+  }
 }
 
 function displayGameError(errorMessage: DisconnectionMessage): void {
@@ -1008,6 +1028,7 @@ export function LeaveOnlineGameIfNeeded(): void {
 // Quit the game and go back to the menu
 export function BackToMenu(): void {
   LeaveOnlineGameIfNeeded();
+  deleteGameResult();
 
   currentGameMode = GameMode.MENU;
   updateCameraMode(camera);
@@ -1019,17 +1040,12 @@ export function BackToMenu(): void {
   showSkinSelector();
   setPaddleSkin(1, "");
   setPaddleSkin(2, "");
-
-  const gameResult: HTMLDivElement | null = document.getElementById(
-    "game-result-screen",
-  ) as HTMLDivElement;
-  if (gameResult) {
-    gameResult.remove();
-  }
 }
 
 // Launch the game in single player against an AI opponent
 export function SinglePlayer(): void {
+  deleteGameResult();
+
   currentGameMode = GameMode.SINGLEPLAYER;
   updateCameraMode(camera);
   unregisterToGameMessages();
@@ -1044,6 +1060,8 @@ export function SinglePlayer(): void {
 
 // Launch the game in local 1v1 mode
 export function LocalGame(): void {
+  deleteGameResult();
+
   currentGameMode = GameMode.LOCAL;
   updateCameraMode(camera);
   unregisterToGameMessages();
@@ -1064,6 +1082,7 @@ export function OnlineGame(autoMatchmaking: boolean = true): void {
     );
     return;
   }
+  deleteGameResult();
 
   currentGameMode = GameMode.ONLINE;
   updateCameraMode(camera);
@@ -1093,6 +1112,7 @@ export function SpectatingMode(): void {
     );
     return;
   }
+  deleteGameResult();
 
   currentGameMode = GameMode.SPECTATING;
   updateCameraMode(camera);
@@ -1107,6 +1127,8 @@ export function SpectatingMode(): void {
 
 // Setup the game to replay mode
 export function ReplayMode(p1Skin: string, p2Skin: string): void {
+  deleteGameResult();
+
   currentGameMode = GameMode.REPLAY;
   updateCameraMode(camera);
   // TODO: show a menu to come back before if a 'replay' button was pressed
