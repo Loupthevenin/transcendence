@@ -87,9 +87,9 @@ export class Room {
   private gameLaunched: boolean;
   private gameEnded: boolean;
 
-  private gameEndedCallback?: (gameResult: GameResultMessage) => void = undefined;
-
   private scoreToWin: number = GAME_CONSTANT.defaultScoreToWin;
+
+  private gameEndedCallback?: (gameResult: GameResultMessage) => void = undefined;
 
   public constructor(type: RoomType) {
     this.id = `room-${Room.roomCounter++}`;
@@ -166,19 +166,17 @@ export class Room {
   }
 
   /**
-   * @param gameEndedCallback The callback to call when the game ends.
-   */
-  public setGameEndedCallback(
-    gameEndedCallback: (gameResult: GameResultMessage) => void,
-  ): void {
-    this.gameEndedCallback = gameEndedCallback;
-  }
-
-  /**
    * @param scoreToWin The score needed to win the game.
    */
   public setScoreToWin(scoreToWin: number): void {
     this.scoreToWin = scoreToWin;
+  }
+
+  /**
+   * @param gameEndedCallback The callback to call when the game ends.
+   */
+  public setGameEndedCallback(gameEndedCallback: (gameResult: GameResultMessage) => void): void {
+    this.gameEndedCallback = gameEndedCallback;
   }
 
   /**
@@ -192,6 +190,9 @@ export class Room {
     }
     if (this.containsPlayer(player)) {
       return false; // Player already in the room
+    }
+    if (player.room !== null && !player.room.isGameEnded()) {
+      return false; // Player already in another room that is not ended
     }
 
     if (!this.player1) {
@@ -246,17 +247,13 @@ export class Room {
    * Removes all players from the room.
    */
   private clear(): void {
-    if (this.player1) {
-      if (this.player1.room === this) {
-        this.player1.room = null;
-      }
-      this.player1 = null;
-    } else if (this.player2) {
-      if (this.player2.room === this) {
-        this.player2.room = null;
-      }
-      this.player2 = null;
+    if (this.player1 && this.player1.room === this) {
+      this.player1.room = null;
+    } else if (this.player2 && this.player2.room === this) {
+      this.player2.room = null;
     }
+    this.player1 = null;
+    this.player2 = null;
   }
 
   /**
@@ -334,7 +331,7 @@ export class Room {
       id: playerId,
       skinId: player.paddleSkinId,
     };
-    this.sendMessage(skinChangeMessage, [player.uuid]);
+    this.sendGameMessage(skinChangeMessage, [player.uuid]);
   }
 
   /**
@@ -381,11 +378,9 @@ export class Room {
    * @param message The message to send.
    */
   public sendMessage(
-    data: GameMessageData,
+    msg: string,
     excludedPlayerUUID?: string[],
   ): void {
-    const msg: string = this.stringifyGameMessageData(data);
-
     if (
       this.player1 &&
       this.isPlayerAlive(this.player1) &&
@@ -403,6 +398,18 @@ export class Room {
     ) {
       this.player2!.socket?.send(msg);
     }
+  }
+
+  /**
+   * Sends a game message to both players.
+   * @param message The message to send.
+   */
+  public sendGameMessage(
+    data: GameMessageData,
+    excludedPlayerUUID?: string[],
+  ): void {
+    const msg: string = this.stringifyGameMessageData(data);
+    this.sendMessage(msg, excludedPlayerUUID);
   }
 
   /**
@@ -513,7 +520,7 @@ export class Room {
         type: "gameData",
         data: this.gameData,
       };
-      this.sendMessage(gameDataMessage);
+      this.sendGameMessage(gameDataMessage);
 
       // Snapshot the current game data
       const elapsedTimeSinceStart: number =
@@ -551,7 +558,7 @@ export class Room {
         type: "disconnection",
         id: disconnectedPlayer,
       };
-      this.sendMessage(disconnectionMessage);
+      this.sendGameMessage(disconnectionMessage);
       winnerId = disconnectedPlayer === 1 ? 2 : 1;
     } else if (this.gameData.p1Score === this.gameData.p2Score) {
       winnerId = -1; // If the match ended by a draw
@@ -567,7 +574,7 @@ export class Room {
       winner: this.winner,
       gameStats: this.gameStats,
     };
-    this.sendMessage(gameResultMessage);
+    this.sendGameMessage(gameResultMessage);
 
     this.saveGameSessionData(winnerId);
 

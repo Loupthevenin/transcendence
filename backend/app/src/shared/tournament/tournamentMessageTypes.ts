@@ -56,3 +56,14 @@ export function isCloseMessage(data: any): data is CloseMessage {
     typeof data.uuid === "string"
   );
 }
+
+export type LaunchMatchMessage = {
+  readonly type: "launchMatch";
+};
+
+export function isLaunchMatchMessage(data: any): data is LaunchMatchMessage {
+  return (
+    data &&
+    data.type === "launchMatch"
+  );
+}

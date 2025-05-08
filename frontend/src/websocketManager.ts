@@ -2,7 +2,8 @@ import ERROR_TYPE, { ERROR_MSG } from "@shared/errorType";
 import { isReconnectionMessage } from "@shared/game/gameMessageTypes";
 import { isErrorMessage, ChatMessageData, isChatMessage, GameMessageData, isGameMessage, TournamentMessageData, isTournamentMessage } from "@shared/messageType"
 import { navigateTo } from "./router";
-import { handleGameReconnection, OnlineGame } from "./game/game";
+import { handleGameReconnection, handleTournamentGameLaunch, OnlineGame } from "./game/game";
+import { isLaunchMatchMessage } from "@shared/tournament/tournamentMessageTypes";
 
 // Define a mapping between event types and their corresponding data types
 type MessageEventMap = {
@@ -135,6 +136,16 @@ export function connectToServer(): void {
         } else if (isChatMessage(data)) {
           notifySubscribers("chat", data.data);
         } else if (isTournamentMessage(data)) {
+          // Handle the received 
+          if (isLaunchMatchMessage(data.data)) {
+            console.log("[WebSocket] Received tournament match launch, preparing game ...");
+            if (location.pathname !== "/") {
+              // Go to root if not already there
+              navigateTo("/");
+            }
+            OnlineGame(false);
+            handleTournamentGameLaunch();
+          }
           notifySubscribers("tournament", data.data);
         } else if (isErrorMessage(data)) {
           if (data.errorType) {
