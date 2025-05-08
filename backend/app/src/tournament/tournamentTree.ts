@@ -3,7 +3,7 @@ import { GAME_CONSTANT } from "../shared/game/gameElements";
 import { Room, RoomType, createNewRoom } from "../game/room";
 import { Player } from "../types/player";
 
-type MatchNode = {
+export type MatchNode = {
   player: Player | null;
   left: MatchNode | null;
   right: MatchNode | null;
