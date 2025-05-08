@@ -366,7 +366,11 @@ function handlePlayerDragInput(pointerInfo: BABYLON.PointerInfo): void {
   }
 }
 
-// global request trackers for each paddle
+// Keep track of which skin each paddle have
+let cachedPaddle1Skin: string = "";
+let cachedPaddle2Skin: string = "";
+
+// Global request trackers for each paddle
 let paddle1SkinRequestId: number = 0;
 let paddle2SkinRequestId: number = 0;
 
@@ -378,6 +382,11 @@ function setPaddleSkin(paddle: 1 | 2, skinId: string): void {
     // Create a temporary mesh will waiting for server response if there is no mesh
     if (!paddle1Mesh) {
       paddle1Mesh = createDefaultSkin(scene);
+      cachedPaddle1Skin = "";
+    }
+
+    if (cachedPaddle1Skin === skinId) {
+      return; // Already have this skin attributed, so do nothing
     }
 
     loadPadddleSkin(skinId, scene).then((mesh: BABYLON.Mesh) => {
@@ -391,6 +400,7 @@ function setPaddleSkin(paddle: 1 | 2, skinId: string): void {
         paddle1Mesh.dispose(); // Delete the current mesh
       }
       paddle1Mesh = mesh;
+      cachedPaddle1Skin = skinId;
       mesh.position = new BABYLON.Vector3(
         0,
         GAME_CONSTANT.paddleDepth / 2,
@@ -403,6 +413,11 @@ function setPaddleSkin(paddle: 1 | 2, skinId: string): void {
     // Create a temporary mesh will waiting for server response if there is no mesh
     if (!paddle2Mesh) {
       paddle2Mesh = createDefaultSkin(scene);
+      cachedPaddle2Skin = "";
+    }
+
+    if (cachedPaddle2Skin === skinId) {
+      return; // Already have this skin attributed, so do nothing
     }
 
     loadPadddleSkin(skinId, scene).then((mesh: BABYLON.Mesh) => {
@@ -416,6 +431,7 @@ function setPaddleSkin(paddle: 1 | 2, skinId: string): void {
         paddle2Mesh.dispose(); // Delete the current mesh
       }
       paddle2Mesh = mesh;
+      cachedPaddle2Skin = skinId;
       mesh.position = new BABYLON.Vector3(
         0,
         GAME_CONSTANT.paddleDepth / 2,
