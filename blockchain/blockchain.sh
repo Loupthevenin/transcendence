@@ -12,5 +12,5 @@ npm install
 echo -e "${GREEN}Npm dependencies installed successfully...${RESET}"
 
 echo -e "${BLUE}Compiling smart contracts with Hardhat...${RESET}"
-npx hardhat compile
+npm run compile
 echo -e "${GREEN}Contracts compiled successfully.${RESET}"

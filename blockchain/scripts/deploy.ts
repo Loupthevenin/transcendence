@@ -1,4 +1,4 @@
-import { ethers } from "hardhat";
+import { ethers, run } from "hardhat";
 
 async function main(): Promise<void> {
   const [deployer] = await ethers.getSigners();
@@ -10,6 +10,16 @@ async function main(): Promise<void> {
 
   const address: string = await contract.getAddress();
   console.log("Contrat déployé : ", address);
+  try {
+    console.log("Verifying contract on Snowtrace...");
+    await run("verify:verify", {
+      address,
+      constructorArguments: [],
+    });
+    console.log("Contract verified");
+  } catch (error) {
+    console.error("Vérification failed: ", error);
+  }
 }
 
 main()
