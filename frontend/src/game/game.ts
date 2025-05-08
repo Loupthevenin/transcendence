@@ -7,7 +7,8 @@ import {
   newGameStats,
   disableSpecularOnMeshes,
 } from "@shared/game/gameElements";
-import { Ball, updateBallPosition, resetBall } from "@shared/game/ball";
+import { updateBallPosition, resetBall } from "@shared/game/ball";
+import { INPUT, PaddleDraggingData, handleAIInput, handlePlayerInput } from "@shared/inputHandler";
 import {
   SkinChangeMessage,
   isSkinChangeMessage,
@@ -236,12 +237,6 @@ function updateScoreText(): void {
   }
 }
 
-enum INPUT {
-  NONE = 0b00,
-  UP = 0b01,
-  DOWN = 0b10,
-}
-
 // Paddle movement variables
 let paddle1Input: INPUT = 0;
 let paddle2Input: INPUT = 0;
@@ -288,11 +283,6 @@ window.addEventListener("keyup", (event: KeyboardEvent) => {
       break;
   }
 });
-
-type PaddleDraggingData = {
-  pointerId: number;
-  targetX: number | null;
-};
 
 const paddle1DraggingData: PaddleDraggingData = {
   pointerId: -1,
@@ -374,68 +364,6 @@ function handlePlayerDragInput(pointerInfo: BABYLON.PointerInfo): void {
       }
       break;
   }
-}
-
-// Function to handle player input and update paddle position
-function handlePlayerInput(
-  paddlePosition: BABYLON.Vector2,
-  paddleMesh: BABYLON.Mesh,
-  keyInput: INPUT,
-  draggingData: PaddleDraggingData,
-  deltaTime: number,
-): void {
-  if (keyInput === 0 && draggingData.pointerId === -1) {
-    return; // No key input, no movement
-  }
-
-  let deltaX: number = 0;
-  if (draggingData.pointerId !== -1) {
-    if (draggingData.targetX !== null) {
-      const distanceToTarget: number = draggingData.targetX - paddlePosition.x;
-      deltaX = Math.min(Math.max(distanceToTarget, -1), 1);
-    }
-  } else {
-    deltaX = (keyInput & INPUT.UP ? 1 : 0) - (keyInput & INPUT.DOWN ? 1 : 0);
-  }
-
-  if (deltaX === 0) {
-    return; // No delta, no movement
-  }
-
-  deltaX *= GAME_CONSTANT.paddleSpeed * deltaTime;
-
-  // Update and clamp paddle positions to prevent them from going out of bounds
-  paddlePosition.x = Math.min(
-    Math.max(
-      paddlePosition.x + deltaX,
-      GAME_CONSTANT.areaMinX + GAME_CONSTANT.paddleHalfWidth,
-    ),
-    GAME_CONSTANT.areaMaxX - GAME_CONSTANT.paddleHalfWidth,
-  );
-
-  // Update paddle mesh positions
-  paddleMesh.position.x = paddlePosition.x;
-}
-
-// Function to handle AI input
-function handleAIInput(
-  paddlePosition: BABYLON.Vector2,
-  paddleMesh: BABYLON.Mesh,
-  ball: Ball,
-  deltaTime: number,
-): void {
-  // TODO: do some weird math to predict the ball position instead of the current one
-  const draggingData: PaddleDraggingData = {
-    pointerId: -2,
-    targetX: ball.position.x,
-  };
-  handlePlayerInput(
-    paddlePosition,
-    paddleMesh,
-    INPUT.NONE,
-    draggingData,
-    deltaTime,
-  );
 }
 
 // global request trackers for each paddle

@@ -223,7 +223,7 @@ export class TournamentTree {
         .catch((error: any) => {
           // Check if the error is typeof MatchStartError
           if (typeof error.msg === "string" && (error.playerId === 1 || error.playerId === 2)) {
-            errorOccured((error as MatchStartError).msg, (error as MatchStartError).playerId);
+            errorOccured((error as MatchStartError).msg, ((error as MatchStartError).playerId === 1) ? 2 : 1);
           } else {
             errorOccured(error);
           }
