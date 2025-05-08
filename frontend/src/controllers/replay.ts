@@ -7,6 +7,7 @@ import {
 } from "@shared/game/replayData";
 import { createGameCanvas, initGameEnvironment, ReplayMode, SetReplayGameData } from "../game/game";
 import nodeRemovalObserver from "../utils/nodeRemovalObserver";
+import { disconnectFromServer } from "../websocketManager";
 
 let progressBar: HTMLInputElement | null = null;
 let tooltip: HTMLElement | null = null;
@@ -125,6 +126,7 @@ function fetchMatchData(token: string, matchId: string): Promise<ReplayData> {
         }
         if (res.status === 401 || res.status === 403) {
           localStorage.removeItem("auth_token");
+          disconnectFromServer(true);
         }
         return reject(`An error occured when fetching match data (status ${res.status})`);
       }

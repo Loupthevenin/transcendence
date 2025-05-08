@@ -46,7 +46,7 @@ export function unsubscribeTo<K extends keyof MessageEventMap>(msgEventType: K, 
 // Notify function
 function notifySubscribers<K extends keyof MessageEventMap>(msgEventType: K, data: MessageEventMap[K]): void {
   if (callbacks[msgEventType]) {
-    callbacks[msgEventType]!.forEach((callback) => callback(data));
+    callbacks[msgEventType]!.forEach((callback: CallbackFunction<K>) => callback(data));
   }
 }
 
@@ -58,6 +58,7 @@ function notifySubscribers<K extends keyof MessageEventMap>(msgEventType: K, dat
 // subscribe("chat", (data: ChatMessageData) => {}); // should work
 
 let socket: WebSocket | null = null;
+let autoReconnectEnabled: boolean = true;
 let reconnectInterval: NodeJS.Timeout | null = null;
 
 export function isConnected(): boolean {
@@ -100,7 +101,7 @@ export function connectToServer(): void {
 
     socket = new WebSocket(wsUrl);
 
-    let autoReconnectEnabled: boolean = true;
+    autoReconnectEnabled = true;
 
     // Handle connection open
     socket.onopen = () => {
@@ -174,6 +175,14 @@ export function connectToServer(): void {
   } catch (error: any) {
     console.error("[WebSocket] Error during connection setup:", error);
   }
+}
+
+// Disconnect the WebSocket from the server
+export function disconnectFromServer(canAutoReconnect: boolean = false): void {
+  if (!canAutoReconnect) {
+    autoReconnectEnabled = false;
+  }
+  socket?.close();
 }
 
 function reconnect(): void {

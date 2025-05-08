@@ -1,4 +1,5 @@
 import { navigateTo } from "../router";
+import { disconnectFromServer } from "../websocketManager";
 import { UserProfile } from "./types";
 import { MatchHistory } from "@shared/match/matchHistory";
 
@@ -22,6 +23,7 @@ async function loadUserProfile(): Promise<void> {
       alert(errorMsg);
       if (res.status === 401 || res.status === 403) {
         localStorage.removeItem("auth_token");
+        disconnectFromServer(true);
       }
       return;
     }
@@ -284,6 +286,7 @@ async function loadHistory(): Promise<void> {
       alert(errorMsg);
       if (res.status === 401 || res.status === 403) {
         localStorage.removeItem("auth_token");
+        disconnectFromServer(true);
       }
       return;
     }
@@ -467,6 +470,7 @@ function logout(container: HTMLElement): void {
       return;
     }
     localStorage.removeItem("auth_token");
+    disconnectFromServer();
     navigateTo("/");
   });
 }
