@@ -2,6 +2,7 @@
 @import "./sidebar.css";
 @import "./google.css";
 @import "./tournaments.css";
+@import "./toastNotification.css";
 
 body {
   margin: 0;
