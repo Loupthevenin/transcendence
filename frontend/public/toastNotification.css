@@ -1,22 +1,55 @@
-@keyframes fade-in-out {
+@keyframes toast-pop {
   0% {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(40px) scale(0.9);
   }
-  10% {
+  15% {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1.05);
   }
-  90% {
+  25% {
+    transform: scale(1);
+  }
+  85% {
     opacity: 1;
-    transform: translateY(0);
+    transform: scale(1);
   }
   100% {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(20px) scale(0.95);
   }
 }
 
-.animate-fade-in-out {
-  animation: fade-in-out 4s ease-in-out forwards;
+.animate-toast-pop {
+  animation: toast-pop 4.5s ease-in-out forwards;
+}
+
+.toast-info {
+  background: linear-gradient(334deg, #6b97f7, #7525e2, #f7137e);
+  background-size: 180% 180%;
+  animation: gradient-animation 6s ease infinite;
+}
+
+.toast-success {
+  background: linear-gradient(334deg, #2af598, #009efd, #00c9a7);
+  background-size: 180% 180%;
+  animation: gradient-animation 6s ease infinite;
+}
+
+.toast-error {
+  background: linear-gradient(334deg, #ff416c, #ff4b2b, #ff6a00);
+  background-size: 180% 180%;
+  animation: gradient-animation 6s ease infinite;
+}
+
+@keyframes gradient-animation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
