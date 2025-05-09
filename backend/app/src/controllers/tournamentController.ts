@@ -13,6 +13,7 @@ export async function tournamentsController(
   if (!uuid) {
     return reply.status(401).send({ error: "Invalid Token" });
   }
+
   const tournaments: Tournament[] = getTournaments();
   const result: TournamentInfo[] = tournaments.map(
     (t: Tournament) =>
@@ -22,9 +23,9 @@ export async function tournamentsController(
         isOwner: t.owner.uuid === uuid,
         playerRegistered: t.playerCount,
         maxPlayers: t.settings.maxPlayerCount,
-        status: t.isClosed ? "Ongoing" : "Pending",
+        status: t.isEnded ? "Ended" : (t.isClosed ? "Ongoing" : "Pending"),
         joined: t.players.some((p: Player) => p.uuid === uuid),
-      }) as TournamentInfo,
+      }) as TournamentInfo
   );
   reply.status(200).send(result);
 }
@@ -34,7 +35,6 @@ export async function tournamentProgression(
   reply: FastifyReply,
 ): Promise<void> {
   const uuid: string = request.query.uuid;
-
   if (!uuid) {
     reply.status(400).send({ error: "UUID is required" });
     return;

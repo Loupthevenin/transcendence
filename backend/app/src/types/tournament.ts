@@ -13,6 +13,7 @@ export type Tournament = {
   settings: TournamentSettings;
   tree: TournamentTree;
   isClosed: boolean; // Indicates if the tournament is closed for new players
+  isEnded: boolean; // Indicates if the tournament is ended
 }
 
 export function isValidTournamentSettings(settings: TournamentSettings): boolean {

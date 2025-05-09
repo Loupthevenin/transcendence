@@ -11,7 +11,7 @@ function createCardTournament(tournament: TournamentInfo): HTMLElement {
     "bg-gray-800 p-6 rounded-lg shadow-xl flex flex-col justify-between";
   const isFull: boolean = tournament.playerRegistered >= tournament.maxPlayers;
   const isJoined: boolean = tournament.joined;
-  const isClosed: boolean = tournament.status === "Ongoing";
+  const isClosed: boolean = tournament.status !== "Pending";
   card.innerHTML = `
 		<div>
             <h2 class="text-2xl font-semibold text-indigo-300 mb-2">${tournament.name}</h2>
