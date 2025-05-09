@@ -62,16 +62,37 @@ function createCardTournament(tournament: TournamentInfo): HTMLElement {
   return card;
 }
 
+let reloadTimeout: NodeJS.Timeout | undefined = undefined;
+let isLoading: boolean = false;
+
 async function loadTournaments(): Promise<void> {
+  // Clear the previous timer to prevent overlapping reloads
+  clearTimeout(reloadTimeout);
+
+  // Prevent multiple simultaneous executions
+  if (isLoading) return;
+  isLoading = true;
+
+  try {
+      await updateTournaments(); // The function that update the tournaments list
+  } finally {
+      isLoading = false;
+
+      // Set a new timer for 10 seconds
+      reloadTimeout = setTimeout(loadTournaments, 10_000);
+  }
+}
+
+async function updateTournaments(): Promise<void> {
   const token: string | null = localStorage.getItem("auth_token");
   if (!token) {
     alert("Pas de token !");
     return;
   }
-  const container: HTMLElement | null = document.getElementById(
-    "tournaments-container",
-  );
+
+  const container: HTMLElement | null = document.getElementById("tournaments-container");
   if (!container) return;
+
   try {
     const res: Response = await fetch("/api/tournaments/list", {
       method: "GET",
@@ -144,6 +165,7 @@ async function loadTournaments(): Promise<void> {
       const closeTournament: HTMLButtonElement | null =
         card.querySelector<HTMLButtonElement>(".close-tournament");
       if (!closeTournament) return;
+
       closeTournament.addEventListener("click", () => {
         const tournamentCloseMessage: TournamentMessages.CloseMessage = {
           type: "close",
@@ -235,74 +257,6 @@ export function tournamentsHandlers(container: HTMLElement): void {
   setDisplayNameInputs();
   createTournament();
 }
-
-// function generateTournamentTree(size: 4 | 8 | 16 | 32): MatchNode {
-//   const NAMES = [
-//     "Alice",
-//     "Bob",
-//     "Charlie",
-//     "David",
-//     "Eve",
-//     "Frank",
-//     "Grace",
-//     "Heidi",
-//     "Ivan",
-//     "Judy",
-//     "Mallory",
-//     "Niaj",
-//     "Olivia",
-//     "Peggy",
-//     "Rupert",
-//     "Sybil",
-//     "Trent",
-//     "Victor",
-//     "Walter",
-//     "Yasmine",
-//     "Zoe",
-//     "Quentin",
-//     "Laura",
-//     "Xavier",
-//     "Yuri",
-//     "Sophie",
-//     "Martin",
-//     "Clara",
-//     "Noah",
-//     "Liam",
-//     "Emma",
-//     "Lucas",
-//   ];
-
-//   function getRandomNamePool(count: number): string[] {
-//     const shuffled = [...NAMES].sort(() => 0.5 - Math.random());
-//     return shuffled.slice(0, count);
-//   }
-
-//   function buildMatchTree(players: Player[]): MatchNode {
-//     if (players.length === 1) {
-//       return {
-//         player: players[0],
-//         left: null,
-//         right: null,
-//       };
-//     }
-
-//     const half = players.length / 2;
-//     const left = buildMatchTree(players.slice(0, half));
-//     const right = buildMatchTree(players.slice(half));
-
-//     const winner = Math.random() < 0.5 ? left.player : right.player;
-
-//     return {
-//       player: winner,
-//       left,
-//       right,
-//     };
-//   }
-
-//   const playerNames = getRandomNamePool(size);
-//   const players = playerNames.map((name) => ({ username: name }));
-//   return buildMatchTree(players);
-// }
 
 function renderMatch(match: MatchNode): HTMLDivElement | null {
   // If the match node is considered empty
@@ -402,7 +356,6 @@ export async function tournamentProgress(
 
     if (!res.ok) return;
     const tree: MatchNode | null = (await res.json()) as MatchNode | null;
-    console.log(tree);
 
     if (tree) {
       const treeDiv: HTMLDivElement | null = renderMatch(tree);
