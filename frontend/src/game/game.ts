@@ -473,7 +473,7 @@ export function handleTournamentGameLaunch(): void {
   }, 50); // Check every 50ms
 }
 
-function handleGameMessages(data: GameMessageData): void {
+export function handleGameMessages(data: GameMessageData): void {
   //console.log("Received:", data);
 
   // Avoid modifying data if not in an online mode

@@ -1,20 +1,9 @@
-// import { createGameCanvas, initGameEnvironment } from "../game/game";
+let alreadySentReadyToPlay = false;
 
-// export function loadGameCanvasOnce(): void {
-//   if (!document.getElementById("renderCanvas")) {
-//     const canvas = createGameCanvas();
-//     document.body.appendChild(canvas);
-//     initGameEnvironment();
-//   }
+export function setReadyToPlaySent(val: boolean) {
+  alreadySentReadyToPlay = val;
+}
 
-//   const chatInterface = document.getElementById("chat-interface");
-//   if (chatInterface) chatInterface.style.display = "none";
-// }
-
-// export function restoreChatInterface(): void {
-//   const chatInterface = document.getElementById("chat-interface");
-//   if (chatInterface) chatInterface.style.display = "flex";
-
-//   const canvas = document.getElementById("renderCanvas");
-//   if (canvas) canvas.remove();
-// }
+export function hasSentReadyToPlay(): boolean {
+  return alreadySentReadyToPlay;
+}

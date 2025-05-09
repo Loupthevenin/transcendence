@@ -6,6 +6,8 @@ import { openInviteToGameModal } from "../controllers/InviteGame";
 import { showBlockedUsersModal } from "../controllers/blockedUser";
 import { showPublicProfile } from "../controllers/publicProfile";
 import { loadChatList as fetchChatList, createOrGetChatRoom, loadChatRoomMessages } from "../controllers/chatService";
+import { setReadyToPlaySent } from "../utils/chatUtils";
+
 
 let currentMessageList: HTMLUListElement | null = null;
 let currentOtherUserId: number | null = null;
@@ -32,6 +34,8 @@ export function setupChat(container: HTMLElement): void {
   chatApp?.classList.remove("hidden");
   notConnected?.classList.add("hidden");
   searchInput?.classList.remove("hidden");
+  setReadyToPlaySent(false);
+  
 
   setupSidebarMenu();
   setupDropdownMenu();

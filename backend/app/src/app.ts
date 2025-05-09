@@ -71,7 +71,6 @@ app.register(require("./routes/replay"), { prefix: "/api/replay" });
 app.register(require("./routes/models"), { prefix: "/api/models" });
 app.register(require("./routes/textures"), { prefix: "/api/textures" });
 app.register(require("./routes/tournaments"), { prefix: "/api/tournaments" });
-app.register(require("./routes/blockchain"), { prefix: "/api/blockchain" });
 app.register(require("./routes/search-user"), { prefix: "/api/search-user" });
 app.register(require("./routes/public-profile"), { prefix: "/api/public-profile" });
 app.register(require("./routes/chatroom"), { prefix: "/api/chatroom" });

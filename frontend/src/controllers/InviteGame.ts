@@ -4,6 +4,7 @@ import { ReadyToPlayMessage } from "@shared/game/gameMessageTypes";
 import { GameMessageData } from "@shared/messageType";
 import { createGameCanvas, initGameEnvironment } from "../game/game";
 import { navigateTo } from "../router";
+import { hasSentReadyToPlay, setReadyToPlaySent } from "../utils/chatUtils";
 
 let gameAlreadyStarted = false;
 
@@ -57,12 +58,16 @@ export function openInviteToGameModal(fromName: string, userId: string): void {
 }
 
 export function initOnlineGameSession(opponentUuid: string): void {
-  const readyMessage: ReadyToPlayMessage = {
-    type: "readyToPlay",
-    opponentId: opponentUuid,
-  };
-  sendMessage("game", readyMessage);
-  console.log("[GAME] Envoi message readyToPlay", readyMessage);
+  if (!hasSentReadyToPlay()){
+    setReadyToPlaySent(true);
+
+    const readyMessage: ReadyToPlayMessage = {
+      type: "readyToPlay",
+      opponentId: opponentUuid,
+    };
+    sendMessage("game", readyMessage);
+    console.log("[GAME] Envoi message readyToPlay", readyMessage);
+  }
 
   subscribeTo("game", async (data: GameMessageData) => {
     if (data.type === "gameStarted" && !gameAlreadyStarted) {
@@ -75,7 +80,9 @@ export function initOnlineGameSession(opponentUuid: string): void {
     }
 
     if (data.type === "gameResult") {
+      console.log("[GAME] Fin du match reçue, reset des états");
       gameAlreadyStarted = false;
+
       const returnTo = localStorage.getItem("returnTo");
       if (returnTo) {
         localStorage.removeItem("returnTo");
@@ -86,6 +93,7 @@ export function initOnlineGameSession(opponentUuid: string): void {
     }
   });
 }
+
 
 export async function prepareGameAndStart(): Promise<void> {
   if (!document.getElementById("renderCanvas")) {

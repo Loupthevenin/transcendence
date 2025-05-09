@@ -26,7 +26,7 @@ export type GameMessageData =
   | GameMessages.DisconnectionMessage
   | GameMessages.ReconnectionMessage
   | GameMessages.MatchmakingMessage
-  | GameMessages.LeaveGameMessage;
+  | GameMessages.LeaveGameMessage
   | GameMessages.ReadyToPlayMessage;
 
 export type GameMessage = {

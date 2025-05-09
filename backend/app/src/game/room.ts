@@ -569,6 +569,8 @@ export class Room {
     if (!this.gameLaunched) {
       throw new Error("Cannot end a game not launched");
     }
+    console.log(`[Room ${this.id}] Fin de partie appelée`);
+
     this.gameEnded = true;
     this.gameStats.gameEndTime = Date.now(); // game end time in milliseconds
 
@@ -605,8 +607,12 @@ export class Room {
     this.gameEndedCallback?.(gameResultMessage);
 
     this.clear();
+    if (this.player1 && this.player1.room === this) this.player1.room = null;
+    if (this.player2 && this.player2.room === this) this.player2.room = null;
+    this.dispose(); // ← suppression de la room
   }
 
+ 
   /**
    * Save the game result in blockchain
    */
@@ -686,4 +692,3 @@ export class Room {
   }
 }
 
-export { rooms };

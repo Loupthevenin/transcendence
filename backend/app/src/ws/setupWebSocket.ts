@@ -160,20 +160,16 @@ export function setupWebSocket(): WebSocketServer {
         
             // Check if already in a room
             if (player.room || opponent.room) {
-              if (player.room) {
-                console.warn(`[GAME] ${player.username} is already in a room`);
-              }
-              if (opponent.room) {
-                console.warn(`[GAME] ${player.username} is already in a room`);
-              }
-              // console.warn(`[GAME] ${opponent.username} is already in a room`);
+              console.warn(`[GAME] Refus de créer une room :`);
+              console.warn(`- ${player.username} a room ?`, !!player.room);
+              console.warn(`- ${opponent.username} a room ?`, !!opponent.room);
               return;
             }
         
             const room = createNewRoom(RoomType.FriendlyMatch );
             room.addPlayer(player);
             room.addPlayer(opponent);
-        
+            console.log(`[DEBUG] Appel à startGame() pour ${player.username} vs ${opponent.username}`);
             room.startGame().catch((err) => {
               console.error("Erreur au démarrage du jeu :", err);
               room.dispose();
@@ -269,6 +265,7 @@ export function setupWebSocket(): WebSocketServer {
         // Remove the player from the room if the game hasn't started
         if (!player.room.isGameLaunched()) {
           player.room?.removePlayer(player);
+          player.room = null;
         }
         // If the game is launched the room handle by itself
       }
