@@ -17,27 +17,29 @@ function createCardTournament(tournament: TournamentInfo): HTMLElement {
             <h2 class="text-2xl font-semibold text-indigo-300 mb-2">${tournament.name}</h2>
             <p class="text-purple-200 mb-1">Joueurs inscrits : ${tournament.playerRegistered}/${tournament.maxPlayers}</p>
             <p class="text-purple-200">Statut : ${tournament.status}</p>
+		<div class="flex flex-col gap-y-2 mt-6">
 		${
       !isClosed
-        ? `<button class="join-tournament w-full mt-6 ${isJoined ? "bg-red-600 hover:bg-red-700" : isFull ? "bg-gray-600 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"} text-white py-2 rounded-md transition-all" ${isFull && !isJoined ? "disabled" : ""}>
+        ? `<button class="join-tournament w-full ${isJoined ? "bg-red-600 hover:bg-red-700" : isFull ? "bg-gray-600 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"} text-white py-2 rounded-md transition-all" ${isFull && !isJoined ? "disabled" : ""}>
 				${isJoined ? "Se désinscrire" : isFull ? "Complet" : "Rejoindre"}
           </button>`
         : ""
     }
 		${
       isClosed
-        ? `<button class="view-progress w-full bg-blue-600 hover:bg-blue-700 text-white py-2 mt-2 rounded-md transition-all">
+        ? `<button class="view-progress w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md transition-all">
               Voir la progression
 			</button>`
         : ""
     }
 		${
       !isClosed && tournament.isOwner && tournament.playerRegistered >= 3
-        ? `<button class="close-tournament w-full bg-red-700 hover:bg-red-800 text-white py-2 mt-2 rounded-md transition-all">
+        ? `<button class="close-tournament w-full bg-red-700 hover:bg-red-800 text-white py-2 rounded-md transition-all">
 					Clôturer le tournoi
 				</button>`
         : ""
     }
+		</div>
         </div>
 		<form class="join-form hidden mt-4 bg-[#2a255c] p-4 rounded-lg shadow-md text-white space-y-4">
           <div>
@@ -74,12 +76,12 @@ async function loadTournaments(): Promise<void> {
   isLoading = true;
 
   try {
-      await updateTournaments(); // The function that update the tournaments list
+    await updateTournaments(); // The function that update the tournaments list
   } finally {
-      isLoading = false;
+    isLoading = false;
 
-      // Set a new timer for 10 seconds
-      reloadTimeout = setTimeout(loadTournaments, 10_000);
+    // Set a new timer for 10 seconds
+    reloadTimeout = setTimeout(loadTournaments, 10_000);
   }
 }
 
@@ -90,7 +92,9 @@ async function updateTournaments(): Promise<void> {
     return;
   }
 
-  const container: HTMLElement | null = document.getElementById("tournaments-container");
+  const container: HTMLElement | null = document.getElementById(
+    "tournaments-container",
+  );
   if (!container) return;
 
   try {
