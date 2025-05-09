@@ -4,7 +4,7 @@ export type TournamentInfo = {
   isOwner: boolean;
   playerRegistered: number;
   maxPlayers: number;
-  status: "Ongoing" | "Pending";
+  status: "Pending" | "Ongoing" | "Ended";
   joined: boolean;
 };
 

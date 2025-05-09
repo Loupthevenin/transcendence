@@ -30,7 +30,7 @@ export function createNewTournament(
   // Search if the owner has already created a tournament
   const tournamentWithSameOwner: Tournament | undefined = Array.from(
     tournaments.values(),
-  ).find((tournament: Tournament) => tournament.owner.uuid === owner.uuid);
+  ).find((tournament: Tournament) => !tournament.isEnded && tournament.owner.uuid === owner.uuid);
 
   // If a tournament already exists for this owner, return null
   if (tournamentWithSameOwner)
@@ -45,9 +45,13 @@ export function createNewTournament(
     players: [],
     pseudoNames: new Map<string, string>(),
     settings,
-    tree: new TournamentTree(settings.scoreToWin),
+    // TournamentTree need a reference to the tournament, and we cant pass it before its declaration
+    tree: undefined as unknown as TournamentTree, 
     isClosed: false,
+    isEnded: false,
   };
+  // Now we can set the TournamentTree
+  tournament.tree = new TournamentTree(tournament, settings.scoreToWin);
 
   tournaments.set(uuid, tournament);
   return [tournament, undefined];
@@ -174,7 +178,7 @@ function close(tournament: Tournament): void {
   try {
     tournament.tree.generate(tournament.players);
   } catch (error: any) {
-    console.error("An error occurred while generating the tournament tree:", error);
+    console.error(`An error occurred while generating the tournament tree of '${tournament.name}':`, error);
     return;
   }
 

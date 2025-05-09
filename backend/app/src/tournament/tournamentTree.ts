@@ -4,6 +4,7 @@ import { Room, RoomType, createNewRoom } from "../game/room";
 import { Player } from "../types/player";
 import { isLaunchMatchMessage, LaunchMatchMessage } from "../shared/tournament/tournamentMessageTypes";
 import { isTournamentMessage, TournamentMessage } from "../shared/messageType";
+import { Tournament } from "../types/tournament";
 
 export type MatchNode = {
   player: Player | null;
@@ -12,10 +13,12 @@ export type MatchNode = {
 }
 
 export class TournamentTree {
+  public tournament: Tournament;
   public root: MatchNode | null = null;
   public scoreToWin: number = GAME_CONSTANT.defaultScoreToWin;
 
-  constructor(scoreToWin?: number) {
+  constructor(tournament: Tournament, scoreToWin?: number) {
+    this.tournament = tournament;
     if (scoreToWin) {
       this.scoreToWin = scoreToWin;
     }
@@ -72,7 +75,8 @@ export class TournamentTree {
         // this.printTree(); ////////////////////////////////////////
       }
 
-      console.log(`Tournament finished! Winner: '${this.root?.player?.username}'`);
+      console.log(`[Tournament ${this.tournament.name}] Tournament finished! Winner: '${this.root?.player?.username}'`);
+      this.tournament.isEnded = true;
       resolve();
     });
   }
@@ -80,7 +84,6 @@ export class TournamentTree {
   // Play all matches in the current round asynchronously
   private async playRound(nodes: MatchNode[]): Promise<void> {
     await Promise.all(nodes.map((node: MatchNode) => this.playMatchAsync(node)));
-    console.log("Round ended\n");
   }
 
   // Collect all the matches from the bottom of the tree (first round)
@@ -150,7 +153,7 @@ export class TournamentTree {
       const room: Room = createNewRoom(RoomType.Tournament);
       const errorOccured: (error: any, winPriority?: 1 | 2) => void = (error: any, winPriority?: 1 | 2) => {
         // If the game cannot be started
-        console.error(`Error starting game in room '${room.getId()}':`, error);
+        console.error(`[Tournament ${this.tournament.name}] Error starting game in room '${room.getId()}':`, error);
         room.dispose();
         if (winPriority) {
           // If there is a winner priority then take it
