@@ -1,7 +1,10 @@
 import { MatchHistory } from "@shared/match/matchHistory";
 import { navigateTo } from "../router";
 import { refreshBlockButtons } from "../controllers/blockedUser";
-import { showErrorToast, showSuccessToast } from "../components/showNotificationToast";
+import {
+  showErrorToast,
+  showSuccessToast,
+} from "../components/showNotificationToast";
 
 export async function showPublicProfile(userId: number): Promise<void> {
   try {
@@ -123,7 +126,9 @@ export async function openProfileModal(profile: {
         throw new Error("No token");
       }
 
-      const endpoint = isBlocked ? "/api/block-user/unblock" : "/api/block-user";
+      const endpoint = isBlocked
+        ? "/api/block-user/unblock"
+        : "/api/block-user";
 
       const res = await fetch(endpoint, {
         method: "POST",
@@ -134,7 +139,8 @@ export async function openProfileModal(profile: {
         body: JSON.stringify({ targetUserId: profile.id }),
       });
 
-      if (!res.ok) throw new Error(`Erreur ${isBlocked ? "déblocage" : "blocage"}`);
+      if (!res.ok)
+        throw new Error(`Erreur ${isBlocked ? "déblocage" : "blocage"}`);
 
       showSuccessToast(
         isBlocked
@@ -145,7 +151,10 @@ export async function openProfileModal(profile: {
       blockButton.onclick = () => toggleBlock(!isBlocked);
       refreshBlockButtons(profile.uuid);
     } catch (error: any) {
-      console.error(`Erreur lors du ${isBlocked ? "déblocage" : "blocage"}:`, error);
+      console.error(
+        `Erreur lors du ${isBlocked ? "déblocage" : "blocage"}:`,
+        error,
+      );
       showErrorToast(`Erreur lors du ${isBlocked ? "déblocage" : "blocage"}.`);
     }
   };
@@ -243,19 +252,45 @@ async function loadHistory(userId: number): Promise<void> {
       totalMatches++;
 
       li.className = `p-4 rounded-lg bg-[#2a255c] shadow border-l-4 ${borderColor}`;
-      li.innerHTML = `
-      <div class="flex justify-between items-center">
-        <div>
-          <p class="text-sm text-purple-300 mb-1">${formatDate(match.date)}</p>
-          <p class="font-semibold">${match.mode} vs ${match.opponent}</p>
-          <p class="text-sm">${resultText}</p>
-        </div>
-        <div class="text-xl font-bold ${scoreColor}">${match.score}</div>
-    <button class="replay-button bg-indigo-500 hover:bg-indigo-600 text-white text-sm px-2 py-1 rounded-lg" data-uuid="${match.uuid}">
-        🔁 Replay
-    </button>
-      </div>
-  `;
+      const wrapper: HTMLDivElement = document.createElement("div");
+      wrapper.className = "flex justify-between items-center";
+
+      // Partie gauche (infos du match)
+      const infoDiv: HTMLDivElement = document.createElement("div");
+
+      const dateP: HTMLElement = document.createElement("p");
+      dateP.className = "text-sm text-purple-300 mb-1";
+      dateP.textContent = formatDate(match.date);
+
+      const modeP: HTMLElement = document.createElement("p");
+      modeP.className = "font-semibold";
+      modeP.textContent = `${match.mode} vs ${match.opponent}`;
+
+      const resultP: HTMLElement = document.createElement("p");
+      resultP.className = "text-sm";
+      resultP.textContent = resultText;
+
+      infoDiv.appendChild(dateP);
+      infoDiv.appendChild(modeP);
+      infoDiv.appendChild(resultP);
+
+      // Partie droite (score + bouton replay)
+      const scoreDiv: HTMLDivElement = document.createElement("div");
+      scoreDiv.className = `text-xl font-bold ${scoreColor}`;
+      scoreDiv.textContent = match.score;
+
+      const replayBtn: HTMLButtonElement = document.createElement("button");
+      replayBtn.className =
+        "replay-button bg-indigo-500 hover:bg-indigo-600 text-white text-sm px-2 py-1 rounded-lg";
+      replayBtn.dataset.uuid = match.uuid;
+      replayBtn.textContent = "🔁 Replay";
+
+      // Assemblage
+      wrapper.appendChild(infoDiv);
+      wrapper.appendChild(scoreDiv);
+      wrapper.appendChild(replayBtn);
+
+      li.appendChild(wrapper);
       historyList.appendChild(li);
     });
 
@@ -356,4 +391,3 @@ function listenerButtonReplay(): void {
     }
   });
 }
-
