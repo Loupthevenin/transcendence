@@ -1,12 +1,16 @@
-type ToastType = "info" | "success" | "error";
+enum ToastType {
+  INFO,
+  SUCCESS,
+  ERROR
+};
 
 const TOAST_DURATION: number = 4000;
 const FADE_OUT_DURATION: number = 500;
 
 const TOAST_STYLES: Record<ToastType, string> = {
-  info: "toast-info",
-  success: "toast-success",
-  error: "toast-error",
+  [ToastType.INFO]: "toast-info",
+  [ToastType.SUCCESS]: "toast-success",
+  [ToastType.ERROR]: "toast-error",
 };
 
 function createToastElement(message: string, type: ToastType): HTMLDivElement {
@@ -20,7 +24,7 @@ function createToastElement(message: string, type: ToastType): HTMLDivElement {
   return toastWrapper;
 }
 
-function showToast(message: string, type: ToastType = "info"): void {
+function showToast(message: string, type: ToastType = ToastType.INFO): void {
   const toast: HTMLDivElement = createToastElement(message, type);
   document.body.appendChild(toast);
   setTimeout(() => {
@@ -29,6 +33,6 @@ function showToast(message: string, type: ToastType = "info"): void {
   }, TOAST_DURATION);
 }
 
-export const showInfoToast = (message: string) => showToast(message, "info");
-export const showSuccessToast = (message: string) => showToast(message, "success");
-export const showErrorToast = (message: string) => showToast(message, "error");
+export const showInfoToast = (message: string) => showToast(message, ToastType.INFO);
+export const showSuccessToast = (message: string) => showToast(message, ToastType.SUCCESS);
+export const showErrorToast = (message: string) => showToast(message, ToastType.ERROR);
