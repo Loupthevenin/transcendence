@@ -107,14 +107,12 @@ export function isReconnectionMessage(data: any): data is ReconnectionMessage {
 
 export type MatchmakingMessage = {
   readonly type: "matchmaking";
-  username: string; // The player username
 };
 
 export function isMatchmakingMessage(data: any): data is MatchmakingMessage {
   return (
     data &&
-    data.type === "matchmaking" &&
-    typeof data.username === "string"
+    data.type === "matchmaking"
   );
 }
 

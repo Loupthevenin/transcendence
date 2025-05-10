@@ -259,7 +259,8 @@ export class Room {
   private clear(): void {
     if (this.player1 && this.player1.room === this) {
       this.player1.room = null;
-    } else if (this.player2 && this.player2.room === this) {
+    }
+    if (this.player2 && this.player2.room === this) {
       this.player2.room = null;
     }
     this.player1 = null;
@@ -670,7 +671,7 @@ export class Room {
       ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
     ).run(
       uuid,
-      this.player1?.uuid ?? "", // same for uuid
+      this.player1?.uuid ?? "", // put empty string by default if the player is null
       this.player2?.uuid ?? "",
       this.gameData.p1Score,
       this.gameData.p2Score,

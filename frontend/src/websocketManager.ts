@@ -13,6 +13,7 @@ import { navigateTo } from "./router";
 import {
   handleGameReconnection,
   handleTournamentGameLaunch,
+  BackToMenu,
   OnlineGame,
 } from "./game/game";
 import { isLaunchMatchMessage } from "@shared/tournament/tournamentMessageTypes";
@@ -184,6 +185,10 @@ export function connectToServer(): void {
                 }
                 console.error("[WebSocket] Connection refused:", parsed.msg);
                 autoReconnectEnabled = false;
+              } else if (parsed.errorType === ERROR_TYPE.MATCHMAKING_REFUSED) {
+                if (location.pathname === "/") {
+                  BackToMenu();
+                }
               } else {
                 console.error("[WebSocket] Error:", parsed.msg);
                 showErrorToast(`[WebSocket] Error: ${parsed.msg}`);

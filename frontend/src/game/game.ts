@@ -1052,11 +1052,7 @@ export function OnlineGame(autoMatchmaking: boolean = true): void {
 
   registerToGameMessages();
   if (autoMatchmaking) {
-    const matchmakingMessage: MatchmakingMessage = {
-      type: "matchmaking",
-      username: `Player-${localSkinId}`,
-    };
-    sendMessage("game", matchmakingMessage);
+    sendMessage("game", { type: "matchmaking" } as MatchmakingMessage);
   }
 }
 
