@@ -1,6 +1,10 @@
 import { navigateTo } from "../router";
 import { handleGoogle } from "./google";
 import { connectToServer } from "../websocketManager";
+import {
+  showErrorToast,
+  showSuccessToast,
+} from "../components/showNotificationToast";
 
 export function setupLoginHandlers(container: HTMLElement): void {
   handleGoogle();
@@ -30,7 +34,7 @@ export function setupLoginHandlers(container: HTMLElement): void {
       const data: any = await res.json();
       if (!res.ok) {
         const errorMsg: string = data?.message || data?.error || "Error login";
-        alert(errorMsg);
+        showErrorToast(errorMsg);
         return;
       }
 
@@ -41,10 +45,11 @@ export function setupLoginHandlers(container: HTMLElement): void {
         localStorage.setItem("auth_token", data.token);
         connectToServer();
         navigateTo("/");
+        showSuccessToast("Login successful!");
       }
     } catch (error: any) {
-      alert("Email ou mot de passe incorrect");
       console.error(error);
+      showErrorToast("Email ou mot de passe incorrect");
     }
   });
 }

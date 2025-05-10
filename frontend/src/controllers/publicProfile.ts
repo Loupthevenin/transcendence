@@ -1,32 +1,48 @@
 import { MatchHistory } from "@shared/match/matchHistory";
 import { navigateTo } from "../router";
-import { refreshBlockButtons } from "../controllers/blockedUser"; 
+import { refreshBlockButtons } from "../controllers/blockedUser";
+import {
+  showErrorToast,
+  showSuccessToast,
+} from "../components/showNotificationToast";
 
 export async function showPublicProfile(userId: number): Promise<void> {
   try {
     const res = await fetch(`/api/public-profile/${userId}`, {
       headers: {
-        "Authorization": `Bearer ${localStorage.getItem("auth_token")}`,
+        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
       },
     });
 
     if (!res.ok) throw new Error("Failed to load public profile");
 
-    const profile = await res.json() as { id: number; uuid: string; name: string; avatar_url: string };
+    const profile = (await res.json()) as {
+      id: number;
+      uuid: string;
+      name: string;
+      avatar_url: string;
+    };
     openProfileModal(profile);
   } catch (err) {
     console.error("Error fetching public profile", err);
-    alert("Impossible de charger le profil public");
+    showErrorToast("Impossible de charger le profil public");
   }
 }
-  
-export async function openProfileModal(profile: { id: number; uuid: string; name: string; avatar_url: string }): Promise<void> {
+
+export async function openProfileModal(profile: {
+  id: number;
+  uuid: string;
+  name: string;
+  avatar_url: string;
+}): Promise<void> {
   const backdrop = document.createElement("div");
-  backdrop.className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50";
+  backdrop.className =
+    "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50";
   backdrop.id = "profile-backdrop";
 
   const modal = document.createElement("div");
-  modal.className = "relative bg-[#1e1b4b] p-6 rounded-2xl text-white w-3/4 h-[90vh] overflow-hidden flex flex-col items-center gap-4";
+  modal.className =
+    "relative bg-[#1e1b4b] p-6 rounded-2xl text-white w-3/4 h-[90vh] overflow-hidden flex flex-col items-center gap-4";
   modal.innerHTML = `
   <button id="block-user-btn" class="absolute top-4 right-4 px-3 py-1 rounded text-sm text-white bg-red-600 hover:bg-red-700">
   🚫
@@ -73,21 +89,28 @@ export async function openProfileModal(profile: { id: number; uuid: string; name
   backdrop.appendChild(modal);
   document.body.appendChild(backdrop);
 
-  modal.querySelector("#close-profile-modal")?.addEventListener("click", () => backdrop.remove());
+  modal
+    .querySelector("#close-profile-modal")
+    ?.addEventListener("click", () => backdrop.remove());
   backdrop.addEventListener("click", (e) => {
     if (e.target === backdrop) backdrop.remove();
   });
 
-  const blockButton = modal.querySelector("#block-user-btn") as HTMLButtonElement;
+  const blockButton = modal.querySelector(
+    "#block-user-btn",
+  ) as HTMLButtonElement;
 
   const updateBlockButton = (isBlocked: boolean) => {
-    blockButton.textContent = isBlocked ? "✅ Débloquer cet utilisateur" : "🚫 Bloquer cet utilisateur";
+    blockButton.textContent = isBlocked
+      ? "✅ Débloquer cet utilisateur"
+      : "🚫 Bloquer cet utilisateur";
     blockButton.className = `${isBlocked ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"} text-white px-3 py-1 rounded text-sm absolute top-4 right-4`;
-
   };
-  
+
   const toggleBlock = async (isBlocked: boolean) => {
-    const confirmMsg = isBlocked ? `Veux-tu vraiment débloquer ${profile.name} ?` : `Veux-tu vraiment bloquer ${profile.name} ?`;
+    const confirmMsg = isBlocked
+      ? `Veux-tu vraiment débloquer ${profile.name} ?`
+      : `Veux-tu vraiment bloquer ${profile.name} ?`;
     if (!confirm(confirmMsg)) return;
 
     const endpoint = isBlocked ? "/api/block-user/unblock" : "/api/block-user";
@@ -96,45 +119,53 @@ export async function openProfileModal(profile: { id: number; uuid: string; name
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("auth_token")}`,
+          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
         },
         body: JSON.stringify({ targetUserId: profile.id }),
       });
 
       if (!res.ok) throw new Error("Erreur blocage/déblocage");
 
-      alert(isBlocked ? `${profile.name} a été débloqué ✅` : `${profile.name} a été bloqué 🚫`);
+      showSuccessToast(
+        isBlocked
+          ? `${profile.name} a été débloqué ✅`
+          : `${profile.name} a été bloqué 🚫`,
+      );
       updateBlockButton(!isBlocked);
       blockButton.onclick = () => toggleBlock(!isBlocked);
       refreshBlockButtons(profile.uuid);
     } catch (err) {
       console.error("Erreur lors du blocage/déblocage", err);
-      alert("Erreur lors du blocage/déblocage.");
+      showErrorToast("Erreur lors du blocage/déblocage.");
     }
   };
 
   try {
-    const res = await fetch(`/api/block-user/is-blocked?targetUserId=${profile.id}`, {
-      headers: { "Authorization": `Bearer ${localStorage.getItem("auth_token")}` },
-    });
+    const res = await fetch(
+      `/api/block-user/is-blocked?targetUserId=${profile.id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+        },
+      },
+    );
     const { blocked } = await res.json();
     updateBlockButton(blocked);
     blockButton.onclick = () => toggleBlock(blocked);
   } catch (err) {
     console.error("Erreur de vérification blocage", err);
+    showErrorToast("Erreur de vérification blacage");
     updateBlockButton(false);
     blockButton.onclick = () => toggleBlock(false);
   }
 
-  await loadHistory(profile.id); 
-
+  await loadHistory(profile.id);
 }
-  
 
 async function loadHistory(userId: number): Promise<void> {
   const token: string | null = localStorage.getItem("auth_token");
   if (!token) {
-    alert("Pas de token !");
+    showErrorToast("Pas de token !");
     return;
   }
   try {
@@ -149,7 +180,7 @@ async function loadHistory(userId: number): Promise<void> {
     if (!res.ok) {
       const errorMsg: string =
         rawData?.message || "Erreur chargement historique";
-      alert(errorMsg);
+      showErrorToast(errorMsg);
       if (res.status === 401 || res.status === 403) {
         localStorage.removeItem("auth_token");
       }
@@ -171,9 +202,21 @@ async function loadHistory(userId: number): Promise<void> {
       const li: HTMLLIElement = document.createElement("li");
       const isWin: boolean = match.result === "win";
       const isDraw: boolean = match.result === "draw";
-      const borderColor: string = isWin ? "border-green-400" : (isDraw ? "border-gray-400" : "border-red-400");
-      const scoreColor: string = isWin ? "text-green-400" : (isDraw ? "text-gray-400" : "text-red-400");
-      const resultText: string = isWin ? "✅ Victoire" : (isDraw ? "⚖️ Match nul" : "❌ Défaite");
+      const borderColor: string = isWin
+        ? "border-green-400"
+        : isDraw
+          ? "border-gray-400"
+          : "border-red-400";
+      const scoreColor: string = isWin
+        ? "text-green-400"
+        : isDraw
+          ? "text-gray-400"
+          : "text-red-400";
+      const resultText: string = isWin
+        ? "✅ Victoire"
+        : isDraw
+          ? "⚖️ Match nul"
+          : "❌ Défaite";
 
       if (isWin) {
         wins++;
@@ -203,25 +246,43 @@ async function loadHistory(userId: number): Promise<void> {
     listenerButtonReplay();
   } catch (error: any) {
     console.error("Error history : ", error);
-    alert("impossible de charger l'historique");
+    showErrorToast("Impossible de charger l'historique");
   }
 }
 
 (window as any).updateWinRate = updateWinRate;
-function updateWinRate(wins: number, draws: number, totalMatches: number): void {
-  const winRateContainer: HTMLElement | null = document.getElementById("win-rate-container");
-  const drawRateContainer: HTMLElement | null = document.getElementById("draw-rate-container");
-  const loseRateContainer: HTMLElement | null = document.getElementById("lose-rate-container");
-  const winRateHeader: HTMLElement | null = document.getElementById("win-rate-header");
-  const drawRateHeader: HTMLElement | null = document.getElementById("draw-rate-header");
-  const loseRateHeader: HTMLElement | null = document.getElementById("lose-rate-header");
+function updateWinRate(
+  wins: number,
+  draws: number,
+  totalMatches: number,
+): void {
+  const winRateContainer: HTMLElement | null =
+    document.getElementById("win-rate-container");
+  const drawRateContainer: HTMLElement | null = document.getElementById(
+    "draw-rate-container",
+  );
+  const loseRateContainer: HTMLElement | null = document.getElementById(
+    "lose-rate-container",
+  );
+  const winRateHeader: HTMLElement | null =
+    document.getElementById("win-rate-header");
+  const drawRateHeader: HTMLElement | null =
+    document.getElementById("draw-rate-header");
+  const loseRateHeader: HTMLElement | null =
+    document.getElementById("lose-rate-header");
   const pieChart: HTMLElement | null = document.getElementById("pie-chart");
 
   winRateHeader?.classList.remove("font-bold", "text-xl");
   drawRateHeader?.classList.remove("font-bold", "text-xl");
   loseRateHeader?.classList.remove("font-bold", "text-xl");
 
-  if (!winRateContainer || !drawRateContainer || !loseRateContainer || !pieChart) return;
+  if (
+    !winRateContainer ||
+    !drawRateContainer ||
+    !loseRateContainer ||
+    !pieChart
+  )
+    return;
 
   // If no matches played, set default text and styles
   if (totalMatches === 0) {
@@ -278,3 +339,4 @@ function listenerButtonReplay(): void {
     }
   });
 }
+

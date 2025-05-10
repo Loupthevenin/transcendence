@@ -4,6 +4,7 @@ import { MatchNode, TournamentInfo } from "@shared/tournament/tournamentInfo";
 import { TournamentSettings } from "@shared/tournament/tournamentSettings";
 import * as TournamentMessages from "@shared/tournament/tournamentMessageTypes";
 import { navigateTo } from "../router";
+import { showErrorToast } from "../components/showNotificationToast";
 
 function createCardTournament(tournament: TournamentInfo): HTMLElement {
   const card: HTMLElement = document.createElement("div");
@@ -88,7 +89,7 @@ async function loadTournaments(): Promise<void> {
 async function updateTournaments(): Promise<void> {
   const token: string | null = localStorage.getItem("auth_token");
   if (!token) {
-    alert("Pas de token !");
+    showErrorToast("Pas de token !");
     return;
   }
 
@@ -181,6 +182,7 @@ async function updateTournaments(): Promise<void> {
     });
   } catch (error: any) {
     console.error("Error loading Tournaments", error);
+    showErrorToast(`Error loading Tournaments ${error}`);
   }
 }
 
@@ -209,6 +211,7 @@ async function setDisplayNameInputs(): Promise<void> {
     }
   } catch (error: any) {
     console.error("Error loading name : ", error);
+    showErrorToast(`Error loading name ${error}`);
   }
 }
 
@@ -335,7 +338,7 @@ export async function tournamentProgress(
 ): Promise<void> {
   const token: string | null = localStorage.getItem("auth_token");
   if (!token) {
-    alert("Pas de token !");
+    showErrorToast("Pas de token !");
     return;
   }
   const params: URLSearchParams = new URLSearchParams(window.location.search);
@@ -367,5 +370,6 @@ export async function tournamentProgress(
     }
   } catch (error: any) {
     console.error("Error tournament progress : ", error);
+    showErrorToast(`Error tournament progress ${error}`);
   }
 }

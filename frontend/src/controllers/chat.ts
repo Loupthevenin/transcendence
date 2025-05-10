@@ -1,13 +1,25 @@
 import { navigateTo } from "../router";
 import { sendMessage, subscribeTo } from "../websocketManager";
 import { getUserInfoFromToken } from "../utils/getUserInfoFromToken";
-import { isNewMsgReceivedMessage, isInviteToGameMessage, NewMsgSendMessage } from "@shared/chat/chatMessageTypes";
+import {
+  isNewMsgReceivedMessage,
+  isInviteToGameMessage,
+  NewMsgSendMessage,
+} from "@shared/chat/chatMessageTypes";
 import { openInviteToGameModal } from "../controllers/InviteGame";
 import { showBlockedUsersModal } from "../controllers/blockedUser";
 import { showPublicProfile } from "../controllers/publicProfile";
-import { loadChatList as fetchChatList, createOrGetChatRoom, loadChatRoomMessages } from "../controllers/chatService";
+import {
+  loadChatList as fetchChatList,
+  createOrGetChatRoom,
+  loadChatRoomMessages,
+} from "../controllers/chatService";
 import { setReadyToPlaySent } from "../utils/chatUtils";
-
+import {
+  showErrorToast,
+  showInfoToast,
+  showSuccessToast,
+} from "../components/showNotificationToast";
 
 let currentMessageList: HTMLUListElement | null = null;
 let currentOtherUserId: number | null = null;
@@ -27,7 +39,9 @@ export function setupChat(container: HTMLElement): void {
     chatApp?.classList.add("hidden");
     notConnected?.classList.remove("hidden");
     searchInput?.classList.add("hidden");
-    container.querySelector("#login-btn")?.addEventListener("click", () => navigateTo("/auth/login"));
+    container
+      .querySelector("#login-btn")
+      ?.addEventListener("click", () => navigateTo("/auth/login"));
     return;
   }
 
@@ -35,7 +49,6 @@ export function setupChat(container: HTMLElement): void {
   notConnected?.classList.add("hidden");
   searchInput?.classList.remove("hidden");
   setReadyToPlaySent(false);
-  
 
   setupSidebarMenu();
   setupDropdownMenu();
@@ -46,7 +59,8 @@ export function setupChat(container: HTMLElement): void {
 
 function setupWebSocketEvents(): void {
   subscribeTo("chat", (data) => {
-    if (isInviteToGameMessage(data)) return openInviteToGameModal(data.from, data.userId);
+    if (isInviteToGameMessage(data))
+      return openInviteToGameModal(data.from, data.userId);
     if (data.type === "startGameRedirect") {
       localStorage.setItem("opponentUuid", data.userId);
       localStorage.setItem("returnTo", window.location.pathname);
@@ -56,17 +70,21 @@ function setupWebSocketEvents(): void {
     if (isNewMsgReceivedMessage(data)) {
       if (data.roomId === currentRoomId && currentMessageList) {
         const li = document.createElement("li");
-        li.className = "self-start bg-[#6d28d9] text-white px-4 py-2 rounded-xl max-w-xs mb-2 break-words";
+        li.className =
+          "self-start bg-[#6d28d9] text-white px-4 py-2 rounded-xl max-w-xs mb-2 break-words";
         li.textContent = data.msg;
         currentMessageList.appendChild(li);
         currentMessageList.scrollTop = currentMessageList.scrollHeight;
         return;
       }
 
-      const chatItem = document.querySelector(`li[data-room-id='${data.roomId}']`);
+      const chatItem = document.querySelector(
+        `li[data-room-id='${data.roomId}']`,
+      );
       if (chatItem && !chatItem.querySelector(".new-msg-badge")) {
         const badge = document.createElement("span");
-        badge.className = "new-msg-badge bg-red-600 text-white text-xs px-2 py-1 rounded-full ml-auto";
+        badge.className =
+          "new-msg-badge bg-red-600 text-white text-xs px-2 py-1 rounded-full ml-auto";
         badge.textContent = "Nouveau";
         chatItem.appendChild(badge);
       }
@@ -84,19 +102,27 @@ function setupSidebarMenu(): void {
 
     const menu = document.createElement("div");
     menu.id = "sidebar-options-menu";
-    menu.className = "absolute right-6 mt-2 w-48 bg-white text-black rounded shadow-lg z-50";
+    menu.className =
+      "absolute right-6 mt-2 w-48 bg-white text-black rounded shadow-lg z-50";
     menu.innerHTML = `<button id="sidebar-manage-blocked-btn" class="w-full text-left px-4 py-2 hover:bg-gray-200">🚫 Gérer mes blocages</button>`;
 
     document.body.appendChild(menu);
 
-    document.getElementById("sidebar-manage-blocked-btn")?.addEventListener("click", () => {
-      menu.remove();
-      showBlockedUsersModal();
-    });
+    document
+      .getElementById("sidebar-manage-blocked-btn")
+      ?.addEventListener("click", () => {
+        menu.remove();
+        showBlockedUsersModal();
+      });
 
-    document.addEventListener("click", (ev) => {
-      if (!menu.contains(ev.target as Node) && ev.target !== sidebarMenuBtn) menu.remove();
-    }, { once: true });
+    document.addEventListener(
+      "click",
+      (ev) => {
+        if (!menu.contains(ev.target as Node) && ev.target !== sidebarMenuBtn)
+          menu.remove();
+      },
+      { once: true },
+    );
   });
 }
 
@@ -123,8 +149,12 @@ function setupDropdownMenu(): void {
 }
 
 function setupSearchInput(): void {
-  const searchInput = document.getElementById("user-search-input") as HTMLInputElement;
-  const resultsContainer = document.getElementById("search-results") as HTMLUListElement;
+  const searchInput = document.getElementById(
+    "user-search-input",
+  ) as HTMLInputElement;
+  const resultsContainer = document.getElementById(
+    "search-results",
+  ) as HTMLUListElement;
 
   if (!searchInput || !resultsContainer) return;
 
@@ -133,17 +163,27 @@ function setupSearchInput(): void {
     if (!query) return (resultsContainer.innerHTML = "");
 
     try {
-      const res = await fetch(`/api/search-user/search?query=${encodeURIComponent(query)}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("auth_token")}` },
-      });
+      const res = await fetch(
+        `/api/search-user/search?query=${encodeURIComponent(query)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+          },
+        },
+      );
       if (!res.ok) throw new Error();
 
-      const users = await res.json() as { id: number; name: string; avatar_url: string }[];
+      const users = (await res.json()) as {
+        id: number;
+        name: string;
+        avatar_url: string;
+      }[];
       resultsContainer.innerHTML = "";
 
       for (const user of users) {
         const li = document.createElement("li");
-        li.className = "flex items-center gap-2 cursor-pointer p-2 rounded hover:bg-[#2a255c]";
+        li.className =
+          "flex items-center gap-2 cursor-pointer p-2 rounded hover:bg-[#2a255c]";
         li.innerHTML = `<img src="${user.avatar_url}" class="w-8 h-8 rounded-full object-cover" /><span>${user.name}</span>`;
 
         li.addEventListener("click", async () => {
@@ -156,7 +196,8 @@ function setupSearchInput(): void {
       }
     } catch (err) {
       console.error("Error searching users", err);
-      resultsContainer.innerHTML = "<li class='text-red-400 px-2'>Erreur de recherche</li>";
+      resultsContainer.innerHTML =
+        "<li class='text-red-400 px-2'>Erreur de recherche</li>";
     }
   });
 }
@@ -171,11 +212,14 @@ async function renderChatList(): Promise<void> {
 
     for (const room of chatrooms) {
       const li = document.createElement("li");
-      li.className = "flex items-center gap-4 p-2 rounded-lg hover:bg-[#2a255c] cursor-pointer transition";
+      li.className =
+        "flex items-center gap-4 p-2 rounded-lg hover:bg-[#2a255c] cursor-pointer transition";
       li.dataset.roomId = room.roomId.toString();
 
       const img = document.createElement("img");
-      img.src = room.otherUserAvatar ?? "https://upload.wikimedia.org/wikipedia/commons/2/2c/Default_pfp.svg";
+      img.src =
+        room.otherUserAvatar ??
+        "https://upload.wikimedia.org/wikipedia/commons/2/2c/Default_pfp.svg";
       img.className = "w-10 h-10 rounded-full object-cover";
       img.alt = "Avatar";
 
@@ -190,7 +234,14 @@ async function renderChatList(): Promise<void> {
       li.appendChild(userInfoDiv);
 
       li.addEventListener("click", () => {
-        openChatWindow(room.roomId, room.otherUserName, room.otherUserEmail, room.otherUserAvatar, room.otherUserId, room.otherUserUuid);
+        openChatWindow(
+          room.roomId,
+          room.otherUserName,
+          room.otherUserEmail,
+          room.otherUserAvatar,
+          room.otherUserId,
+          room.otherUserUuid,
+        );
       });
 
       list.appendChild(li);
@@ -202,11 +253,25 @@ async function renderChatList(): Promise<void> {
 
 async function handleNewChat(receiverId: number): Promise<void> {
   try {
-    const { roomId, otherUserName, otherUserAvatar, otherUserEmail, otherUserId, otherUserUuid } = await createOrGetChatRoom(receiverId);
-    openChatWindow(roomId, otherUserName, otherUserEmail, otherUserAvatar, otherUserId, otherUserUuid);
+    const {
+      roomId,
+      otherUserName,
+      otherUserAvatar,
+      otherUserEmail,
+      otherUserId,
+      otherUserUuid,
+    } = await createOrGetChatRoom(receiverId);
+    openChatWindow(
+      roomId,
+      otherUserName,
+      otherUserEmail,
+      otherUserAvatar,
+      otherUserId,
+      otherUserUuid,
+    );
   } catch (err) {
     console.error("Failed to create or join chatroom", err);
-    alert("Impossible d'ouvrir une conversation");
+    showErrorToast("Impossible d'ouvrir une conversation");
   }
 }
 
@@ -216,7 +281,7 @@ export async function openChatWindow(
   receiverEmail: string,
   avatar_url: string | null,
   otherUserId: number,
-  otherUserUuid: string
+  otherUserUuid: string,
 ): Promise<void> {
   const chatsContainer = document.getElementById("chats");
   if (!chatsContainer) return;
@@ -227,7 +292,8 @@ export async function openChatWindow(
   currentOtherUserUuid = otherUserUuid;
 
   const chatBox = document.createElement("div");
-  chatBox.className = "flex flex-col flex-1 h-full min-h-0 bg-[#1e1b4b] rounded-2xl m-4 p-4 shadow-lg";
+  chatBox.className =
+    "flex flex-col flex-1 h-full min-h-0 bg-[#1e1b4b] rounded-2xl m-4 p-4 shadow-lg";
   chatBox.innerHTML = `
   <div class="flex items-center justify-between mb-4">
       <div class="flex items-center gap-3">
@@ -262,7 +328,9 @@ export async function openChatWindow(
   });
 
   const menuBtn = chatBox.querySelector("#chat-menu-btn") as HTMLButtonElement;
-  const dropdown = chatBox.querySelector("#chat-menu-dropdown") as HTMLDivElement;
+  const dropdown = chatBox.querySelector(
+    "#chat-menu-dropdown",
+  ) as HTMLDivElement;
 
   menuBtn.addEventListener("click", (e) => {
     e.stopPropagation();
@@ -274,14 +342,16 @@ export async function openChatWindow(
     if (currentOtherUserId !== null) showPublicProfile(currentOtherUserId);
   });
 
-  const inviteBtn = chatBox.querySelector("#invite-to-game-btn") as HTMLButtonElement;
+  const inviteBtn = chatBox.querySelector(
+    "#invite-to-game-btn",
+  ) as HTMLButtonElement;
   inviteBtn.addEventListener("click", async () => {
     try {
       const res = await fetch("/api/invite-to-game", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${localStorage.getItem("auth_token")}`,
-          "Content-Type": "application/json"
+          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ targetUserUuid: currentOtherUserUuid }),
       });
@@ -289,29 +359,37 @@ export async function openChatWindow(
       if (!res.ok) {
         const text = await res.text();
         if (res.status === 404 && text.includes("not connected")) {
-          alert("L'utilisateur n'est pas en ligne.");
+          showInfoToast("L'utilisateur n'est pas en ligne.");
         } else {
           throw new Error("Erreur d'invitation");
         }
       } else {
-        alert("Invitation envoyée 🎮");
+        showSuccessToast("Invitation envoyée 🎮");
       }
     } catch (err) {
       console.error("Erreur d'envoi d'invitation:", err);
-      alert("Erreur lors de l'envoi de l'invitation");
+      showErrorToast("Erreur lors de l'envoi de l'invitation");
     }
   });
 
-  const blockBtn = chatBox.querySelector("#block-user-btn") as HTMLButtonElement;
+  const blockBtn = chatBox.querySelector(
+    "#block-user-btn",
+  ) as HTMLButtonElement;
   const updateBlockButton = (isBlocked: boolean) => {
-    blockBtn.textContent = isBlocked ? "✅ Débloquer cet utilisateur" : "🚫 Bloquer cet utilisateur";
+    blockBtn.textContent = isBlocked
+      ? "✅ Débloquer cet utilisateur"
+      : "🚫 Bloquer cet utilisateur";
     blockBtn.className = `w-full text-left px-4 py-2 hover:bg-gray-200 ${isBlocked ? "text-green-500" : "text-red-500"}`;
   };
   const toggleBlock = async (isBlocked: boolean) => {
-    const confirmMsg = isBlocked ? "Veux-tu vraiment débloquer cet utilisateur ?" : "Veux-tu vraiment le bloquer ?";
+    const confirmMsg = isBlocked
+      ? "Veux-tu vraiment débloquer cet utilisateur ?"
+      : "Veux-tu vraiment le bloquer ?";
     if (!confirm(confirmMsg)) return;
     try {
-      const endpoint = isBlocked ? "/api/block-user/unblock" : "/api/block-user";
+      const endpoint = isBlocked
+        ? "/api/block-user/unblock"
+        : "/api/block-user";
       const response = await fetch(endpoint, {
         method: "POST",
         headers: {
@@ -321,18 +399,25 @@ export async function openChatWindow(
         body: JSON.stringify({ targetUserId: currentOtherUserId }),
       });
       if (!response.ok) throw new Error("Erreur blocage/déblocage");
-      alert(isBlocked ? "Utilisateur débloqué ✅" : "Utilisateur bloqué 🚫");
+      showSuccessToast(
+        isBlocked ? "Utilisateur débloqué ✅" : "Utilisateur bloqué 🚫",
+      );
       updateBlockButton(!isBlocked);
       blockBtn.onclick = () => toggleBlock(!isBlocked);
     } catch (err) {
       console.error("Erreur blocage:", err);
-      alert("Erreur lors de l'action de blocage/déblocage");
+      showErrorToast("Erreur lors de l'action de blocage/déblocage");
     }
   };
   try {
-    const res = await fetch(`/api/block-user/is-blocked?targetUserId=${currentOtherUserId}`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("auth_token")}` },
-    });
+    const res = await fetch(
+      `/api/block-user/is-blocked?targetUserId=${currentOtherUserId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+        },
+      },
+    );
     const { blocked } = await res.json();
     updateBlockButton(blocked);
     blockBtn.onclick = () => toggleBlock(blocked);
@@ -343,7 +428,7 @@ export async function openChatWindow(
 
   try {
     const messages = await loadChatRoomMessages(roomId);
-    messages.forEach(msg => {
+    messages.forEach((msg) => {
       const li = document.createElement("li");
       li.textContent = msg.content;
       li.className =
@@ -366,7 +451,7 @@ export async function openChatWindow(
     if (!msg) return;
 
     const user = getUserInfoFromToken();
-    if (!user) return alert("Utilisateur non authentifié");
+    if (!user) return showErrorToast("Utilisateur non authentifié");
 
     const newMessage: NewMsgSendMessage = {
       type: "newMessageSend",
@@ -379,7 +464,8 @@ export async function openChatWindow(
     sendMessage("chat", newMessage);
 
     const li = document.createElement("li");
-    li.className = "self-end bg-[#6366f1] text-white px-4 py-2 rounded-xl max-w-xs mb-2 break-words";
+    li.className =
+      "self-end bg-[#6366f1] text-white px-4 py-2 rounded-xl max-w-xs mb-2 break-words";
     li.textContent = msg;
     list.appendChild(li);
     list.scrollTop = list.scrollHeight;

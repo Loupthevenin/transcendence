@@ -1,3 +1,7 @@
+import {
+  showErrorToast,
+  showSuccessToast,
+} from "../components/showNotificationToast";
 import { navigateTo } from "../router";
 import { disconnectFromServer } from "../websocketManager";
 import { UserProfile } from "./types";
@@ -6,7 +10,7 @@ import { MatchHistory } from "@shared/match/matchHistory";
 async function loadUserProfile(): Promise<void> {
   const token: string | null = localStorage.getItem("auth_token");
   if (!token) {
-    alert("Pas de token !");
+    showErrorToast("Pas de token !");
     return;
   }
   try {
@@ -20,7 +24,7 @@ async function loadUserProfile(): Promise<void> {
     const rawData: any = await res.json();
     if (!res.ok) {
       const errorMsg: string = rawData?.message || "Erreur chargement profile";
-      alert(errorMsg);
+      showErrorToast(errorMsg);
       if (res.status === 401 || res.status === 403) {
         localStorage.removeItem("auth_token");
         disconnectFromServer(true);
@@ -49,7 +53,7 @@ async function loadUserProfile(): Promise<void> {
     }
   } catch (error: any) {
     console.error("Error profile :", error);
-    alert("impossible de charger le profile");
+    showErrorToast(`Impossible de charger le profile`);
   }
 }
 
@@ -59,7 +63,7 @@ async function updateUserProfile(
 ): Promise<any> {
   const token: string | null = localStorage.getItem("auth_token");
   if (!token) {
-    alert("Pas de token !");
+    showErrorToast("Pas de token !");
     return;
   }
   try {
@@ -76,7 +80,7 @@ async function updateUserProfile(
     return await res.json();
   } catch (error: any) {
     console.error("Erreur update :", error);
-    alert("Impossible de mettre à jour le profile");
+    showErrorToast("Impossible de mettre à jour le profile");
   }
 }
 
@@ -127,18 +131,18 @@ function listenerEmail(): void {
       const newEmail: string = input.value.trim();
       const emailRegex: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(newEmail)) {
-        alert("veuillez entrer une adresse email valide.");
+        showErrorToast("Veuillez entrer une adresse email valide.");
         emailElement.textContent = currentEmail;
       } else if (newEmail && newEmail !== currentEmail) {
         const res: any = await updateUserProfile({ email: newEmail }, "email");
         if (res && res.success) {
-          alert(res.message);
+          showSuccessToast(res.message);
           localStorage.removeItem("auth_token");
           setTimeout(() => {
             navigateTo("/auth/login");
-          }, 1500);
+          }, 5000);
         } else {
-          alert(res?.error);
+          showErrorToast(res?.error);
           emailElement.textContent = currentEmail;
         }
       }
@@ -177,7 +181,7 @@ function listenerAvatar(): void {
 
     const token: string | null = localStorage.getItem("auth_token");
     if (!token) {
-      alert("Pas de token !");
+      showErrorToast("Pas de token !");
       return;
     }
     try {
@@ -193,16 +197,17 @@ function listenerAvatar(): void {
       if (!res.ok) {
         const errorMsg: string =
           data?.message || data?.error || "Error update Avatar";
-        alert(errorMsg);
+        showErrorToast(errorMsg);
         return;
       }
 
       if (data.avatarUrl) {
         avatarImg.src = data.avatarUrl;
+        showSuccessToast("Success loading image");
       }
     } catch (error: any) {
       console.error("Erreur update avatar : ", error);
-      alert("Impossible d'update l'avatar");
+      showErrorToast("Impossible d'update l'avatar");
     }
   });
 }
@@ -216,20 +221,38 @@ function formatDate(dateStr: string): string {
   });
 }
 
-function updateWinRate(wins: number, draws: number, totalMatches: number): void {
-  const winRateContainer: HTMLElement | null = document.getElementById("win-rate-container");
-  const drawRateContainer: HTMLElement | null = document.getElementById("draw-rate-container");
-  const loseRateContainer: HTMLElement | null = document.getElementById("lose-rate-container");
-  const winRateHeader: HTMLElement | null = document.getElementById("win-rate-header");
-  const drawRateHeader: HTMLElement | null = document.getElementById("draw-rate-header");
-  const loseRateHeader: HTMLElement | null = document.getElementById("lose-rate-header");
+function updateWinRate(
+  wins: number,
+  draws: number,
+  totalMatches: number,
+): void {
+  const winRateContainer: HTMLElement | null =
+    document.getElementById("win-rate-container");
+  const drawRateContainer: HTMLElement | null = document.getElementById(
+    "draw-rate-container",
+  );
+  const loseRateContainer: HTMLElement | null = document.getElementById(
+    "lose-rate-container",
+  );
+  const winRateHeader: HTMLElement | null =
+    document.getElementById("win-rate-header");
+  const drawRateHeader: HTMLElement | null =
+    document.getElementById("draw-rate-header");
+  const loseRateHeader: HTMLElement | null =
+    document.getElementById("lose-rate-header");
   const pieChart: HTMLElement | null = document.getElementById("pie-chart");
 
   winRateHeader?.classList.remove("font-bold", "text-xl");
   drawRateHeader?.classList.remove("font-bold", "text-xl");
   loseRateHeader?.classList.remove("font-bold", "text-xl");
 
-  if (!winRateContainer || !drawRateContainer || !loseRateContainer || !pieChart) return;
+  if (
+    !winRateContainer ||
+    !drawRateContainer ||
+    !loseRateContainer ||
+    !pieChart
+  )
+    return;
 
   // If no matches played, set default text and styles
   if (totalMatches === 0) {
@@ -268,7 +291,7 @@ function updateWinRate(wins: number, draws: number, totalMatches: number): void 
 async function loadHistory(): Promise<void> {
   const token: string | null = localStorage.getItem("auth_token");
   if (!token) {
-    alert("Pas de token !");
+    showErrorToast("Pas de token !");
     return;
   }
   try {
@@ -283,7 +306,7 @@ async function loadHistory(): Promise<void> {
     if (!res.ok) {
       const errorMsg: string =
         rawData?.message || "Erreur chargement historique";
-      alert(errorMsg);
+      showErrorToast(errorMsg);
       if (res.status === 401 || res.status === 403) {
         localStorage.removeItem("auth_token");
         disconnectFromServer(true);
@@ -306,9 +329,21 @@ async function loadHistory(): Promise<void> {
       const li: HTMLLIElement = document.createElement("li");
       const isWin: boolean = match.result === "win";
       const isDraw: boolean = match.result === "draw";
-      const borderColor: string = isWin ? "border-green-400" : (isDraw ? "border-gray-400" : "border-red-400");
-      const scoreColor: string = isWin ? "text-green-400" : (isDraw ? "text-gray-400" : "text-red-400");
-      const resultText: string = isWin ? "✅ Victoire" : (isDraw ? "⚖️ Match nul" : "❌ Défaite");
+      const borderColor: string = isWin
+        ? "border-green-400"
+        : isDraw
+          ? "border-gray-400"
+          : "border-red-400";
+      const scoreColor: string = isWin
+        ? "text-green-400"
+        : isDraw
+          ? "text-gray-400"
+          : "text-red-400";
+      const resultText: string = isWin
+        ? "✅ Victoire"
+        : isDraw
+          ? "⚖️ Match nul"
+          : "❌ Défaite";
 
       if (isWin) {
         wins++;
@@ -338,7 +373,7 @@ async function loadHistory(): Promise<void> {
     listenerButtonReplay();
   } catch (error: any) {
     console.error("Error history : ", error);
-    alert("impossible de charger l'historique");
+    showErrorToast("Impossible de charger l'historique");
   }
 }
 
@@ -369,7 +404,7 @@ async function listener2FA(container: HTMLElement): Promise<void> {
 
   const token: string | null = localStorage.getItem("auth_token");
   if (!token) {
-    alert("Pas de token !");
+    showErrorToast("Pas de token !");
     return;
   }
 
@@ -382,7 +417,7 @@ async function listener2FA(container: HTMLElement): Promise<void> {
     if (!resStatus.ok) {
       const errorMsg: string =
         dataStatus?.message || dataStatus?.error || "Error check 2FA";
-      alert(errorMsg);
+      showErrorToast(errorMsg);
       return;
     }
     if (dataStatus.require2FA) {
@@ -391,6 +426,7 @@ async function listener2FA(container: HTMLElement): Promise<void> {
     }
   } catch (error: any) {
     console.error(error);
+    showErrorToast(`${error}`);
   }
 
   button2FA.addEventListener("click", async () => {
@@ -406,7 +442,7 @@ async function listener2FA(container: HTMLElement): Promise<void> {
       if (!res.ok) {
         const errorMsg: string =
           data?.message || data?.error || "Error activation 2FA";
-        alert(errorMsg);
+        showErrorToast(errorMsg);
         return;
       }
 
@@ -418,11 +454,11 @@ async function listener2FA(container: HTMLElement): Promise<void> {
           buttonDisable2FA.classList.remove("hidden");
         }
       } else {
-        alert(data?.message);
+        showErrorToast(data?.message);
       }
     } catch (error: any) {
-      alert("Erreur lors de l'activation 2FA");
       console.error(error);
+      showErrorToast("Erreur lors de l'activation 2FA");
     }
   });
 
@@ -439,20 +475,21 @@ async function listener2FA(container: HTMLElement): Promise<void> {
       if (!resDisable.ok) {
         const errorMsg: string =
           dataDisable?.message || dataDisable?.error || "Error disable 2FA";
-        alert(errorMsg);
+        showErrorToast(errorMsg);
         return;
       }
 
       if (dataDisable.success) {
-        alert(dataDisable?.message);
+        showSuccessToast(dataDisable?.message);
         button2FA.classList.remove("hidden");
         buttonDisable2FA.classList.add("hidden");
         qrCodeContainer.innerHTML = "";
       } else {
-        alert(dataDisable?.message);
+        showErrorToast(dataDisable?.message);
       }
     } catch (error: any) {
       console.error(error);
+      showErrorToast(`${error}`);
     }
   });
 }
@@ -466,12 +503,13 @@ function logout(container: HTMLElement): void {
   buttonLogout.addEventListener("click", () => {
     const token: string | null = localStorage.getItem("auth_token");
     if (!token) {
-      alert("Pas de token !");
+      showErrorToast("Pas de token !");
       return;
     }
     localStorage.removeItem("auth_token");
     disconnectFromServer();
     navigateTo("/");
+    showSuccessToast("Logout successful!");
   });
 }
 
