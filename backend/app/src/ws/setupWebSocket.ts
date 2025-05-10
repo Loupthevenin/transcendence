@@ -2,12 +2,13 @@ import WebSocket, { WebSocketServer } from "ws";
 import { IncomingMessage } from "http";
 import jwt from "jsonwebtoken";
 import { Player, DisconnectedPlayer } from "../types/player";
-import { addPlayerToMatchmaking } from "../game/room";
+import { addPlayerToMatchmaking, Room } from "../game/room";
 import {
   isSkinChangeMessage,
   isPaddlePositionMessage,
   isMatchmakingMessage,
   isLeaveGameMessage,
+  isReadyToPlayMessage,
 } from "../shared/game/gameMessageTypes";
 import {
   isCloseMessage,
@@ -42,7 +43,7 @@ import { Tournament } from "../types/tournament";
 
 import { handleChatAndInviteMessages } from "./chatInviteHandler";
 
-// email : Player
+// uuid : Player
 const players: Map<string, Player> = new Map();
 
 // const readyPlayers = new Map<number, Set<number>>();
@@ -144,20 +145,20 @@ export function setupWebSocket(): WebSocketServer {
     ws.on("message", (message: string) => {
 
       try {
-        const msgData: any = JSON.parse(message);       
+        const msgData: any = JSON.parse(message);
 
-        if (handleChatAndInviteMessages(msgData, player, ws)) {
+        if (handleChatAndInviteMessages(msgData, player)) {
           return;
         }
         if (isGameMessage(msgData)) {
           const data: GameMessageData = msgData.data;
-          if (data.type === "readyToPlay") {
-            const opponent = getPlayerByUuid(data.opponentId);
+          if (isReadyToPlayMessage(data)) {
+            const opponent: Player | undefined = getPlayerByUUID(data.opponentId);
             if (!opponent) {
               console.log("[GAME] Opponent not found or not connected");
               return;
             }
-        
+
             // Check if already in a room
             if (player.room || opponent.room) {
               console.warn(`[GAME] Refus de créer une room :`);
@@ -165,16 +166,16 @@ export function setupWebSocket(): WebSocketServer {
               console.warn(`- ${opponent.username} a room ?`, !!opponent.room);
               return;
             }
-        
-            const room = createNewRoom(RoomType.FriendlyMatch );
+
+            const room: Room = createNewRoom(RoomType.FriendlyMatch);
             room.addPlayer(player);
             room.addPlayer(opponent);
             console.log(`[DEBUG] Appel à startGame() pour ${player.username} vs ${opponent.username}`);
-            room.startGame().catch((err) => {
-              console.error("Erreur au démarrage du jeu :", err);
+            room.startGame().catch((error: any) => {
+              console.error("Erreur au démarrage du jeu :", error);
               room.dispose();
             });
-        
+
             return;
           }
           else if (isMatchmakingMessage(data)) {
@@ -302,18 +303,15 @@ setInterval(() => {
   });
 }, 1000); // Run the interval every second
 
-export function getPlayerById(userId: number): Player | null {
-  for (const player of players.values()) {
-    const user = db.prepare("SELECT id FROM users WHERE uuid = ?").get(player.uuid) as { id: number } | undefined;
-    if (user && user.id === userId) {
-      return player;
-    }
-  }
-  return null;
+// Get a player by is Primary Key in the Database
+export function getPlayerById(userId: number): Player | undefined {
+  const user: { uuid: string } | undefined = db
+    .prepare("SELECT uuid FROM users WHERE id = ?")
+    .get(userId) as { uuid: string } | undefined;
+  return user ? getPlayerByUUID(user.uuid) : undefined;
 }
 
-export function getPlayerByUuid(uuid: string): Player | undefined {
+// Get a player by is UUID
+export function getPlayerByUUID(uuid: string): Player | undefined {
   return players.get(uuid);
 }
-
-

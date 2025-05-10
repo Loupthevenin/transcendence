@@ -1,15 +1,21 @@
 import WebSocket from "ws";
 import { Player } from "../types/player";
 import db from "../db/db";
-import { isInviteToGameMessage, isAcceptGameInviteMessage, isNewMsgSendMessage, NewMsgReceivedMessage } from "../shared/chat/chatMessageTypes";
+import {
+  isInviteToGameMessage,
+  isAcceptGameInviteMessage,
+  isNewMsgSendMessage,
+  NewMsgReceivedMessage,
+  InviteToGameMessage,
+  StartGameRedirectMessage
+} from "../shared/chat/chatMessageTypes";
 import { ChatMessageData } from "../shared/messageType";
 import { isBlocked } from "../utils/blocked";
-import { getPlayerById, getPlayerByUuid } from "./setupWebSocket";
+import { getPlayerById, getPlayerByUUID } from "./setupWebSocket";
 
 export function handleChatAndInviteMessages(
   msgData: any,
-  player: Player,
-  ws: WebSocket
+  player: Player
 ): boolean {
   if (isInviteToGameMessage(msgData.data)) {
     const data = msgData.data;
@@ -27,7 +33,7 @@ export function handleChatAndInviteMessages(
           type: "inviteToGame",
           from: player.username,
           userId: data.userId,
-        }
+        } as InviteToGameMessage
       }));
     }
 
@@ -38,7 +44,7 @@ export function handleChatAndInviteMessages(
     console.log(`[INVITEGAME] ${msgData.data.from} a accepté l'invitation.`);
 
     const receiver = player;
-    const inviter = getPlayerByUuid(msgData.data.userId);
+    const inviter = getPlayerByUUID(msgData.data.userId);
 
     if (!inviter) {
       console.error("[INVITEGAME] Inviteur introuvable !");
@@ -52,7 +58,7 @@ export function handleChatAndInviteMessages(
           type: "startGameRedirect",
           from: receiver.username,
           userId: receiver.uuid
-        }
+        } as StartGameRedirectMessage
       }));
     }
 
@@ -63,7 +69,7 @@ export function handleChatAndInviteMessages(
           type: "startGameRedirect",
           from: inviter.username,
           userId: inviter.uuid
-        }
+        } as StartGameRedirectMessage
       }));
     }
 
@@ -106,12 +112,14 @@ export function handleChatAndInviteMessages(
         console.error("Room not found between users");
         return true;
       }
-//  Save the message in database
+
+      //  Save the message in database
       db.prepare(`
         INSERT INTO messages (room_id, sender_id, content)
         VALUES (?, ?, ?)
       `).run(room.id, sender.id, msg);
-//  Notify the receiver if connected
+
+      //  Notify the receiver if connected
       const receiverPlayer = getPlayerById(receiver.id);
       if (receiverPlayer && receiverPlayer.socket?.readyState === WebSocket.OPEN) {
         const newMsg: NewMsgReceivedMessage = {

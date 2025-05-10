@@ -128,8 +128,9 @@ export function isLeaveGameMessage(data: any): data is LeaveGameMessage {
     data.type === "leaveGame"
   );
 }
+
 export type ReadyToPlayMessage = {
-  type: "readyToPlay";
+  readonly type: "readyToPlay";
   opponentId: string;
 };
 

@@ -87,7 +87,7 @@ const routes: Record<string, Route> = {
   "/game": {
     view: () => MainLayout(createGameCanvas()),
     setup: async (root: HTMLElement) => {
-      const opponentUuid = localStorage.getItem("opponentUuid");
+      const opponentUuid: string | null = localStorage.getItem("opponentUuid");
       if (opponentUuid) {
         initOnlineGameSession(opponentUuid);
       }

@@ -606,10 +606,8 @@ export class Room {
 
     this.gameEndedCallback?.(gameResultMessage);
 
-    this.clear();
-    if (this.player1 && this.player1.room === this) this.player1.room = null;
-    if (this.player2 && this.player2.room === this) this.player2.room = null;
-    this.dispose(); // ← suppression de la room
+    //this.clear();
+    this.dispose(); // Dispose the room
   }
 
  

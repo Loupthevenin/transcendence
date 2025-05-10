@@ -17,9 +17,9 @@ export function isNewMsgReceivedMessage(data: any): data is NewMsgReceivedMessag
 
 export type NewMsgSendMessage = {
   readonly type: "newMessageSend";
-  senderEmail: string; // The player's username
+  senderEmail: string; // Sender
   senderName: string;
-  receiverEmail: string; //target
+  receiverEmail: string; // Target
   msg: string; // The message
 };
 
@@ -28,26 +28,26 @@ export function isNewMsgSendMessage(data: any): data is NewMsgSendMessage {
     data &&
     data.type === "newMessageSend" &&
     typeof data.senderEmail === "string" &&
-    typeof data.msg === "string" &&
+    typeof data.senderName === "string" &&
     typeof data.receiverEmail === "string" &&
-    typeof data.senderName === "string" 
+    typeof data.msg === "string"
   );
 }
 
-export type RegisterUserMessage = {
-  readonly type: "registerUsername";
-  email: string;
-  name: string;
-};
+// export type RegisterUserMessage = {
+//   readonly type: "registerUsername";
+//   email: string;
+//   name: string;
+// };
 
-export function isRegisterUserMessage(data: any): data is RegisterUserMessage {
-  return (
-    data &&
-    data.type === "registerUsername" &&
-    typeof data.email === "string" &&
-    typeof data.name === "string"
-  );
-}
+// export function isRegisterUserMessage(data: any): data is RegisterUserMessage {
+//   return (
+//     data &&
+//     data.type === "registerUsername" &&
+//     typeof data.email === "string" &&
+//     typeof data.name === "string"
+//   );
+// }
 
 export type InviteToGameMessage = {
   readonly type: "inviteToGame";
@@ -80,8 +80,18 @@ export function isAcceptGameInviteMessage(data: any): data is AcceptGameInviteMe
 }
 
 export type StartGameRedirectMessage = {
-  type: "startGameRedirect";
+  readonly type: "startGameRedirect";
   from: string;
   userId: string;
   targetUserId: number;
 };
+
+export function isStartGameRedirectMessage(data: any): data is StartGameRedirectMessage {
+  return (
+    data &&
+    data.type === "startGameRedirect" &&
+    typeof data.from === "string" &&
+    typeof data.userId === "string" &&
+    typeof data.targetUserId === "number"
+  );
+}
