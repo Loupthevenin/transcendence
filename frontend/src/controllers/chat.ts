@@ -22,6 +22,9 @@ import {
   showSuccessToast,
 } from "../components/showNotificationToast";
 
+const SELF_MSG_BOX: string = "self-end bg-[#6366f1] text-white px-4 py-2 rounded-xl max-w-xs mb-2 break-words";
+const OTHER_MSG_BOX: string = "self-start bg-[#6d28d9] text-white px-4 py-2 rounded-xl max-w-xs mb-2 break-words";
+
 let currentMessageList: HTMLUListElement | null = null;
 let currentOtherUserId: number | null = null;
 let currentOtherUserUuid: string | null = null;
@@ -71,8 +74,7 @@ function setupWebSocketEvents(): void {
     if (isNewMsgReceivedMessage(data)) {
       if (data.roomId === currentRoomId && currentMessageList) {
         const li = document.createElement("li");
-        li.className =
-          "self-start bg-[#6d28d9] text-white px-4 py-2 rounded-xl max-w-xs mb-2 break-words";
+        li.className = OTHER_MSG_BOX;
         li.textContent = data.msg;
         currentMessageList.appendChild(li);
         currentMessageList.scrollTop = currentMessageList.scrollHeight;
@@ -201,8 +203,8 @@ function setupSearchInput(): void {
 
         resultsContainer.appendChild(li);
       }
-    } catch (err) {
-      console.error("Error searching users", err);
+    } catch (error: any) {
+      console.error("Error searching users", error);
       resultsContainer.innerHTML =
         "<li class='text-red-400 px-2'>Erreur de recherche</li>";
     }
@@ -253,8 +255,8 @@ async function renderChatList(): Promise<void> {
 
       list.appendChild(li);
     }
-  } catch (err) {
-    console.error("Erreur chargement chat list", err);
+  } catch (error: any) {
+    console.error("Erreur chargement chat list", error);
   }
 }
 
@@ -276,8 +278,8 @@ async function handleNewChat(receiverId: number): Promise<void> {
       otherUserId,
       otherUserUuid,
     );
-  } catch (err) {
-    console.error("Failed to create or join chatroom", err);
+  } catch (error: any) {
+    console.error("Failed to create or join chatroom", error);
     showErrorToast("Impossible d'ouvrir une conversation");
   }
 }
@@ -467,13 +469,13 @@ export async function openChatWindow(
       li.textContent = msg.content;
       li.className =
         msg.sender_id === currentOtherUserId
-          ? "self-start bg-[#6d28d9] text-white px-4 py-2 rounded-xl max-w-xs mb-2 break-words"
-          : "self-end bg-[#6366f1] text-white px-4 py-2 rounded-xl max-w-xs mb-2 break-words";
+          ? OTHER_MSG_BOX
+          : SELF_MSG_BOX;
       list.appendChild(li);
     });
     list.scrollTop = list.scrollHeight;
-  } catch (err) {
-    console.error("Erreur chargement messages", err);
+  } catch (error: any) {
+    console.error("Erreur chargement messages", error);
   }
 
   const form = chatBox.querySelector("#chat-form") as HTMLFormElement;
@@ -498,8 +500,7 @@ export async function openChatWindow(
     sendMessage("chat", newMessage);
 
     const li = document.createElement("li");
-    li.className =
-      "self-end bg-[#6366f1] text-white px-4 py-2 rounded-xl max-w-xs mb-2 break-words";
+    li.className = SELF_MSG_BOX;
     li.textContent = msg;
     list.appendChild(li);
     list.scrollTop = list.scrollHeight;
