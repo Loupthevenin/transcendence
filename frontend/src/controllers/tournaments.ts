@@ -10,58 +10,121 @@ function createCardTournament(tournament: TournamentInfo): HTMLElement {
   const card: HTMLElement = document.createElement("div");
   card.className =
     "bg-gray-800 p-6 rounded-lg shadow-xl flex flex-col justify-between";
+
   const isFull: boolean = tournament.playerRegistered >= tournament.maxPlayers;
   const isJoined: boolean = tournament.joined;
   const isClosed: boolean = tournament.status !== "Pending";
-  card.innerHTML = `
-		<div>
-            <h2 class="text-2xl font-semibold text-indigo-300 mb-2">${tournament.name}</h2>
-            <p class="text-purple-200 mb-1">Joueurs inscrits : ${tournament.playerRegistered}/${tournament.maxPlayers}</p>
-            <p class="text-purple-200">Statut : ${tournament.status}</p>
-		<div class="flex flex-col gap-y-2 mt-6">
-		${
-      !isClosed
-        ? `<button class="join-tournament w-full ${isJoined ? "bg-red-600 hover:bg-red-700" : isFull ? "bg-gray-600 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"} text-white py-2 rounded-md transition-all" ${isFull && !isJoined ? "disabled" : ""}>
-				${isJoined ? "Se désinscrire" : isFull ? "Complet" : "Rejoindre"}
-          </button>`
-        : ""
-    }
-		${
-      isClosed
-        ? `<button class="view-progress w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md transition-all">
-              Voir la progression
-			</button>`
-        : ""
-    }
-		${
-      !isClosed && tournament.isOwner && tournament.playerRegistered >= 3
-        ? `<button class="close-tournament w-full bg-red-700 hover:bg-red-800 text-white py-2 rounded-md transition-all">
-					Clôturer le tournoi
-				</button>`
-        : ""
-    }
-		</div>
-        </div>
-		<form class="join-form hidden mt-4 bg-[#2a255c] p-4 rounded-lg shadow-md text-white space-y-4">
-          <div>
-            <label class="block text-sm font-medium mb-2">Nom</label>
-            <input
-              type="text"
-              name="displayName"
-              class="display-name-input w-full px-4 py-2 rounded-lg bg-[#1e1b4b] text-white border border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              required
-            />
-          </div>
-          <div class="flex justify-end gap-4">
-            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-lg">
-              Confirmer
-            </button>
-            <button type="reset" class="cancel-join bg-gray-600 hover:bg-gray-700 text-white font-semibold px-4 py-2 rounded-lg">
-              Annuler
-            </button>
-          </div>
-        </form>
-`;
+
+  // Conteneur principal
+  const mainDiv = document.createElement("div");
+
+  // Titre
+  const h2 = document.createElement("h2");
+  h2.className = "text-2xl font-semibold text-indigo-300 mb-2";
+  h2.textContent = tournament.name;
+
+  // Joueurs inscrits
+  const playersP = document.createElement("p");
+  playersP.className = "text-purple-200 mb-1";
+  playersP.textContent = `Joueurs inscrits : ${tournament.playerRegistered}/${tournament.maxPlayers}`;
+
+  // Statut
+  const statusP = document.createElement("p");
+  statusP.className = "text-purple-200";
+  statusP.textContent = `Statut : ${tournament.status}`;
+
+  mainDiv.appendChild(h2);
+  mainDiv.appendChild(playersP);
+  mainDiv.appendChild(statusP);
+
+  // Boutons actions
+  const buttonsContainer = document.createElement("div");
+  buttonsContainer.className = "flex flex-col gap-y-2 mt-6";
+
+  // Bouton rejoindre / se désinscrire
+  if (!isClosed) {
+    const joinBtn = document.createElement("button");
+    joinBtn.className = `join-tournament w-full ${
+      isJoined
+        ? "bg-red-600 hover:bg-red-700"
+        : isFull
+          ? "bg-gray-600 cursor-not-allowed"
+          : "bg-indigo-600 hover:bg-indigo-700"
+    } text-white py-2 rounded-md transition-all`;
+    joinBtn.textContent = isJoined
+      ? "Se désinscrire"
+      : isFull
+        ? "Complet"
+        : "Rejoindre";
+    if (isFull && !isJoined) joinBtn.disabled = true;
+    buttonsContainer.appendChild(joinBtn);
+  }
+
+  // Bouton voir progression
+  if (isClosed) {
+    const viewBtn = document.createElement("button");
+    viewBtn.className =
+      "view-progress w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md transition-all";
+    viewBtn.textContent = "Voir la progression";
+    buttonsContainer.appendChild(viewBtn);
+  }
+
+  // Bouton clôturer
+  if (!isClosed && tournament.isOwner && tournament.playerRegistered >= 3) {
+    const closeBtn = document.createElement("button");
+    closeBtn.className =
+      "close-tournament w-full bg-red-700 hover:bg-red-800 text-white py-2 rounded-md transition-all";
+    closeBtn.textContent = "Clôturer le tournoi";
+    buttonsContainer.appendChild(closeBtn);
+  }
+
+  mainDiv.appendChild(buttonsContainer);
+  card.appendChild(mainDiv);
+
+  // Formulaire d'inscription
+  const form = document.createElement("form");
+  form.className =
+    "join-form hidden mt-4 bg-[#2a255c] p-4 rounded-lg shadow-md text-white space-y-4";
+
+  const nameDiv = document.createElement("div");
+
+  const nameLabel = document.createElement("label");
+  nameLabel.className = "block text-sm font-medium mb-2";
+  nameLabel.textContent = "Nom";
+
+  const nameInput = document.createElement("input");
+  nameInput.type = "text";
+  nameInput.name = "displayName";
+  nameInput.required = true;
+  nameInput.className =
+    "display-name-input w-full px-4 py-2 rounded-lg bg-[#1e1b4b] text-white border border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400";
+
+  nameDiv.appendChild(nameLabel);
+  nameDiv.appendChild(nameInput);
+
+  const formActions = document.createElement("div");
+  formActions.className = "flex justify-end gap-4";
+
+  const submitBtn = document.createElement("button");
+  submitBtn.type = "submit";
+  submitBtn.className =
+    "bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-lg";
+  submitBtn.textContent = "Confirmer";
+
+  const resetBtn = document.createElement("button");
+  resetBtn.type = "reset";
+  resetBtn.className =
+    "cancel-join bg-gray-600 hover:bg-gray-700 text-white font-semibold px-4 py-2 rounded-lg";
+  resetBtn.textContent = "Annuler";
+
+  formActions.appendChild(submitBtn);
+  formActions.appendChild(resetBtn);
+
+  form.appendChild(nameDiv);
+  form.appendChild(formActions);
+
+  card.appendChild(form);
+
   return card;
 }
 
@@ -303,10 +366,18 @@ function renderMatch(match: MatchNode): HTMLDivElement | null {
         ? "winner"
         : "loser";
 
-  matchBox.innerHTML = `
-  <div class="${p1Class}" title="${p1}">${p1}</div>
-  <div class="${p2Class}" title="${p2}">${p2}</div>
-`;
+  const player1Div: HTMLDivElement = document.createElement("div");
+  player1Div.className = p1Class;
+  player1Div.title = p1;
+  player1Div.textContent = p1;
+
+  const player2Div: HTMLDivElement = document.createElement("div");
+  player2Div.className = p2Class;
+  player2Div.title = p2;
+  player2Div.textContent = p2;
+
+  matchBox.appendChild(player1Div);
+  matchBox.appendChild(player2Div);
 
   wrapper.appendChild(matchBox);
 
