@@ -382,10 +382,15 @@ function setPaddleSkin(paddle: 1 | 2, skinId: string): void {
     // Create a temporary mesh will waiting for server response if there is no mesh
     if (!paddle1Mesh) {
       paddle1Mesh = createDefaultSkin(scene);
+      paddle1Mesh.position = new BABYLON.Vector3(
+        0,
+        GAME_CONSTANT.paddleDepth / 2,
+        GAME_CONSTANT.paddleDefaultZPosition,
+      );
       cachedPaddle1Skin = "";
     }
 
-    if (cachedPaddle1Skin === skinId) {
+    if (cachedPaddle1Skin === skinId && skinId != "") {
       return; // Already have this skin attributed, so do nothing
     }
 
@@ -413,10 +418,15 @@ function setPaddleSkin(paddle: 1 | 2, skinId: string): void {
     // Create a temporary mesh will waiting for server response if there is no mesh
     if (!paddle2Mesh) {
       paddle2Mesh = createDefaultSkin(scene);
+      paddle2Mesh.position = new BABYLON.Vector3(
+        0,
+        GAME_CONSTANT.paddleDepth / 2,
+        -GAME_CONSTANT.paddleDefaultZPosition,
+      );
       cachedPaddle2Skin = "";
     }
 
-    if (cachedPaddle2Skin === skinId) {
+    if (cachedPaddle2Skin === skinId && skinId != "") {
       return; // Already have this skin attributed, so do nothing
     }
 
