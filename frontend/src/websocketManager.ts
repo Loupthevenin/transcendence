@@ -1,33 +1,53 @@
-
 import ERROR_TYPE, { ERROR_MSG } from "@shared/errorType";
 import { isReconnectionMessage } from "@shared/game/gameMessageTypes";
-import { isErrorMessage, ChatMessageData, isChatMessage, GameMessageData, isGameMessage, TournamentMessageData, isTournamentMessage } from "@shared/messageType"
+import {
+  isErrorMessage,
+  ChatMessageData,
+  isChatMessage,
+  GameMessageData,
+  isGameMessage,
+  TournamentMessageData,
+  isTournamentMessage,
+} from "@shared/messageType";
 import { navigateTo } from "./router";
-import { handleGameReconnection, handleTournamentGameLaunch, OnlineGame } from "./game/game";
+import {
+  handleGameReconnection,
+  handleTournamentGameLaunch,
+  OnlineGame,
+} from "./game/game";
 import { isLaunchMatchMessage } from "@shared/tournament/tournamentMessageTypes";
+import { showErrorToast } from "./components/showNotificationToast";
 
 // Define a mapping between event types and their corresponding data types
 type MessageEventMap = {
-  "onConnected": undefined;
-  "onDisconnected": undefined;
-  "game": GameMessageData;
-  "chat": ChatMessageData;
-  "tournament": TournamentMessageData;
+  onConnected: undefined;
+  onDisconnected: undefined;
+  game: GameMessageData;
+  chat: ChatMessageData;
+  tournament: TournamentMessageData;
 };
 
 // Create a type that includes only keys where the mapped type is NOT undefined
 type SendableMessageTypes = {
-  [K in keyof MessageEventMap]: MessageEventMap[K] extends undefined ? never : K
+  [K in keyof MessageEventMap]: MessageEventMap[K] extends undefined
+    ? never
+    : K;
 }[keyof MessageEventMap];
 
 // Callback function type that uses the event map
-type CallbackFunction<T extends keyof MessageEventMap> = (data: MessageEventMap[T]) => void;
+type CallbackFunction<T extends keyof MessageEventMap> = (
+  data: MessageEventMap[T],
+) => void;
 
 // A mapping of event types to their callbacks
-const callbacks: { [K in keyof MessageEventMap]?: Array<CallbackFunction<K>>; } = {};
+const callbacks: { [K in keyof MessageEventMap]?: Array<CallbackFunction<K>> } =
+  {};
 
 // Subscribe function
-export function subscribeTo<K extends keyof MessageEventMap>(msgEventType: K, callback: CallbackFunction<K>): void {
+export function subscribeTo<K extends keyof MessageEventMap>(
+  msgEventType: K,
+  callback: CallbackFunction<K>,
+): void {
   if (!callbacks[msgEventType]) {
     callbacks[msgEventType] = [];
   }
@@ -35,7 +55,10 @@ export function subscribeTo<K extends keyof MessageEventMap>(msgEventType: K, ca
 }
 
 // Unsubscribe function
-export function unsubscribeTo<K extends keyof MessageEventMap>(msgEventType: K, callback: CallbackFunction<K>): void {
+export function unsubscribeTo<K extends keyof MessageEventMap>(
+  msgEventType: K,
+  callback: CallbackFunction<K>,
+): void {
   if (callbacks[msgEventType]) {
     // Find the index of the callback and remove it in place
     const index: number = callbacks[msgEventType].indexOf(callback);
@@ -46,9 +69,14 @@ export function unsubscribeTo<K extends keyof MessageEventMap>(msgEventType: K, 
 }
 
 // Notify function
-function notifySubscribers<K extends keyof MessageEventMap>(msgEventType: K, data: MessageEventMap[K]): void {
+function notifySubscribers<K extends keyof MessageEventMap>(
+  msgEventType: K,
+  data: MessageEventMap[K],
+): void {
   if (callbacks[msgEventType]) {
-    callbacks[msgEventType]!.forEach((callback: CallbackFunction<K>) => callback(data));
+    callbacks[msgEventType]!.forEach((callback: CallbackFunction<K>) =>
+      callback(data),
+    );
   }
 }
 
@@ -67,15 +95,18 @@ export function isConnected(): boolean {
   return socket !== null && socket.readyState === WebSocket.OPEN;
 }
 
-export function sendMessage<K extends SendableMessageTypes>(msgEventType: K, data: MessageEventMap[K]): void {
+export function sendMessage<K extends SendableMessageTypes>(
+  msgEventType: K,
+  data: MessageEventMap[K],
+): void {
   if (!isConnected()) {
     console.error("[WebSocket] Not connected. Cannot send message.");
     return;
   }
 
-  const message: { type: K; data: MessageEventMap[K]; } = {
+  const message: { type: K; data: MessageEventMap[K] } = {
     type: msgEventType,
-    data: data
+    data: data,
   };
   socket!.send(JSON.stringify(message));
 }
@@ -94,7 +125,8 @@ export function connectToServer(): void {
 
   try {
     // Dynamically construct the WebSocket URL to avoid hardcoding
-    const wsProtocol: string = window.location.protocol === "https:" ? "wss://" : "ws://"; // Use 'wss' for secure, 'ws' for non-secure
+    const wsProtocol: string =
+      window.location.protocol === "https:" ? "wss://" : "ws://"; // Use 'wss' for secure, 'ws' for non-secure
     const wsHost: string = window.location.host; // Get the domain and port (e.g., "example.com:443" or "localhost:8080")
     const wsPath: string = "/api/"; // The WebSocket endpoint path on the server
     const wsParams: string = `?token=${token}`; // The WebSocket parameters for the connection to the server
@@ -119,15 +151,16 @@ export function connectToServer(): void {
 
     socket.onmessage = (event: MessageEvent) => {
       try {
-        const parsed: { type: string; data: any; [key: string]: any } = JSON.parse(event.data);
-    
+        const parsed: { type: string; data: any; [key: string]: any } =
+          JSON.parse(event.data);
+
         switch (parsed.type) {
           case "game":
             if (isGameMessage(parsed)) {
               if (isReconnectionMessage(parsed.data)) {
                 console.log("[WebSocket] Reconnection to game in progress...");
                 if (location.pathname !== "/") {
-                  navigateTo("/");// Go to root if not already there
+                  navigateTo("/"); // Go to root if not already there
                 }
                 OnlineGame(false);
                 handleGameReconnection(parsed.data);
@@ -137,7 +170,7 @@ export function connectToServer(): void {
               console.warn("[WebSocket] Invalid game message", parsed.data);
             }
             break;
-    
+
           case "chat":
             if (isChatMessage(parsed)) {
               notifySubscribers("chat", parsed.data);
@@ -145,50 +178,64 @@ export function connectToServer(): void {
               console.warn("[WebSocket] Invalid chat message", parsed.data);
             }
             break;
-    
+
           case "tournament":
             if (isTournamentMessage(parsed)) {
-              // Handle the received 
+              // Handle the received
               if (isLaunchMatchMessage(parsed.data)) {
-                console.log("[WebSocket] Received tournament match launch, preparing game ...");
+                console.log(
+                  "[WebSocket] Received tournament match launch, preparing game ...",
+                );
                 if (location.pathname !== "/") {
-                  navigateTo("/");// Go to root if not already there
+                  navigateTo("/"); // Go to root if not already there
                 }
                 OnlineGame(false);
                 handleTournamentGameLaunch();
               }
-              notifySubscribers("tournament", parsed.data as TournamentMessageData);
+              notifySubscribers(
+                "tournament",
+                parsed.data as TournamentMessageData,
+              );
             } else {
-              console.warn("[WebSocket] Invalid tournament message", parsed.data);
+              console.warn(
+                "[WebSocket] Invalid tournament message",
+                parsed.data,
+              );
             }
             break;
-    
+
           case "error":
             if (isErrorMessage(parsed)) {
               if (parsed.errorType === ERROR_TYPE.CONNECTION_REFUSED) {
                 if (parsed.msg === ERROR_MSG.TOKEN_MISSING_OR_INVALID) {
                   localStorage.removeItem("auth_token");
-                  console.error("[WebSocket] Invalid token: auth_token removed", parsed.msg);
+                  console.error(
+                    "[WebSocket] Invalid token: auth_token removed",
+                    parsed.msg,
+                  );
                 }
                 console.error("[WebSocket] Refused:", parsed.msg);
                 autoReconnectEnabled = false;
               } else {
                 console.error("[WebSocket] Error:", parsed.msg);
+                showErrorToast(`[WebSocket] Error: ${parsed.msg}`);
               }
             } else {
               console.error("[WebSocket] Malformed error message:", parsed);
             }
             break;
-    
+
           default:
             console.warn("[WebSocket] Unknown message type:", parsed.type);
         }
       } catch (error: any) {
-        console.error("[WebSocket] An error occurred while parsing message:", error);
+        console.error(
+          "[WebSocket] An error occurred while parsing message:",
+          error,
+        );
       }
     };
-    
-    
+
     // Handle close
     socket.onclose = () => {
       socket = null;
@@ -229,10 +276,3 @@ function reconnect(): void {
 }
 
 connectToServer();
-
-
-
-
-
-
-

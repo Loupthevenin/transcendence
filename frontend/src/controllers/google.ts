@@ -1,3 +1,7 @@
+import {
+  showErrorToast,
+  showSuccessToast,
+} from "../components/showNotificationToast";
 import { navigateTo } from "../router";
 import { connectToServer } from "../websocketManager";
 
@@ -10,7 +14,7 @@ export function handleGoogle(): void {
       window.location.href = "/api/auth/google";
     } catch (error: any) {
       console.error("Erreur google auth : ", error);
-      alert("Erreur Google OAUTH2");
+      showErrorToast("Erreur Google OAUTH2");
     }
   });
 }
@@ -24,7 +28,7 @@ export function handleGoogleCallback(): void {
   const error: string | null = params.get("error");
 
   if (error) {
-    alert(decodeURIComponent(error));
+    showErrorToast(decodeURIComponent(error));
     navigateTo("/auth/login");
   } else if (token) {
     if (require2FA === "1") {
@@ -34,9 +38,10 @@ export function handleGoogleCallback(): void {
       localStorage.setItem("auth_token", token);
       connectToServer();
       navigateTo("/");
+      showSuccessToast("Login successful!");
     }
   } else {
-    alert("Erreur lors de Google OAUTH");
     navigateTo("/auth/login");
+    showErrorToast("Erreur lors de Google OAUTH2");
   }
 }

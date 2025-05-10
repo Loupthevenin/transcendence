@@ -1,3 +1,7 @@
+import {
+  showErrorToast,
+  showSuccessToast,
+} from "../components/showNotificationToast";
 import { navigateTo } from "../router";
 import { connectToServer } from "../websocketManager";
 
@@ -14,8 +18,8 @@ export function setupTwoFAHandlers(container: HTMLElement): void {
     const tempToken: string | null = localStorage.getItem("temp_token");
 
     if (!tempToken) {
-      alert("Session expirée, reconnecte-toi");
       navigateTo("/auth/login");
+      showErrorToast("Session expirée, reconnecte-toi");
       return;
     }
 
@@ -32,7 +36,7 @@ export function setupTwoFAHandlers(container: HTMLElement): void {
       const data: any = await res.json();
       if (!res.ok) {
         const errorMsg: string = data?.message || data?.error || "Code invalid";
-        alert(errorMsg);
+        showErrorToast(errorMsg);
         return;
       }
 
@@ -40,9 +44,10 @@ export function setupTwoFAHandlers(container: HTMLElement): void {
       localStorage.setItem("auth_token", data.token);
       connectToServer();
       navigateTo("/");
+      showSuccessToast("Login successful!");
     } catch (error: any) {
-      alert("Code 2FA incorrect");
       console.error(error);
+      showErrorToast("Code 2FA incorrect");
     }
   });
 }

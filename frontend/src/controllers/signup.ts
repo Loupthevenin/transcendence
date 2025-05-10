@@ -1,3 +1,4 @@
+import { showErrorToast } from "../components/showNotificationToast";
 import { navigateTo } from "../router";
 import { handleGoogle } from "./google";
 
@@ -24,7 +25,7 @@ export function setupSignupHandlers(container: HTMLElement): void {
     ).value;
 
     if (password != confirm_password) {
-      alert("Les mots de passe en correspondent pas");
+      showErrorToast(`Les mots de passe ne correspondent pas`);
       return;
     }
 
@@ -38,13 +39,13 @@ export function setupSignupHandlers(container: HTMLElement): void {
       const data: any = await res.json();
       if (!res.ok) {
         const errorMsg: string = data?.message || "Error signup";
-        alert(errorMsg);
+        showErrorToast(`${errorMsg}`);
         return;
       }
       navigateTo("/");
     } catch (error: any) {
       console.error("Signup error", error);
-      alert("Une erreur est survenue pendant l'inscription");
+      showErrorToast(`Une erreur est survenue pendant l'inscription ${error}`);
     }
   });
 }
