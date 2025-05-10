@@ -26,7 +26,10 @@ type UpdateBody = {
   avatarUrl?: string;
 };
 
-export async function getData(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+export async function getData(
+  request: FastifyRequest,
+  reply: FastifyReply,
+): Promise<void> {
   const email: string | undefined = request.user?.email;
   if (!email) {
     return reply.status(401).send({ message: "Invalid Token" });
@@ -47,7 +50,10 @@ export async function getData(request: FastifyRequest, reply: FastifyReply): Pro
   return reply.send(updateBody);
 }
 
-export async function getHistory(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+export async function getHistory(
+  request: FastifyRequest,
+  reply: FastifyReply,
+): Promise<void> {
   const uuid: string | undefined = request.user?.uuid;
   if (!uuid) {
     return reply.status(401).send({ message: "Invalid Token" });
@@ -55,7 +61,16 @@ export async function getHistory(request: FastifyRequest, reply: FastifyReply): 
 
   const matches: MatchHistoryRow[] = db
     .prepare(
-      `SELECT * FROM match_history WHERE player_a_uuid = ? OR player_b_uuid = ? ORDER BY date DESC`,
+      `SELECT 
+      mh.*, 
+      ua.name AS player_a_name, 
+      ub.name AS player_b_name
+    FROM match_history mh
+    JOIN users ua ON mh.player_a_uuid = ua.uuid
+    JOIN users ub ON mh.player_b_uuid = ub.uuid
+    WHERE mh.player_a_uuid = ? OR mh.player_b_uuid = ?
+    ORDER BY mh.date DESC
+  `,
     )
     .all(uuid, uuid) as MatchHistoryRow[];
 
@@ -64,18 +79,21 @@ export async function getHistory(request: FastifyRequest, reply: FastifyReply): 
 
     const myScore: number = isPlayerA ? match.score_a : match.score_b;
     const opponentScore: number = isPlayerA ? match.score_b : match.score_a;
-    const opponentName: string = isPlayerA ? match.player_b_name : match.player_a_name;
+    const opponentName: string = isPlayerA
+      ? match.player_b_name
+      : match.player_a_name;
 
     const matchHistory: MatchHistory = {
       uuid: match.uuid,
       date: match.date,
       mode: match.mode,
       opponent: opponentName,
-      result: match.winner === "draw"
-                ? "draw"
-                : match.winner === (isPlayerA ? "A" : "B")
-                  ? "win"
-                  : "lose",
+      result:
+        match.winner === "draw"
+          ? "draw"
+          : match.winner === (isPlayerA ? "A" : "B")
+            ? "win"
+            : "lose",
       score: `${myScore} - ${opponentScore}`,
     };
     return matchHistory;
@@ -104,7 +122,9 @@ export async function setName(
       cleanName,
       email,
     );
-    const user: { uuid: string } = db.prepare(`SELECT uuid FROM users WHERE email = ?`).get(email) as { uuid: string };
+    const user: { uuid: string } = db
+      .prepare(`SELECT uuid FROM users WHERE email = ?`)
+      .get(email) as { uuid: string };
 
     if (user) {
       updateUsername(user.uuid, cleanName);
@@ -120,7 +140,7 @@ export async function setName(
 export async function setEmail(
   request: FastifyRequest<{ Body: UpdateBody }>,
   reply: FastifyReply,
-): Promise<void>  {
+): Promise<void> {
   const oldEmail: string | undefined = request.user?.email;
   if (!oldEmail) {
     return reply.status(404).send({ error: "Invalid Token" });
@@ -170,7 +190,10 @@ export async function setEmail(
   });
 }
 
-export async function setAvatar(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+export async function setAvatar(
+  request: FastifyRequest,
+  reply: FastifyReply,
+): Promise<void> {
   const email: string | undefined = request.user?.email;
   if (!email) {
     return reply.status(404).send({ error: "Invalid Token" });
