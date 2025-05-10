@@ -164,11 +164,17 @@ function setupSearchInput(): void {
     if (!query) return (resultsContainer.innerHTML = "");
 
     try {
+      const token: string | null = localStorage.getItem("auth_token");
+      if (!token) {
+        showErrorToast("Pas de token !");
+        throw new Error("No token");
+      }
+
       const res = await fetch(
         `/api/search-user/search?query=${encodeURIComponent(query)}`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+            Authorization: `Bearer ${token}`,
           },
         },
       );
@@ -348,14 +354,21 @@ export async function openChatWindow(
   ) as HTMLButtonElement;
   inviteBtn.addEventListener("click", async () => {
     try {
+      const token: string | null = localStorage.getItem("auth_token");
+      if (!token) {
+        showErrorToast("Pas de token !");
+        throw new Error("No token");
+      }
+
       const res = await fetch("/api/invite-to-game", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ targetUserUuid: currentOtherUserUuid }),
       });
+
       console.log(">> Envoi invitation à :", currentOtherUserUuid);
       if (!res.ok) {
         const text = await res.text();
@@ -367,8 +380,8 @@ export async function openChatWindow(
       } else {
         showSuccessToast("Invitation envoyée 🎮");
       }
-    } catch (err) {
-      console.error("Erreur d'envoi d'invitation:", err);
+    } catch (error: any) {
+      console.error("Erreur d'envoi d'invitation:", error);
       showErrorToast("Erreur lors de l'envoi de l'invitation");
     }
   });
@@ -376,53 +389,73 @@ export async function openChatWindow(
   const blockBtn = chatBox.querySelector(
     "#block-user-btn",
   ) as HTMLButtonElement;
+
   const updateBlockButton = (isBlocked: boolean) => {
     blockBtn.textContent = isBlocked
       ? "✅ Débloquer cet utilisateur"
       : "🚫 Bloquer cet utilisateur";
     blockBtn.className = `w-full text-left px-4 py-2 hover:bg-gray-200 ${isBlocked ? "text-green-500" : "text-red-500"}`;
   };
+
   const toggleBlock = async (isBlocked: boolean) => {
     const confirmMsg = isBlocked
       ? "Veux-tu vraiment débloquer cet utilisateur ?"
       : "Veux-tu vraiment le bloquer ?";
     if (!confirm(confirmMsg)) return;
+
     try {
+      const token: string | null = localStorage.getItem("auth_token");
+      if (!token) {
+        showErrorToast("Pas de token !");
+        throw new Error("No token");
+      }
+
       const endpoint = isBlocked
         ? "/api/block-user/unblock"
         : "/api/block-user";
+
       const response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ targetUserId: currentOtherUserId }),
       });
+
       if (!response.ok) throw new Error("Erreur blocage/déblocage");
       showSuccessToast(
         isBlocked ? "Utilisateur débloqué ✅" : "Utilisateur bloqué 🚫",
       );
+
       updateBlockButton(!isBlocked);
       blockBtn.onclick = () => toggleBlock(!isBlocked);
-    } catch (err) {
-      console.error("Erreur blocage:", err);
+    } catch (error: any) {
+      console.error("Erreur blocage:", error);
       showErrorToast("Erreur lors de l'action de blocage/déblocage");
     }
   };
+
   try {
+    const token: string | null = localStorage.getItem("auth_token");
+    if (!token) {
+      showErrorToast("Pas de token !");
+      throw new Error("No token");
+    }
+
     const res = await fetch(
       `/api/block-user/is-blocked?targetUserId=${currentOtherUserId}`,
       {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+          Authorization: `Bearer ${token}`,
         },
       },
     );
+
     const { blocked } = await res.json();
     updateBlockButton(blocked);
     blockBtn.onclick = () => toggleBlock(blocked);
-  } catch (err) {
+  } catch (error: any) {
     updateBlockButton(false);
     blockBtn.onclick = () => toggleBlock(false);
   }
