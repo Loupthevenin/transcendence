@@ -18,6 +18,7 @@ import {
   EMAIL_USER,
   EMAIL_PASS,
 } from "../config";
+import { updateUsername } from "../ws/setupWebSocket";
 
 type UpdateBody = {
   name?: string;
@@ -103,6 +104,11 @@ export async function setName(
       cleanName,
       email,
     );
+    const user: { uuid: string } = db.prepare(`SELECT uuid FROM users WHERE email = ?`).get(email) as { uuid: string };
+
+    if (user) {
+      updateUsername(user.uuid, cleanName);
+    }
 
     return reply.send({ success: true, updated: cleanName });
   } catch (error: any) {
