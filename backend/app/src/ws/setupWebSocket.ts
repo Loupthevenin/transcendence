@@ -177,23 +177,11 @@ export function setupWebSocket(): WebSocketServer {
             });
 
             return;
-          }
-          else if (isMatchmakingMessage(data)) {
-            if (!player.room) {
-              console.log(`[Matchmaking] : ${player.username} (${playerUUID})`);
-              addPlayerToMatchmaking(player);
-            } else {
-              console.warn(`[Matchmaking ignoré] ${player.username} est déjà dans une room (${player.room.getId()})`);
-            }
-            return;
-          }
-
-          if (isLeaveGameMessage(data)) {
+          } else if (isLeaveGameMessage(data)) {
             if (player.room) {
               player.room.removePlayer(player);
             }
-          }
-          else if (isMatchmakingMessage(data)) {
+          } else if (isMatchmakingMessage(data)) {
             // Check if the player is already in a room
             if (player.room) {
               sendErrorMessage(ws, ERROR_MSG.ALREADY_IN_ROOM, ERROR_TYPE.MATCHMAKING_REFUSED);
