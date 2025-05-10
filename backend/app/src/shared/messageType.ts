@@ -43,9 +43,9 @@ export function isGameMessage(data: any): data is GameMessage {
 }
 
 export type ChatMessageData =
-	| ChatMessages.NewMsgReceivedMessage
-	| ChatMessages.NewMsgSendMessage
-  | ChatMessages.RegisterUserMessage
+  | ChatMessages.NewMsgReceivedMessage
+  | ChatMessages.NewMsgSendMessage
+  //| ChatMessages.RegisterUserMessage
   | ChatMessages.InviteToGameMessage
   | ChatMessages.AcceptGameInviteMessage
   | ChatMessages.StartGameRedirectMessage;

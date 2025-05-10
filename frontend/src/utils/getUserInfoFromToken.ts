@@ -1,6 +1,5 @@
 import { jwtDecode } from "jwt-decode";
 
-
 type JwtPayload = {
   email: string;
   name: string;
@@ -14,9 +13,9 @@ export function getUserInfoFromToken(): { email: string; name: string } | null {
 
   try {
     const decoded = jwtDecode<JwtPayload>(token);
-    return {email: decoded.email, name: decoded.name };
-  } catch (err) {
-    console.error("Invalid JWT", err);
+    return { email: decoded.email, name: decoded.name };
+  } catch (error: any) {
+    console.error("Invalid JWT", error);
     return null;
   }
 }

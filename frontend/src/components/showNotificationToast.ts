@@ -1,7 +1,7 @@
 type ToastType = "info" | "success" | "error";
 
-const TOAST_DURATION = 4000;
-const FADE_OUT_DURATION = 500;
+const TOAST_DURATION: number = 4000;
+const FADE_OUT_DURATION: number = 500;
 
 const TOAST_STYLES: Record<ToastType, string> = {
   info: "toast-info",
@@ -30,6 +30,5 @@ function showToast(message: string, type: ToastType = "info"): void {
 }
 
 export const showInfoToast = (message: string) => showToast(message, "info");
-export const showSuccessToast = (message: string) =>
-  showToast(message, "success");
+export const showSuccessToast = (message: string) => showToast(message, "success");
 export const showErrorToast = (message: string) => showToast(message, "error");

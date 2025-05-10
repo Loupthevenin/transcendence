@@ -5,6 +5,7 @@ import {
   isNewMsgReceivedMessage,
   isInviteToGameMessage,
   NewMsgSendMessage,
+  isStartGameRedirectMessage,
 } from "@shared/chat/chatMessageTypes";
 import { openInviteToGameModal } from "../controllers/InviteGame";
 import { showBlockedUsersModal } from "../controllers/blockedUser";
@@ -61,7 +62,7 @@ function setupWebSocketEvents(): void {
   subscribeTo("chat", (data) => {
     if (isInviteToGameMessage(data))
       return openInviteToGameModal(data.from, data.userId);
-    if (data.type === "startGameRedirect") {
+    if (isStartGameRedirectMessage(data)) {
       localStorage.setItem("opponentUuid", data.userId);
       localStorage.setItem("returnTo", window.location.pathname);
       navigateTo("/game");

@@ -1,6 +1,6 @@
-let alreadySentReadyToPlay = false;
+let alreadySentReadyToPlay: boolean = false;
 
-export function setReadyToPlaySent(val: boolean) {
+export function setReadyToPlaySent(val: boolean): void {
   alreadySentReadyToPlay = val;
 }
 

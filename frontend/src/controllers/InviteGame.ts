@@ -5,6 +5,7 @@ import { GameMessageData } from "@shared/messageType";
 import { createGameCanvas, initGameEnvironment } from "../game/game";
 import { navigateTo } from "../router";
 import { hasSentReadyToPlay, setReadyToPlaySent } from "../utils/chatUtils";
+import { AcceptGameInviteMessage } from "@shared/chat/chatMessageTypes";
 
 let gameAlreadyStarted = false;
 
@@ -39,7 +40,7 @@ export function openInviteToGameModal(fromName: string, userId: string): void {
       type: "gameInviteAccepted",
       from: fromName,
       userId,
-    });
+    } as AcceptGameInviteMessage);
     localStorage.setItem("opponentUuid", userId);
     localStorage.setItem("returnTo", window.location.pathname);
   

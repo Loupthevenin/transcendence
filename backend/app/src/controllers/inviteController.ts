@@ -1,7 +1,8 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import { getPlayerByUuid } from "../ws/setupWebSocket";
+import { getPlayerByUUID } from "../ws/setupWebSocket";
 import db from "../db/db";
 import { requireToken } from "../hook/requireToken";
+import { InviteToGameMessage } from "../shared/chat/chatMessageTypes";
 
 type InviteToGameBody = {
   targetUserUuid: string;
@@ -16,7 +17,7 @@ export async function invite( request: FastifyRequest<{ Body: InviteToGameBody }
   const userRow = db.prepare("SELECT uuid FROM users WHERE uuid = ?").get(targetUserUuid) as { uuid: string } | undefined;
   if (!userRow) return reply.status(404).send("User not found");
 
-  const receiver = getPlayerByUuid(userRow.uuid);
+  const receiver = getPlayerByUUID(userRow.uuid);
   if (!receiver) return reply.status(404).send("User not connected");
 
   if (receiver.socket?.readyState === WebSocket.OPEN) {
@@ -28,7 +29,7 @@ export async function invite( request: FastifyRequest<{ Body: InviteToGameBody }
           from: request.user.name,
           userId: request.user.uuid,
           targetUserId: userRow.uuid,
-        },
+        } as InviteToGameMessage,
       })
     );
   }

@@ -1037,7 +1037,7 @@ export function OnlineGame(autoMatchmaking: boolean = true): void {
   resetGame();
 
   hideSkinSelector();
-  localSkinId = getSelectedSkinId() || "1";
+  localSkinId = getSelectedSkinId();
   setPaddleSkin(1, localSkinId);
 
   registerToGameMessages();
