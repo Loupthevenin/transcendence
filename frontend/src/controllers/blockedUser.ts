@@ -65,15 +65,23 @@ export async function showBlockedUsersModal(): Promise<void> {
       const userDiv = document.createElement("div");
       userDiv.className = "flex items-center justify-between";
 
-      userDiv.innerHTML = `
+      const tempWrapper: HTMLDivElement = document.createElement("div");
+      tempWrapper.innerHTML = `
           <div class="flex items-center gap-4">
             <img src="${user.avatar_url ?? "https://upload.wikimedia.org/wikipedia/commons/2/2c/Default_pfp.svg"}" class="w-10 h-10 rounded-full object-cover" alt="Avatar">
-            <span class="font-semibold">${user.name}</span>
+            <span class="font-semibold"></span>
           </div>
           <button class="unblock-btn bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded" data-user-id="${user.id}">
             Débloquer
           </button>
         `;
+
+      const span = tempWrapper.querySelector("span");
+      if (span) span.textContent = user.name;
+
+      while (tempWrapper.firstChild) {
+        userDiv.appendChild(tempWrapper.firstChild);
+      }
 
       listContainer.appendChild(userDiv);
     }
@@ -152,4 +160,3 @@ export async function refreshBlockButtons(targetUuid: string) {
     menuBtn.dataset.blocked = String(blocked);
   }
 }
-

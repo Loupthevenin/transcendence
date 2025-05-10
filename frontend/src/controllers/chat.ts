@@ -22,8 +22,10 @@ import {
   showSuccessToast,
 } from "../components/showNotificationToast";
 
-const SELF_MSG_BOX: string = "self-end bg-[#6366f1] text-white px-4 py-2 rounded-xl max-w-xs mb-2 break-words";
-const OTHER_MSG_BOX: string = "self-start bg-[#6d28d9] text-white px-4 py-2 rounded-xl max-w-xs mb-2 break-words";
+const SELF_MSG_BOX: string =
+  "self-end bg-[#6366f1] text-white px-4 py-2 rounded-xl max-w-xs mb-2 break-words";
+const OTHER_MSG_BOX: string =
+  "self-start bg-[#6d28d9] text-white px-4 py-2 rounded-xl max-w-xs mb-2 break-words";
 
 let currentMessageList: HTMLUListElement | null = null;
 let currentOtherUserId: number | null = null;
@@ -232,12 +234,19 @@ async function renderChatList(): Promise<void> {
       img.className = "w-10 h-10 rounded-full object-cover";
       img.alt = "Avatar";
 
-      const userInfoDiv = document.createElement("div");
+      const userInfoDiv: HTMLDivElement = document.createElement("div");
       userInfoDiv.className = "flex flex-col";
-      userInfoDiv.innerHTML = `
-        <span class="font-semibold">${room.otherUserName}</span>
-        <span class="text-xs text-gray-400">${new Date(room.lastMessageAt).toLocaleString()}</span>
-      `;
+
+      const nameSpan: HTMLSpanElement = document.createElement("span");
+      nameSpan.className = "font-semibold";
+      nameSpan.textContent = room.otherUserName;
+
+      const dateSpan: HTMLSpanElement = document.createElement("span");
+      dateSpan.className = "text-xs text-gray-400";
+      dateSpan.textContent = new Date(room.lastMessageAt).toLocaleString();
+
+      userInfoDiv.appendChild(nameSpan);
+      userInfoDiv.appendChild(dateSpan);
 
       li.appendChild(img);
       li.appendChild(userInfoDiv);
@@ -300,14 +309,16 @@ export async function openChatWindow(
   currentOtherUserId = otherUserId;
   currentOtherUserUuid = otherUserUuid;
 
-  const chatBox = document.createElement("div");
+  const chatBox: HTMLDivElement = document.createElement("div");
   chatBox.className =
     "flex flex-col flex-1 h-full min-h-0 bg-[#1e1b4b] rounded-2xl m-4 p-4 shadow-lg";
-  chatBox.innerHTML = `
+
+  const tempWrapper: HTMLDivElement = document.createElement("div");
+  tempWrapper.innerHTML = `
   <div class="flex items-center justify-between mb-4">
       <div class="flex items-center gap-3">
         <img id="chat-avatar" class="w-10 h-10 rounded-full object-cover cursor-pointer" src="${avatar_url ?? "https://upload.wikimedia.org/wikipedia/commons/2/2c/Default_pfp.svg"}" alt="Avatar">
-        <h2 id="chat-username" class="text-lg font-semibold">${otherUserName}</h2>
+        <h2 id="chat-username" class="text-lg font-semibold"></h2>
       </div>
       <div class="relative">
         <button id="chat-menu-btn" class="text-xl">⋮</button>
@@ -324,6 +335,14 @@ export async function openChatWindow(
     <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700">Send</button>
   </form>
   `;
+
+  const usernameElement =
+    tempWrapper.querySelector<HTMLHeadingElement>("#chat-username");
+  if (usernameElement) usernameElement.textContent = otherUserName;
+
+  while (tempWrapper.firstChild) {
+    chatBox.appendChild(tempWrapper.firstChild);
+  }
 
   chatsContainer.appendChild(chatBox);
   const list = chatBox.querySelector("#chat-messages") as HTMLUListElement;
@@ -468,9 +487,7 @@ export async function openChatWindow(
       const li = document.createElement("li");
       li.textContent = msg.content;
       li.className =
-        msg.sender_id === currentOtherUserId
-          ? OTHER_MSG_BOX
-          : SELF_MSG_BOX;
+        msg.sender_id === currentOtherUserId ? OTHER_MSG_BOX : SELF_MSG_BOX;
       list.appendChild(li);
     });
     list.scrollTop = list.scrollHeight;
