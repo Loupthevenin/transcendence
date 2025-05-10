@@ -353,19 +353,43 @@ async function loadHistory(): Promise<void> {
       totalMatches++;
 
       li.className = `p-4 rounded-lg bg-[#2a255c] shadow border-l-4 ${borderColor}`;
-      li.innerHTML = `
-      <div class="flex justify-between items-center">
-        <div>
-          <p class="text-sm text-purple-300 mb-1">${formatDate(match.date)}</p>
-          <p class="font-semibold">${match.mode} vs ${match.opponent}</p>
-          <p class="text-sm">${resultText}</p>
-        </div>
-        <div class="text-xl font-bold ${scoreColor}">${match.score}</div>
-		<button class="replay-button bg-indigo-500 hover:bg-indigo-600 text-white text-sm px-2 py-1 rounded-lg" data-uuid="${match.uuid}">
-        🔁 Replay
-		</button>
-      </div>
-	`;
+
+      const container: HTMLDivElement = document.createElement("div");
+      container.className = "flex justify-between items-center";
+
+      const left: HTMLDivElement = document.createElement("div");
+
+      const dateP: HTMLElement = document.createElement("p");
+      dateP.className = "text-sm text-purple-300 mb-1";
+      dateP.textContent = formatDate(match.date);
+
+      const opponentP: HTMLElement = document.createElement("p");
+      opponentP.className = "match-opponent font-semibold";
+      opponentP.textContent = `${match.mode} vs ${match.opponent}`;
+
+      const resultP: HTMLElement = document.createElement("p");
+      resultP.className = "text-sm";
+      resultP.textContent = resultText;
+
+      left.appendChild(dateP);
+      left.appendChild(opponentP);
+      left.appendChild(resultP);
+
+      const scoreDiv: HTMLDivElement = document.createElement("div");
+      scoreDiv.className = `text-xl font-bold ${scoreColor}`;
+      scoreDiv.textContent = match.score;
+
+      const button: HTMLButtonElement = document.createElement("button");
+      button.className =
+        "replay-button bg-indigo-500 hover:bg-indigo-600 text-white text-sm px-2 py-1 rounded-lg";
+      button.setAttribute("data-uuid", match.uuid);
+      button.textContent = "🔁 Replay";
+
+      container.appendChild(left);
+      container.appendChild(scoreDiv);
+      container.appendChild(button);
+
+      li.appendChild(container);
       historyList.appendChild(li);
     });
 
