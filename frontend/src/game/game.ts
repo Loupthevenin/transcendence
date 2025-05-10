@@ -8,7 +8,12 @@ import {
   disableSpecularOnMeshes,
 } from "@shared/game/gameElements";
 import { updateBallPosition, resetBall } from "@shared/game/ball";
-import { INPUT, PaddleDraggingData, handleAIInput, handlePlayerInput } from "@shared/inputHandler";
+import {
+  INPUT,
+  PaddleDraggingData,
+  handleAIInput,
+  handlePlayerInput,
+} from "@shared/inputHandler";
 import {
   SkinChangeMessage,
   isSkinChangeMessage,
@@ -563,8 +568,21 @@ function displayGameResult(gameResult: GameResultMessage): void {
     bg-[#2a255c] rounded-xl shadow-2xl max-w-xl w-full
   `;
 
-  content.innerHTML = `
-      <h2 class="text-4xl font-bold text-green-400 animate-bounce">🎉 Victoire de <span class="text-yellow-400">${gameResult.winner}</span> !</h2>
+  const h2: HTMLElement = document.createElement("h2");
+  h2.className = "text-4xl font-bold text-green-400 animate-bounce";
+  h2.textContent = "🎉 Victoire de ";
+
+  const spanWinner: HTMLSpanElement = document.createElement("span");
+  spanWinner.className = "text-yellow-400";
+  spanWinner.textContent = gameResult.winner;
+
+  h2.appendChild(spanWinner);
+  h2.append(" !");
+
+  content.appendChild(h2);
+
+  const tempWrapper: HTMLDivElement = document.createElement("div");
+  tempWrapper.innerHTML = `
       <p class="text-xl">Score final : <span class="font-semibold">${gameResult.p1Score} - ${gameResult.p2Score}</span></p>
 
       <div class="bg-[#2a255c] p-4 rounded-lg shadow-lg w-full max-w-md">
@@ -581,6 +599,10 @@ function displayGameResult(gameResult: GameResultMessage): void {
       Retour au menu
     </button>
 `;
+  while (tempWrapper.firstChild) {
+    content.appendChild(tempWrapper.firstChild);
+  }
+
   overlay.appendChild(content);
   document.body.appendChild(overlay);
 
@@ -599,7 +621,8 @@ function displayGameResult(gameResult: GameResultMessage): void {
 }
 
 function deleteGameResult(): void {
-  const gameResult: HTMLElement | null = document.getElementById("game-result-screen");
+  const gameResult: HTMLElement | null =
+    document.getElementById("game-result-screen");
   if (gameResult) {
     gameResult.remove();
   }
@@ -961,7 +984,7 @@ export async function initGameEnvironment(): Promise<void> {
       loadingScreen.remove(); // Delete the loading screen
     }
     loadingScreen = null;
-    console.log("All loaded, showing canvas") /// debug
+    console.log("All loaded, showing canvas"); /// debug
     if (canvas) {
       canvas.style.visibility = "visible"; // Show the game canvas
     }
