@@ -27,8 +27,6 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS match_history (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   uuid TEXT NOT NULL UNIQUE,
-  player_a_name TEXT NOT NULL,
-  player_b_name TEXT NOT NULL,
   player_a_uuid TEXT NOT NULL,
   player_b_uuid TEXT NOT NULL,
   score_a INTEGER NOT NULL,

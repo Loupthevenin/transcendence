@@ -47,7 +47,9 @@ export function createNewRoom(type: RoomType): Room {
 export function addPlayerToMatchmaking(player: Player): void {
   // Check for an available room of type Matchmaking
   if (player.room) {
-    console.warn(`[addPlayerToMatchmaking] ${player.username} est déjà dans une room (${player.room.getId()})`);
+    console.warn(
+      `[addPlayerToMatchmaking] ${player.username} est déjà dans une room (${player.room.getId()})`,
+    );
     return;
   }
   for (const [, room] of rooms) {
@@ -94,7 +96,8 @@ export class Room {
 
   private scoreToWin: number = GAME_CONSTANT.defaultScoreToWin;
 
-  private gameEndedCallback?: (gameResult: GameResultMessage) => void = undefined;
+  private gameEndedCallback?: (gameResult: GameResultMessage) => void =
+    undefined;
 
   public constructor(type: RoomType) {
     this.id = `room-${Room.roomCounter++}`;
@@ -180,7 +183,9 @@ export class Room {
   /**
    * @param gameEndedCallback The callback to call when the game ends.
    */
-  public setGameEndedCallback(gameEndedCallback: (gameResult: GameResultMessage) => void): void {
+  public setGameEndedCallback(
+    gameEndedCallback: (gameResult: GameResultMessage) => void,
+  ): void {
     this.gameEndedCallback = gameEndedCallback;
   }
 
@@ -382,10 +387,7 @@ export class Room {
    * Sends a message to both players.
    * @param message The message to send.
    */
-  public sendMessage(
-    msg: string,
-    excludedPlayerUUID?: string[],
-  ): void {
+  public sendMessage(msg: string, excludedPlayerUUID?: string[]): void {
     if (
       this.player1 &&
       this.isPlayerAlive(this.player1) &&
@@ -427,9 +429,13 @@ export class Room {
       if (this.gameLaunched) return reject("Game already started");
       if (!this.isFull()) return reject("Room is not full");
       if (!this.isPlayerAlive(this.player1))
-        return reject("Somehow the player 1 disconnected before the game start");
+        return reject(
+          "Somehow the player 1 disconnected before the game start",
+        );
       if (!this.isPlayerAlive(this.player2))
-        return reject("Somehow the player 2 disconnected before the game start");
+        return reject(
+          "Somehow the player 2 disconnected before the game start",
+        );
 
       this.gameLaunched = true;
 
@@ -591,7 +597,8 @@ export class Room {
     } else {
       winnerId = this.gameData.p1Score > this.gameData.p2Score ? 1 : 2;
     }
-    this.winner = winnerId === -1 ? "" : (this.getPlayer(winnerId)?.username ?? "");
+    this.winner =
+      winnerId === -1 ? "" : (this.getPlayer(winnerId)?.username ?? "");
 
     const gameResultMessage: GameResultMessage = {
       type: "gameResult",
@@ -610,7 +617,6 @@ export class Room {
     this.dispose(); // Dispose the room
   }
 
- 
   /**
    * Save the game result in blockchain
    */
@@ -653,18 +659,17 @@ export class Room {
 
     const uuid: string = uuidv4();
     // Save the match replay
-    this.replayData.gameDuration = this.gameStats.gameEndTime - this.gameStats.gameStartTime;
+    this.replayData.gameDuration =
+      this.gameStats.gameEndTime - this.gameStats.gameStartTime;
     saveReplayDataToFile(this.replayData, uuid);
 
     // Save the match result in the database
     db.prepare(
       `INSERT INTO match_history (
-      uuid, player_a_name, player_b_name, player_a_uuid, player_b_uuid, score_a, score_b, winner, mode
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      uuid, player_a_uuid, player_b_uuid, score_a, score_b, winner, mode
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
     ).run(
       uuid,
-      this.player1?.username ?? "", // put empty string by default if the player is null
-      this.player2?.username ?? "",
       this.player1?.uuid ?? "", // same for uuid
       this.player2?.uuid ?? "",
       this.gameData.p1Score,
@@ -689,4 +694,3 @@ export class Room {
     rooms.delete(this.id);
   }
 }
-
