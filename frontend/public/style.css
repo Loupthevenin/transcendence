@@ -1,8 +1,8 @@
 @import "tailwindcss";
-@import "./sidebar.css";
-@import "./google.css";
-@import "./tournaments.css";
-@import "./toastNotification.css";
+@import "./styles/sidebar.css";
+@import "./styles/google.css";
+@import "./styles/tournaments.css";
+@import "./styles/toastNotification.css";
 
 * {
   box-sizing: border-box;
