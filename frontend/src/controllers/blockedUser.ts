@@ -35,9 +35,15 @@ export async function showBlockedUsersModal(): Promise<void> {
   ) as HTMLDivElement;
 
   try {
+    const token: string | null = localStorage.getItem("auth_token");
+    if (!token) {
+      showErrorToast("Pas de token !");
+      throw new Error("No token");
+    }
+
     const res = await fetch("/api/block-user", {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+        Authorization: `Bearer ${token}`,
       },
     });
 
@@ -85,11 +91,17 @@ export async function showBlockedUsersModal(): Promise<void> {
           if (!confirmed) return;
 
           try {
+            const token: string | null = localStorage.getItem("auth_token");
+            if (!token) {
+              showErrorToast("Pas de token !");
+              throw new Error("No token");
+            }
+
             const unblockRes = await fetch("/api/block-user/unblock", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+                Authorization: `Bearer ${token}`,
               },
               body: JSON.stringify({ targetUserId: Number(userId) }),
             });
@@ -103,14 +115,14 @@ export async function showBlockedUsersModal(): Promise<void> {
               listContainer.innerHTML =
                 "<p class='text-center text-gray-500'>Aucun utilisateur bloqué.</p>";
             }
-          } catch (err) {
-            console.error("Error unblocking user", err);
+          } catch (error: any) {
+            console.error("Error unblocking user", error);
             showErrorToast("Erreur lors du déblocage.");
           }
         });
       });
-  } catch (err) {
-    console.error("Error loading blocked users", err);
+  } catch (error: any) {
+    console.error("Error loading blocked users", error);
     showErrorToast("Erreur de chargement.");
     listContainer.innerHTML =
       "<p class='text-center text-red-500'>Erreur de chargement.</p>";
@@ -118,9 +130,15 @@ export async function showBlockedUsersModal(): Promise<void> {
 }
 
 export async function refreshBlockButtons(targetUuid: string) {
+  const token: string | null = localStorage.getItem("auth_token");
+  if (!token) {
+    showErrorToast("Pas de token !");
+    return;
+  }
+
   const res = await fetch(`/api/block-user/status/${targetUuid}`, {
     headers: {
-      Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      Authorization: `Bearer ${token}`,
     },
   });
 

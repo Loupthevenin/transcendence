@@ -1,16 +1,19 @@
 import { MatchHistory } from "@shared/match/matchHistory";
 import { navigateTo } from "../router";
 import { refreshBlockButtons } from "../controllers/blockedUser";
-import {
-  showErrorToast,
-  showSuccessToast,
-} from "../components/showNotificationToast";
+import { showErrorToast, showSuccessToast } from "../components/showNotificationToast";
 
 export async function showPublicProfile(userId: number): Promise<void> {
   try {
+    const token: string | null = localStorage.getItem("auth_token");
+    if (!token) {
+      showErrorToast("Pas de token !");
+      throw new Error("No token");
+    }
+
     const res = await fetch(`/api/public-profile/${userId}`, {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+        Authorization: `Bearer ${token}`,
       },
     });
 
@@ -23,8 +26,8 @@ export async function showPublicProfile(userId: number): Promise<void> {
       avatar_url: string;
     };
     openProfileModal(profile);
-  } catch (err) {
-    console.error("Error fetching public profile", err);
+  } catch (error: any) {
+    console.error("Error fetching public profile", error);
     showErrorToast("Impossible de charger le profil public");
   }
 }
@@ -113,18 +116,25 @@ export async function openProfileModal(profile: {
       : `Veux-tu vraiment bloquer ${profile.name} ?`;
     if (!confirm(confirmMsg)) return;
 
-    const endpoint = isBlocked ? "/api/block-user/unblock" : "/api/block-user";
     try {
+      const token: string | null = localStorage.getItem("auth_token");
+      if (!token) {
+        showErrorToast("Pas de token !");
+        throw new Error("No token");
+      }
+
+      const endpoint = isBlocked ? "/api/block-user/unblock" : "/api/block-user";
+
       const res = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ targetUserId: profile.id }),
       });
 
-      if (!res.ok) throw new Error("Erreur blocage/déblocage");
+      if (!res.ok) throw new Error(`Erreur ${isBlocked ? "déblocage" : "blocage"}`);
 
       showSuccessToast(
         isBlocked
@@ -134,27 +144,34 @@ export async function openProfileModal(profile: {
       updateBlockButton(!isBlocked);
       blockButton.onclick = () => toggleBlock(!isBlocked);
       refreshBlockButtons(profile.uuid);
-    } catch (err) {
-      console.error("Erreur lors du blocage/déblocage", err);
-      showErrorToast("Erreur lors du blocage/déblocage.");
+    } catch (error: any) {
+      console.error(`Erreur lors du ${isBlocked ? "déblocage" : "blocage"}:`, error);
+      showErrorToast(`Erreur lors du ${isBlocked ? "déblocage" : "blocage"}.`);
     }
   };
 
   try {
+    const token: string | null = localStorage.getItem("auth_token");
+    if (!token) {
+      showErrorToast("Pas de token !");
+      throw new Error("No token");
+    }
+
     const res = await fetch(
       `/api/block-user/is-blocked?targetUserId=${profile.id}`,
       {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+          Authorization: `Bearer ${token}`,
         },
       },
     );
+
     const { blocked } = await res.json();
     updateBlockButton(blocked);
     blockButton.onclick = () => toggleBlock(blocked);
-  } catch (err) {
-    console.error("Erreur de vérification blocage", err);
-    showErrorToast("Erreur de vérification blacage");
+  } catch (error: any) {
+    console.error("Erreur de vérification blocage:", error);
+    showErrorToast("Erreur de vérification blocage");
     updateBlockButton(false);
     blockButton.onclick = () => toggleBlock(false);
   }
