@@ -51,11 +51,11 @@ const players: Map<string, Player> = new Map();
 const recentlyDisconnectedPlayers: Map<string, DisconnectedPlayer> = new Map();
 
 // Extract the params from the request
-function extractUrlParams(request: IncomingMessage): { [key: string]: string } {
+function extractUrlParams(request: IncomingMessage): Record<string, string> {
   const fullUrl: string = `${request.headers.origin}${request.url}`;
   const parsedUrl: URL = new URL(fullUrl);
 
-  const params: { [key: string]: string } = {};
+  const params: Record<string, string> = {};
   for (const [key, value] of parsedUrl.searchParams.entries()) {
     params[key] = value;
   }
@@ -77,9 +77,9 @@ export function setupWebSocket(): WebSocketServer {
 
   // WebSocket connection
   wss.on("connection", (ws: WebSocket, request: IncomingMessage) => {
-    let isAuthentificated: boolean = false;
-    const params: { [key: string]: string } = extractUrlParams(request);
+    const params: Record<string, string> = extractUrlParams(request);
 
+    let isAuthentificated: boolean = false;
     let playerUUID: string = "";
     let playerUsername: string = "";
 
@@ -314,4 +314,12 @@ export function getPlayerById(userId: number): Player | undefined {
 // Get a player by is UUID
 export function getPlayerByUUID(uuid: string): Player | undefined {
   return players.get(uuid);
+}
+
+// Update player username
+export function updateUsername(uuid: string, newUsername: string): void {
+  const player: Player | undefined = players.get(uuid);
+  if (player) {
+    player.username = newUsername;
+  }
 }
