@@ -147,7 +147,7 @@ function smoothUpdateCarousel(deltaTime: number, forceUpdate: boolean = false): 
 }
 
 // Function to rotate the carousel to a new index
-function rotateCarousel(deltaRotation: -1 | 1): void {
+function rotateCarousel(deltaRotation: -2 | -1 | 1 | 2): void {
   currentIndex = (currentIndex + deltaRotation + models.length) % models.length;
   localStorage.setItem("paddle_skin_id", skinIds[currentIndex]);
   // targetRotation += angleStep * deltaRotation;
@@ -242,6 +242,28 @@ export function initSkinSelector(): void {
     // smoothUpdateCarousel(deltaTime);
 
     scene.render();
+  });
+
+  // Add event listener for mouse click
+  canvas.addEventListener('click', (event) => {
+    if (!canvas) return;
+
+    // Get the bounding rectangle of the canvas
+    const rect: DOMRect = canvas.getBoundingClientRect();
+
+    // Calculate the X position relative to the canvas and
+    // Get the percentage of the click position relative to canvas width
+    const percentageX: number = (event.clientX - rect.left) / rect.width;
+
+    if (percentageX >= 0 && percentageX < 0.15) {
+      rotateCarousel(-2);
+    } else if (percentageX >= 0.15 && percentageX < 0.3) {
+      rotateCarousel(-1);
+    } else if (percentageX >= 0.7 && percentageX < 0.85) {
+      rotateCarousel(1);
+    } else if (percentageX >= 0.85 && percentageX <= 1) {
+      rotateCarousel(2);
+    }
   });
 
   // Resize event
