@@ -583,8 +583,7 @@ function displayGameResult(gameResult: GameResultMessage): void {
 
   const tempWrapper: HTMLDivElement = document.createElement("div");
   tempWrapper.innerHTML = `
-      <p class="text-xl">Score final : <span class="font-semibold">${gameResult.p1Score} - ${gameResult.p2Score}</span></p>
-
+      <p class="text-xl">Score final : <span class="font-semibold">${gameResult.p1Score} / ${gameResult.p2Score}</span></p>
       <div class="bg-[#2a255c] p-4 rounded-lg shadow-lg w-full max-w-md">
         <h3 class="text-2xl font-semibold text-indigo-300 mb-4">Statistiques</h3>
         <ul class="space-y-2 text-sm">
@@ -595,9 +594,9 @@ function displayGameResult(gameResult: GameResultMessage): void {
           <li><span class="text-indigo-400 font-medium">player 2 distance travelled :</span> ${gameResult.gameStats.paddle2DistanceTravelled}</li>
         </ul>
       </div>
-	<button id="back-to-menu" class="mt-4 bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-lg shadow-md transition">
-      Retour au menu
-    </button>
+      <button id="back-to-menu" class="mt-4 bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-lg shadow-md transition">
+        Retour au menu
+      </button>
 `;
   while (tempWrapper.firstChild) {
     content.appendChild(tempWrapper.firstChild);

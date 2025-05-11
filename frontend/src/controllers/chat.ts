@@ -192,10 +192,19 @@ function setupSearchInput(): void {
       resultsContainer.innerHTML = "";
 
       for (const user of users) {
-        const li = document.createElement("li");
+        const li: HTMLLIElement = document.createElement("li");
         li.className =
           "flex items-center gap-2 cursor-pointer p-2 rounded hover:bg-[#2a255c]";
-        li.innerHTML = `<img src="${user.avatar_url}" class="w-8 h-8 rounded-full object-cover" /><span>${user.name}</span>`;
+
+        const img: HTMLImageElement = document.createElement("img");
+        img.src = user.avatar_url;
+        img.className = "w-8 h-8 rounded-full object-cover";
+
+        const span: HTMLSpanElement = document.createElement("span");
+        span.textContent = user.name;
+
+        li.appendChild(img);
+        li.appendChild(span);
 
         li.addEventListener("click", async () => {
           resultsContainer.innerHTML = "";
