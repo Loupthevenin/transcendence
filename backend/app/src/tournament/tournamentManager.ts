@@ -51,7 +51,7 @@ export function createNewTournament(
     isEnded: false,
   };
   // Now we can set the TournamentTree
-  tournament.tree = new TournamentTree(tournament, settings.scoreToWin);
+  tournament.tree = new TournamentTree(tournament);
 
   tournaments.set(uuid, tournament);
   return [tournament, undefined];

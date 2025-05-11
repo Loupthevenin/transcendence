@@ -690,6 +690,7 @@ function gameLoop(deltaTime: number): void {
         type: "gameResult",
         p1Score: gameData.p1Score,
         p2Score: gameData.p2Score,
+        winnerUUID: "",
         winner: gameData.p1Score > gameData.p2Score ? "Player 1" : "Player 2",
         gameStats: gameStats,
       };
