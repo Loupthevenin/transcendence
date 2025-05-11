@@ -11,6 +11,9 @@ let light: BABYLON.HemisphericLight;
 let skinIds: string[] = [];
 let modelsCanBeLoaded: boolean = false;
 
+const models: BABYLON.AbstractMesh[] = [];
+let currentIndex: number = 0;
+
 // Get the list of skin ids from the server
 async function fetchSkinIds(): Promise<void> {
   try {
@@ -19,26 +22,31 @@ async function fetchSkinIds(): Promise<void> {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data: any = await response.json();
-    if (Array.isArray(data)) {
-      skinIds = data; // Ensure the response is an array of strings
 
-      // Start loading models only if the scene has been initialized
-      if (modelsCanBeLoaded) {
-        loadModels();
-      }
-      modelsCanBeLoaded = true;
-    } else {
+    // Ensure the response is an array
+    if (!Array.isArray(data)) {
       console.error("Unexpected data format received:", data);
+      return;
     }
+
+    skinIds = data; 
+
+    const storedSkinId: string | null = localStorage.getItem("paddle_skin_id");
+    if (storedSkinId && skinIds.includes(storedSkinId)) {
+      currentIndex = skinIds.indexOf(storedSkinId);
+    }
+
+    // Start loading models only if the scene has been initialized
+    if (modelsCanBeLoaded) {
+      loadModels();
+    }
+    modelsCanBeLoaded = true;
   } catch (error: any) {
     console.error("Error fetching skin IDs:", error);
   }
 }
 
 fetchSkinIds(); // Retrieve skin IDs immediately
-
-const models: BABYLON.AbstractMesh[] = [];
-let currentIndex: number = 0;
 
 // Load models dynamically
 async function loadModels(): Promise<void> {
@@ -141,6 +149,7 @@ function smoothUpdateCarousel(deltaTime: number, forceUpdate: boolean = false): 
 // Function to rotate the carousel to a new index
 function rotateCarousel(deltaRotation: -1 | 1): void {
   currentIndex = (currentIndex + deltaRotation + models.length) % models.length;
+  localStorage.setItem("paddle_skin_id", skinIds[currentIndex]);
   // targetRotation += angleStep * deltaRotation;
   // console.log("currentIndex:", currentIndex);
   smoothUpdateCarousel(1);
