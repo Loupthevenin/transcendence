@@ -56,8 +56,8 @@ export async function openProfileModal(profile: {
 
   <img src="${profile.avatar_url ?? "https://upload.wikimedia.org/wikipedia/commons/2/2c/Default_pfp.svg"}" 
         class="w-24 h-24 rounded-full object-cover" alt="Avatar">
-  <h2 class="text-2xl font-bold">${profile.name}</h2>
-  <p class="text-white text-sm">User ID : ${profile.id}</p>
+  <h2 id="profile-username" class="text-2xl font-bold"></h2>
+  <p id="profile-id" class="text-white text-sm"></p>
 
   <div class="bg-[#2e2c60] p-6 rounded-xl shadow-lg text-white">
     <h3 class="text-xl font-semibold text-indigo-300 mb-4">Statistiques</h3>
@@ -91,6 +91,16 @@ export async function openProfileModal(profile: {
   ✖
   </button>
   `;
+
+  const profileUsernameElement: HTMLHeadingElement | null = modal.querySelector("#profile-username");
+  if (profileUsernameElement) {
+    profileUsernameElement.textContent = profile.name;
+  }
+
+  const profileIdElement: HTMLParagraphElement | null = modal.querySelector("#profile-id");
+  if (profileIdElement) {
+    profileIdElement.textContent = `User ID : ${profile.id}`;
+  }
 
   backdrop.appendChild(modal);
   document.body.appendChild(backdrop);

@@ -18,7 +18,7 @@ export function openInviteToGameModal(fromName: string, userId: string): void {
   modal.className = "bg-white p-8 rounded-2xl shadow-xl flex flex-col items-center gap-6 w-80 text-black";
   modal.innerHTML = `
     <h2 class="text-xl font-bold">🎮 Invitation au jeu</h2>
-    <p class="text-center">${fromName} t'invite à un match !</p>
+    <p class="text-center" id="invite-message"></p>
     <div class="flex gap-4 w-full">
       <button id="accept-invite-btn" class="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
         Accepter
@@ -28,6 +28,11 @@ export function openInviteToGameModal(fromName: string, userId: string): void {
       </button>
     </div>
   `;
+
+  const messageElement: HTMLParagraphElement | null = modal.querySelector("#invite-message");
+  if (messageElement) {
+    messageElement.textContent = `${fromName} t'invite à un match !`;
+  }
 
   backdrop.appendChild(modal);
   document.body.appendChild(backdrop);
