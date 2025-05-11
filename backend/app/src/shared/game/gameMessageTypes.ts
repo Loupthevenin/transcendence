@@ -59,6 +59,7 @@ export type GameResultMessage = {
   readonly type: "gameResult";
   p1Score: number; // The score of the player 1
   p2Score: number; // The score of the player 2
+  winnerUUID: string; // The winner's uuid
   winner: string; // The winner's nickname
   gameStats: GameStats; // Stats about the game
 };
@@ -69,6 +70,7 @@ export function isGameResultMessage(data: any): data is GameResultMessage {
     data.type === "gameResult" &&
     typeof data.p1Score === "number" &&
     typeof data.p2Score === "number" &&
+    typeof data.winnerUUID === "string" &&
     typeof data.winner === "string" &&
     typeof data.gameStats === "object" &&
     isGameStats(data.gameStats)

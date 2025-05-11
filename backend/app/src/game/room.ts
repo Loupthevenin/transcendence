@@ -1,4 +1,4 @@
-import db from "../db/db";
+import { saveMatchData } from "../db/db";
 import { v4 as uuidv4 } from "uuid";
 import {
   GAME_CONSTANT,
@@ -24,9 +24,6 @@ import {
   snapshotReplayData,
   saveReplayDataToFile,
 } from "../controllers/replayController";
-import { JsonRpcProvider, Wallet, Contract } from "ethers";
-import { PRIVATE_KEY, CONTRACT_KEY } from "../config";
-import contractJson from "../../artifacts/contracts/ScoreStorage.sol/ScoreStorage.json";
 
 export enum RoomType {
   Matchmaking,
@@ -89,7 +86,7 @@ export class Room {
   private gameData: GameData;
   private gameStats: GameStats;
   private replayData: ReplayData;
-  private winner: string;
+  private winnerId: -1 | 1 | 2;
 
   private gameLaunched: boolean;
   private gameEnded: boolean;
@@ -109,7 +106,7 @@ export class Room {
     this.gameData = newGameData();
     this.gameStats = newGameStats();
     this.replayData = newReplayData();
-    this.winner = "";
+    this.winnerId = -1;
     this.gameLaunched = false;
     this.gameEnded = false;
   }
@@ -195,6 +192,9 @@ export class Room {
    * @returns True if the player was added successfully, otherwise false.
    */
   public addPlayer(player: Player): boolean {
+    if (!this.isPlayerAlive(player)) {
+      return false; // Player is not connected
+    }
     if (!this.isJoinable()) {
       return false; // Cannot add players after the game has started or ended
     }
@@ -369,7 +369,8 @@ export class Room {
         type: "gameResult",
         p1Score: this.gameData.p1Score,
         p2Score: this.gameData.p2Score,
-        winner: this.winner,
+        winnerUUID: this.winnerId === -1 ? "" : this.getPlayer(this.winnerId)!.uuid,
+        winner: this.winnerId === -1 ? "" : this.getPlayer(this.winnerId)!.username,
         gameStats: this.gameStats,
       };
       player.socket?.send(this.stringifyGameMessageData(gameResultMessage));
@@ -581,8 +582,6 @@ export class Room {
     this.gameEnded = true;
     this.gameStats.gameEndTime = Date.now(); // game end time in milliseconds
 
-    let winnerId: -1 | 1 | 2;
-
     if (disconnectedPlayer !== -1) {
       console.log(
         `[Room ${this.id}] : The player ${disconnectedPlayer} (${this.getPlayer(disconnectedPlayer)?.username ?? ""}) disconnected for too long`,
@@ -592,59 +591,29 @@ export class Room {
         id: disconnectedPlayer,
       };
       this.sendGameMessage(disconnectionMessage);
-      winnerId = disconnectedPlayer === 1 ? 2 : 1;
+      this.winnerId = disconnectedPlayer === 1 ? 2 : 1;
     } else if (this.gameData.p1Score === this.gameData.p2Score) {
-      winnerId = -1; // If the match ended by a draw
+      this.winnerId = -1; // If the match ended by a draw
     } else {
-      winnerId = this.gameData.p1Score > this.gameData.p2Score ? 1 : 2;
+      this.winnerId = this.gameData.p1Score > this.gameData.p2Score ? 1 : 2;
     }
-    this.winner =
-      winnerId === -1 ? "" : (this.getPlayer(winnerId)?.username ?? "");
 
     const gameResultMessage: GameResultMessage = {
       type: "gameResult",
       p1Score: this.gameData.p1Score,
       p2Score: this.gameData.p2Score,
-      winner: this.winner,
+      winnerUUID: this.winnerId === -1 ? "" : this.getPlayer(this.winnerId)!.uuid,
+      winner: this.winnerId === -1 ? "" : this.getPlayer(this.winnerId)!.username,
       gameStats: this.gameStats,
     };
     this.sendGameMessage(gameResultMessage);
 
-    this.saveGameSessionData(winnerId);
+    this.saveGameSessionData(this.winnerId);
 
     this.gameEndedCallback?.(gameResultMessage);
 
     //this.clear();
     this.dispose(); // Dispose the room
-  }
-
-  /**
-   * Save the game result in blockchain
-   */
-  private async saveToBlockchain(): Promise<void> {
-    if (!this.player1 || !this.player2 || !this.gameEnded) return;
-
-    const provider: JsonRpcProvider = new JsonRpcProvider(
-      "https://api.avax-test.network/ext/bc/C/rpc",
-    );
-    const signer: Wallet = new Wallet(PRIVATE_KEY, provider);
-    const abi = contractJson.abi;
-    const contract: Contract = new Contract(CONTRACT_KEY, abi, signer);
-
-    try {
-      const tx = await contract.storeMatch(
-        this.player1.username,
-        this.player2.username,
-        this.gameData.p1Score,
-        this.gameData.p2Score,
-        this.winner,
-        Math.floor(Date.now() / 1000),
-      );
-      await tx.wait();
-      console.log("Match stored on blockchain", tx.hash);
-    } catch (error: any) {
-      console.error("Failed to store match on blockchain: ", error);
-    }
   }
 
   /**
@@ -659,30 +628,20 @@ export class Room {
       console.warn("[WARNING] missing player 2, this should not happen !");
 
     const uuid: string = uuidv4();
+
     // Save the match replay
-    this.replayData.gameDuration =
-      this.gameStats.gameEndTime - this.gameStats.gameStartTime;
+    this.replayData.gameDuration = this.gameStats.gameEndTime - this.gameStats.gameStartTime;
     saveReplayDataToFile(this.replayData, uuid);
 
-    // Save the match result in the database
-    db.prepare(
-      `INSERT INTO match_history (
-      uuid, player_a_uuid, player_b_uuid, score_a, score_b, winner, mode
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    ).run(
+    saveMatchData(
       uuid,
       this.player1?.uuid ?? "", // put empty string by default if the player is null
       this.player2?.uuid ?? "",
       this.gameData.p1Score,
       this.gameData.p2Score,
       winnerId === 1 ? "A" : winnerId === 2 ? "B" : "draw",
-      RoomType[this.type],
-    );
-
-    // Save the match result in the blockchain
-    if (this.type === RoomType.Tournament) {
-      this.saveToBlockchain();
-    }
+      this.type,
+    )
   }
 
   /**

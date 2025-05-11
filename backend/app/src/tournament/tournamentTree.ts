@@ -1,10 +1,14 @@
 import { GameResultMessage } from "../shared/game/gameMessageTypes";
-import { GAME_CONSTANT } from "../shared/game/gameElements";
 import { Room, RoomType, createNewRoom } from "../game/room";
 import { Player } from "../types/player";
 import { isLaunchMatchMessage, LaunchMatchMessage } from "../shared/tournament/tournamentMessageTypes";
 import { isTournamentMessage, TournamentMessage } from "../shared/messageType";
 import { Tournament } from "../types/tournament";
+import { saveMatchData } from "../db/db";
+import { v4 as uuidv4 } from "uuid";
+import { JsonRpcProvider, Wallet, Contract } from "ethers";
+import { PRIVATE_KEY, CONTRACT_KEY } from "../config";
+import contractJson from "../../artifacts/contracts/ScoreStorage.sol/ScoreStorage.json";
 
 export type MatchNode = {
   player: Player | null;
@@ -13,15 +17,11 @@ export type MatchNode = {
 }
 
 export class TournamentTree {
-  public tournament: Tournament;
+  private tournament: Tournament;
   public root: MatchNode | null = null;
-  public scoreToWin: number = GAME_CONSTANT.defaultScoreToWin;
 
-  constructor(tournament: Tournament, scoreToWin?: number) {
+  constructor(tournament: Tournament) {
     this.tournament = tournament;
-    if (scoreToWin) {
-      this.scoreToWin = scoreToWin;
-    }
   }
 
   // Function to generate the tournament tree
@@ -155,13 +155,37 @@ export class TournamentTree {
         // If the game cannot be started
         console.error(`[Tournament ${this.tournament.name}] Error starting game in room '${room.getId()}':`, error);
         room.dispose();
+
+        let winner: "A" | "B";
         if (winPriority) {
           // If there is a winner priority then take it
-          this.handleMatchEnded(node, winPriority === 1 ? "A" : "B");
+          winner = winPriority === 1 ? "A" : "B";
         } else {
           // Else select the winner randomly to avoid blocking the tournament
-          this.handleMatchEnded(node, Math.random() < 0.5 ? "A" : "B");
+          winner = Math.random() < 0.5 ? "A" : "B";
         }
+
+        saveMatchData(
+          uuidv4(),
+          player1.uuid,
+          player2.uuid,
+          0,
+          0,
+          winner,
+          RoomType.Tournament
+        )
+
+        const p1Name: string = this.tournament.pseudoNames.get(player1.uuid)!;
+        const p2Name: string = this.tournament.pseudoNames.get(player2.uuid)!;
+        this.saveToBlockchain(
+          p1Name,
+          p2Name,
+          0,
+          0,
+          winner === "A" ? p1Name : p2Name
+        );
+
+        this.handleMatchEnded(node, winner);
         resolve(); // Resolve even if there's an error
       };
 
@@ -174,8 +198,16 @@ export class TournamentTree {
         return;
       }
 
-      room.setScoreToWin(this.scoreToWin);
+      room.setScoreToWin(this.tournament.settings.scoreToWin);
       room.setGameEndedCallback((gameResult: GameResultMessage) => {
+        this.saveToBlockchain(
+          this.tournament.pseudoNames.get(player1.uuid)!,
+          this.tournament.pseudoNames.get(player2.uuid)!,
+          gameResult.p1Score,
+          gameResult.p2Score,
+          this.tournament.pseudoNames.get(gameResult.winnerUUID)!
+        );
+
         this.handleMatchEnded(node, gameResult.winner === node.right!.player!.username ? "B" : "A");
         resolve(); // Resolve once the match is over
       });
@@ -225,8 +257,11 @@ export class TournamentTree {
         .then(() => room.startGame())
         .catch((error: any) => {
           // Check if the error is typeof MatchStartError
-          if (typeof error.msg === "string" && (error.playerId === 1 || error.playerId === 2)) {
-            errorOccured((error as MatchStartError).msg, ((error as MatchStartError).playerId === 1) ? 2 : 1);
+          if (error && typeof error.msg === "string" && (error.playerId === 1 || error.playerId === 2)) {
+            errorOccured(
+              (error as MatchStartError).msg,
+              (error as MatchStartError).playerId === 1 ? 2 : 1
+            );
           } else {
             errorOccured(error);
           }
@@ -234,7 +269,40 @@ export class TournamentTree {
     });
   }
 
-  private handleMatchEnded(node: MatchNode, winner: "A" | "B") {
+  /**
+   * Save the game result in blockchain
+   */
+  private async saveToBlockchain(
+    p1username: string,
+    p2username: string,
+    p1Score: number,
+    p2Score: number,
+    winner: string // Winner's username
+  ): Promise<void> {
+    const provider: JsonRpcProvider = new JsonRpcProvider(
+      "https://api.avax-test.network/ext/bc/C/rpc",
+    );
+    const signer: Wallet = new Wallet(PRIVATE_KEY, provider);
+    const abi = contractJson.abi;
+    const contract: Contract = new Contract(CONTRACT_KEY, abi, signer);
+
+    try {
+      const tx = await contract.storeMatch(
+        p1username,
+        p2username,
+        p1Score,
+        p2Score,
+        winner,
+        Math.floor(Date.now() / 1000),
+      );
+      await tx.wait();
+      console.log("Match stored on blockchain", tx.hash);
+    } catch (error: any) {
+      console.error("Failed to store match on blockchain: ", error);
+    }
+  }
+
+  private handleMatchEnded(node: MatchNode, winner: "A" | "B"): void {
     if (node.player) throw new Error("This match has already been played.");
     if (!node.left || !node.right) throw new Error("Cannot play a match for a node without two children.");
     if (!node.left.player || !node.right.player) throw new Error("Cannot play a match for a node with children without player.");
