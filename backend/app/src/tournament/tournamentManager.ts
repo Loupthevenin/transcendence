@@ -166,6 +166,7 @@ function adjustPlayers(tournament: Tournament): void {
       username: botName,
       socket: null,
       room: null,
+      spectatingRoom: null,
       paddleSkinId: getRandomPaddleModelId(),
     });
     tournament.pseudoNames.set(botUUID, botName);

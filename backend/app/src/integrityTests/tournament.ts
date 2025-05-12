@@ -31,6 +31,7 @@ export async function Test1(): Promise<void> {
     username: "Player1",
     socket: null,
     room: null,
+    spectatingRoom: null,
     paddleSkinId: "2"
   };
 
@@ -40,6 +41,7 @@ export async function Test1(): Promise<void> {
     username: "Player2",
     socket: null,
     room: null,
+    spectatingRoom: null,
     paddleSkinId: "6"
   };
 
@@ -49,6 +51,7 @@ export async function Test1(): Promise<void> {
     username: "Player3",
     socket: null,
     room: null,
+    spectatingRoom: null,
     paddleSkinId: "10"
   };
 
@@ -192,6 +195,7 @@ export async function Test2(): Promise<void> {
       username: `Player${i}`,
       socket: null,
       room: null,
+      spectatingRoom: null,
       paddleSkinId: getRandomPaddleModelId()
     });
   }
@@ -236,6 +240,7 @@ export async function Test3(): Promise<void> {
       username: `Player${i}`,
       socket: null,
       room: null,
+      spectatingRoom: null,
       paddleSkinId: getRandomPaddleModelId()
     });
   }
@@ -283,6 +288,7 @@ export async function Test4(): Promise<void> {
       username: `Player${i}`,
       socket: null,
       room: null,
+      spectatingRoom: null,
       paddleSkinId: getRandomPaddleModelId()
     });
   }

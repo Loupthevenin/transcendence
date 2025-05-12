@@ -27,6 +27,7 @@ import {
   MatchmakingMessage,
   ReconnectionMessage,
   LeaveGameMessage,
+  SpectatingRequestMessage,
 } from "@shared/game/gameMessageTypes";
 import {
   showSkinSelector,
@@ -49,6 +50,7 @@ import {
 import { PositionData, ScoreData } from "@shared/game/replayData";
 import enableCanvasExtension from "../utils/canvasExtensionEnabler";
 import { LaunchMatchMessage } from "@shared/tournament/tournamentMessageTypes";
+import { navigateTo } from "../router";
 
 enum GameMode {
   MENU, // Player is in the menu
@@ -492,7 +494,7 @@ export function handleGameMessages(data: GameMessageData): void {
   //console.log("Received:", data);
 
   // Avoid modifying data if not in an online mode
-  if (currentGameMode !== GameMode.ONLINE) return;
+  if (currentGameMode !== GameMode.ONLINE && currentGameMode !== GameMode.SPECTATING) return;
 
   try {
     if (isGameStartedMessage(data)) {
@@ -546,12 +548,20 @@ export function handleGameMessages(data: GameMessageData): void {
   }
 }
 
+let isRegisteredToGameMessages: boolean = false;
+
 function registerToGameMessages(): void {
-  subscribeTo("game", handleGameMessages);
+  if (!isRegisteredToGameMessages) {
+    subscribeTo("game", handleGameMessages);
+    isRegisteredToGameMessages = true;
+  }
 }
 
 function unregisterToGameMessages(): void {
-  unsubscribeTo("game", handleGameMessages);
+  if (isRegisteredToGameMessages) {
+    unsubscribeTo("game", handleGameMessages);
+    isRegisteredToGameMessages = false;
+  }
 }
 
 function displayGameResult(gameResult: GameResultMessage): void {
@@ -680,7 +690,8 @@ function gameLoop(deltaTime: number): void {
 
   if (
     currentGameMode !== GameMode.MENU &&
-    currentGameMode !== GameMode.ONLINE
+    currentGameMode !== GameMode.ONLINE &&
+    currentGameMode !== GameMode.SPECTATING
   ) {
     if (
       gameData.p1Score >= GAME_CONSTANT.defaultScoreToWin ||
@@ -957,10 +968,6 @@ export async function initGameEnvironment(): Promise<void> {
           }
         }
         break;
-
-      case GameMode.SPECTATING:
-        // TODO
-        break;
     }
 
     // Render the scene
@@ -997,9 +1004,15 @@ export async function initGameEnvironment(): Promise<void> {
   });
 }
 
+export function LoadGameCanvasIfNeeded(): void {
+  if (location.pathname !== "/") {
+    navigateTo("/"); // Go to root if not already there
+  }
+}
+
 // Send a leave message to server if needed, and set 'currentGameMode' to MENU
 export function LeaveOnlineGameIfNeeded(): void {
-  if (currentGameMode === GameMode.ONLINE) {
+  if (currentGameMode === GameMode.ONLINE || currentGameMode === GameMode.SPECTATING) {
     // Tell the server we quit the game
     const LeaveGameMessage: LeaveGameMessage = {
       type: "leaveGame",
@@ -1066,6 +1079,7 @@ export function OnlineGame(autoMatchmaking: boolean = true): void {
     );
     return;
   }
+  LoadGameCanvasIfNeeded();
   deleteGameResult();
 
   currentGameMode = GameMode.ONLINE;
@@ -1084,14 +1098,16 @@ export function OnlineGame(autoMatchmaking: boolean = true): void {
   }
 }
 
+(window as any).SpectatingMode = SpectatingMode; ///////////////////////////////////////////////////////
 // Launch the game in spectating mode to watch match of other remote players
-export function SpectatingMode(): void {
+export function SpectatingMode(playerUUIDToSpectate: string): void {
   if (!isConnected()) {
     console.error(
       "You are not connected to the server, cannot spectate other game",
     );
     return;
   }
+  LoadGameCanvasIfNeeded();
   deleteGameResult();
 
   currentGameMode = GameMode.SPECTATING;
@@ -1102,7 +1118,14 @@ export function SpectatingMode(): void {
 
   hideSkinSelector();
 
+  playerId = -1;
   registerToGameMessages();
+
+  const spectatingRequest: SpectatingRequestMessage = {
+    type: "spectatingRequest",
+    target: playerUUIDToSpectate
+  };
+  sendMessage("game", spectatingRequest);
 }
 
 // Setup the game to replay mode
