@@ -455,7 +455,12 @@ export async function tournamentProgress(
 
     if (tree) {
       const treeDiv: HTMLDivElement | null = renderMatch(tree);
-      if (treeDiv) bracket.appendChild(treeDiv);
+      if (treeDiv) {
+        const innerWrapper: HTMLDivElement = document.createElement("div");
+        innerWrapper.className = "bracket-inner";
+        innerWrapper.appendChild(treeDiv);
+        bracket.appendChild(innerWrapper);
+      }
     }
   } catch (error: any) {
     console.error("Error tournament progress : ", error);
