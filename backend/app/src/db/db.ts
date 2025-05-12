@@ -88,28 +88,15 @@ if (NODE_ENV === "development") {
     VALUES (@uuid, @name, @email, @password, @is_verified)
   `);
 
-  insertUser.run({
-    uuid: uuidv4(),  
-    name: "Alice",
-    email: "alice@example.com",
-    password: hashedPassword,
-    is_verified: 1
-  });
-
-  insertUser.run({
-    uuid: uuidv4(),  
-    name: "Bob",
-    email: "bob@example.com",
-    password: hashedPassword,
-    is_verified: 1
-  });
-
-  insertUser.run({
-    uuid: uuidv4(), 
-    name: "Joe",
-    email: "joe@example.com",
-    password: hashedPassword,
-    is_verified: 1
+  ["Alice", "Bob", "Joe", "Patrick", "Marc", "Peter"]
+  .forEach((name: string) => {
+    insertUser.run({
+      uuid: uuidv4(),  
+      name,
+      email: `${name.toLocaleLowerCase()}@example.com`,
+      password: hashedPassword,
+      is_verified: 1
+    });
   });
 }
 
