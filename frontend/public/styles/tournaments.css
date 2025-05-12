@@ -4,11 +4,19 @@
   gap: 40px;
   padding: 40px;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   overflow-x: auto;
   overflow-y: hidden;
   white-space: nowrap;
   width: 100%;
+}
+
+.bracket-inner {
+  display: flex;
+  flex-direction: row;
+  gap: 40px;
+  margin: 0 auto;
+  min-width: fit-content;
 }
 
 .match {
