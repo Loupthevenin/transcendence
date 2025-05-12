@@ -141,3 +141,16 @@ export function isReadyToPlayMessage(data: any): data is ReadyToPlayMessage {
     typeof data.opponentId === "string"
   );
 }
+
+export type SpectatingRequestMessage = {
+  readonly type: "spectatingRequest";
+  target: string; // The UUID of the player to spectate
+};
+
+export function isSpectatingRequestMessage(data: any): data is SpectatingRequestMessage {
+  return (
+    data &&
+    data.type === "spectatingRequest" &&
+    typeof data.target === "string"
+  );
+}

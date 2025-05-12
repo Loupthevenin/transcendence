@@ -7,6 +7,7 @@ export type Player = {
   username: string;
   socket: WebSocket | null;
   room: Room | null;
+  spectatingRoom: Room | null;
   paddleSkinId: string;
 }
 

@@ -27,7 +27,8 @@ export type GameMessageData =
   | GameMessages.ReconnectionMessage
   | GameMessages.MatchmakingMessage
   | GameMessages.LeaveGameMessage
-  | GameMessages.ReadyToPlayMessage;
+  | GameMessages.ReadyToPlayMessage
+  | GameMessages.SpectatingRequestMessage;
 
 export type GameMessage = {
   readonly type: "game";

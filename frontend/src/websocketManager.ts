@@ -9,7 +9,6 @@ import {
   TournamentMessageData,
   isTournamentMessage,
 } from "@shared/messageType";
-import { navigateTo } from "./router";
 import {
   handleGameReconnection,
   handleTournamentGameLaunch,
@@ -140,9 +139,6 @@ export function connectToServer(): void {
             if (isGameMessage(parsed)) {
               if (isReconnectionMessage(parsed.data)) {
                 console.log("[WebSocket] Reconnection to game in progress...");
-                if (location.pathname !== "/") {
-                  navigateTo("/"); // Go to root if not already there
-                }
                 OnlineGame(false);
                 handleGameReconnection(parsed.data);
               }
@@ -164,9 +160,6 @@ export function connectToServer(): void {
             if (isTournamentMessage(parsed)) {
               if (isLaunchMatchMessage(parsed.data)) {
                 console.log("[WebSocket] Received tournament match launch, preparing game ...");
-                if (location.pathname !== "/") {
-                  navigateTo("/"); // Go to root if not already there
-                }
                 OnlineGame(false);
                 handleTournamentGameLaunch();
               }
@@ -178,20 +171,28 @@ export function connectToServer(): void {
 
           case "error":
             if (isErrorMessage(parsed)) {
-              if (parsed.errorType === ERROR_TYPE.CONNECTION_REFUSED) {
-                if (parsed.msg === ERROR_MSG.TOKEN_MISSING_OR_INVALID) {
-                  localStorage.removeItem("auth_token");
-                  console.error("[WebSocket] Invalid token: auth_token removed", parsed.msg);
-                }
-                console.error("[WebSocket] Connection refused:", parsed.msg);
-                autoReconnectEnabled = false;
-              } else if (parsed.errorType === ERROR_TYPE.MATCHMAKING_REFUSED) {
-                if (location.pathname === "/") {
+              switch (parsed.errorType) {
+                case ERROR_TYPE.CONNECTION_REFUSED:
+                  if (parsed.msg === ERROR_MSG.TOKEN_MISSING_OR_INVALID) {
+                    localStorage.removeItem("auth_token");
+                    console.error("[WebSocket] Invalid token: auth_token removed", parsed.msg);
+                  }
+                  console.error("[WebSocket] Connection refused:", parsed.msg);
+                  autoReconnectEnabled = false;
+                  break;
+
+                case ERROR_TYPE.MATCHMAKING_REFUSED:
+                  if (location.pathname === "/") {
+                    BackToMenu();
+                  }
+
+                case ERROR_TYPE.SPECTATING_FAILED:
                   BackToMenu();
-                }
-              } else {
-                console.error("[WebSocket] Error:", parsed.msg);
-                showErrorToast(`[WebSocket] Error: ${parsed.msg}`);
+
+                default:
+                  console.error("[WebSocket] Error:", parsed.msg);
+                  showErrorToast(`[WebSocket] Error: ${parsed.msg}`);
+                  break;
               }
             } else {
               console.error("[WebSocket] Malformed error message:", parsed);

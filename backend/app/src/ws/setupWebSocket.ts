@@ -9,6 +9,7 @@ import {
   isMatchmakingMessage,
   isLeaveGameMessage,
   isReadyToPlayMessage,
+  isSpectatingRequestMessage,
 } from "../shared/game/gameMessageTypes";
 import {
   isCloseMessage,
@@ -135,6 +136,7 @@ export function setupWebSocket(): WebSocketServer {
         username: playerUsername,
         socket: ws,
         room: null,
+        spectatingRoom: null,
         paddleSkinId: "",
       };
       console.log(`New player connected: ${player.username} (${playerUUID})`);
@@ -181,9 +183,12 @@ export function setupWebSocket(): WebSocketServer {
             if (player.room) {
               player.room.removePlayer(player);
             }
+            if (player.spectatingRoom) {
+              player.spectatingRoom.removeSpectator(player);
+            }
           } else if (isMatchmakingMessage(data)) {
             // Check if the player is already in a room
-            if (player.room) {
+            if (player.room || player.spectatingRoom) {
               sendErrorMessage(ws, ERROR_MSG.ALREADY_IN_ROOM, ERROR_TYPE.MATCHMAKING_REFUSED);
             } else {
               console.log(`[Matchmaking] : ${player.username} (${playerUUID})`);
@@ -201,6 +206,19 @@ export function setupWebSocket(): WebSocketServer {
               if (index !== -1) {
                 player.room.setPaddlePosition(index, data.position);
               }
+            }
+          } else if (isSpectatingRequestMessage(data)) {
+            const target: Player | undefined = players.get(data.target);
+            if (!target) {
+              sendErrorMessage(ws, ERROR_MSG.NO_PLAYER_FOUND, ERROR_TYPE.SPECTATING_FAILED);
+              return;
+            }
+            if (!target.room) {
+              sendErrorMessage(ws, ERROR_MSG.PLAYER_IS_NOT_IN_GAME, ERROR_TYPE.SPECTATING_FAILED);
+              return;
+            }
+            if (!target.room.addSpectator(player)) {
+              sendErrorMessage(ws, ERROR_MSG.CANNOT_SPECTATE, ERROR_TYPE.SPECTATING_FAILED);
             }
           }
         } else if (isTournamentMessage(msgData)) {
@@ -256,6 +274,9 @@ export function setupWebSocket(): WebSocketServer {
         }
         // If the game is launched the room handle by itself
       }
+      if (player.spectatingRoom) {
+        player.spectatingRoom.removeSpectator(player);
+      }
       players.delete(playerUUID);
       console.log(`Player disconnected: ${player.username} (${playerUUID})`);
 
@@ -284,7 +305,7 @@ setInterval(() => {
       // Remove the player from the recentlyDisconnectedPlayers map
       disconnectedPlayer.player.room?.removePlayer(disconnectedPlayer.player);
       recentlyDisconnectedPlayers.delete(uuid);
-      console.log(`Player with UUID ${uuid} removed after ${timeSinceDisconnection} ms.`);
+      console.log(`Player '${uuid}' removed after ${timeSinceDisconnection} ms of disconnection.`);
     }
   });
 }, 1000); // Run the interval every second

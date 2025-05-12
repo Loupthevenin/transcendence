@@ -6,6 +6,7 @@ const ERROR_TYPE = {
   TOURNAMENT_JOIN_FAILED: "TOURNAMENT_JOIN_FAILED",
   TOURNAMENT_LEAVE_FAILED: "TOURNAMENT_LEAVE_FAILED",
   TOURNAMENT_CLOSE_FAILED: "TOURNAMENT_CLOSE_FAILED",
+  SPECTATING_FAILED: "SPECTATING_FAILED",
 } as const;
 
 type ERROR_TYPE = (typeof ERROR_TYPE)[keyof typeof ERROR_TYPE];
@@ -26,4 +27,7 @@ export const ERROR_MSG = {
   INVALID_TOURNAMENT_NAME: "Invalid tournament name",
   INVALID_TOURNAMENT_SETTINGS: "Invalid tournament settings",
   ALREADY_OWNER_OF_TOURNAMENT: "Already owner of a tournament",
+  NO_PLAYER_FOUND: "No player has been found",
+  PLAYER_IS_NOT_IN_GAME: "The player is not in a game",
+  CANNOT_SPECTATE: "Something is preventing from spectating",
 } as const;

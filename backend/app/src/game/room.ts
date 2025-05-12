@@ -42,13 +42,11 @@ export function createNewRoom(type: RoomType): Room {
 }
 
 export function addPlayerToMatchmaking(player: Player): void {
-  // Check for an available room of type Matchmaking
-  if (player.room) {
-    console.warn(
-      `[addPlayerToMatchmaking] ${player.username} est déjà dans une room (${player.room.getId()})`,
-    );
-    return;
+  if (player.room || player.spectatingRoom) {
+    return; // If the player is already in a room dont add it to matchmaking
   }
+
+  // Check for an available room of type Matchmaking
   for (const [, room] of rooms) {
     if (room.getType() === RoomType.Matchmaking && room.isJoinable()) {
       if (room.addPlayer(player)) {
@@ -83,6 +81,8 @@ export class Room {
   private player1Left: boolean;
   private player2Left: boolean;
 
+  private spectators: Player[];
+
   private gameData: GameData;
   private gameStats: GameStats;
   private replayData: ReplayData;
@@ -103,6 +103,7 @@ export class Room {
     this.player2 = null;
     this.player1Left = false;
     this.player2Left = false;
+    this.spectators = [];
     this.gameData = newGameData();
     this.gameStats = newGameStats();
     this.replayData = newReplayData();
@@ -205,17 +206,24 @@ export class Room {
       return false; // Player already in another room that is not ended
     }
 
+    const setupPlayer: () => void = () => {
+      player.room = this;
+      if (player.spectatingRoom) {
+        player.spectatingRoom.removeSpectator(player);
+      }
+    };
+
     if (!this.player1) {
       this.player1 = player;
       this.player1Left = false;
-      player.room = this;
+      setupPlayer();
       return true;
     }
 
     if (!this.player2) {
       this.player2 = player;
       this.player2Left = false;
-      player.room = this;
+      setupPlayer();
       return true;
     }
 
@@ -254,6 +262,57 @@ export class Room {
   }
 
   /**
+   * Add a spectator to the room.
+   * @param player The player to join the room.
+   * @returns True if the player was added successfully, otherwise false.
+   */
+  public addSpectator(player: Player): boolean {
+    if (!this.isPlayerAlive(player)) {
+      return false; // Player is not connected
+    }
+    if (!this.gameLaunched || this.gameEnded) {
+      return false; // Game not started or game already ended
+    }
+    if (this.containsPlayer(player) || this.spectators.includes(player)) {
+      return false; // Player already in the room
+    }
+    if (player.room !== null || player.spectatingRoom !== null) {
+      return false; // Player already in another room
+    }
+
+    this.spectators.push(player);
+    player.spectatingRoom = this;
+
+    const skinChangeMessage1: SkinChangeMessage = {
+      type: "skinId",
+      id: 1,
+      skinId: this.player1?.paddleSkinId ?? "",
+    };
+    player.socket?.send(this.stringifyGameMessageData(skinChangeMessage1));
+
+    const skinChangeMessage2: SkinChangeMessage = {
+      type: "skinId",
+      id: 2,
+      skinId: this.player2?.paddleSkinId ?? "",
+    };
+    player.socket?.send(this.stringifyGameMessageData(skinChangeMessage2));
+
+    return true;
+  }
+
+  /**
+   * Remove a spectator from the room.
+   * @param player The player to remove.
+   */
+  public removeSpectator(player: Player): void {
+    if (player.spectatingRoom === this) {
+      player.spectatingRoom = null; // Clear the player's spectatingRoom reference
+    }
+
+    this.spectators = this.spectators.filter((spectator: Player) => spectator && spectator.uuid !== player.uuid);
+  }
+
+  /**
    * Removes all players from the room.
    */
   private clear(): void {
@@ -265,6 +324,13 @@ export class Room {
     }
     this.player1 = null;
     this.player2 = null;
+
+    this.spectators.forEach((player: Player) => {
+      if (player.spectatingRoom === this) {
+        player.spectatingRoom = null;
+      }
+    });
+    this.spectators.length = 0;
   }
 
   /**
@@ -386,8 +452,9 @@ export class Room {
   }
 
   /**
-   * Sends a message to both players.
-   * @param message The message to send.
+   * Sends a message to all players.
+   * @param msg The message to send.
+   * @param excludedPlayerUUID The list of player UUID to excluded from the message.
    */
   public sendMessage(msg: string, excludedPlayerUUID?: string[]): void {
     if (
@@ -407,11 +474,21 @@ export class Room {
     ) {
       this.player2!.socket?.send(msg);
     }
+
+    this.spectators.forEach((player: Player) => {
+      if (
+        this.isPlayerAlive(player) &&
+        !excludedPlayerUUID?.includes(player.uuid)
+      ) {
+        player!.socket?.send(msg);
+      }
+    });
   }
 
   /**
-   * Sends a game message to both players.
-   * @param message The message to send.
+   * Sends a game message to all players.
+   * @param data The GameMessageData to send.
+   * @param excludedPlayerUUID The list of player UUID to excluded from the message.
    */
   public sendGameMessage(
     data: GameMessageData,
