@@ -641,7 +641,7 @@ export class Room {
       this.gameData.p2Score,
       winnerId === 1 ? "A" : winnerId === 2 ? "B" : "draw",
       this.type,
-    )
+    );
   }
 
   /**

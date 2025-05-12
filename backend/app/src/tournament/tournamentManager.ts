@@ -142,23 +142,32 @@ export function removePlayerFromTournament(
 }
 
 // Adjust players to make the count a power of 2 by adding bot players
-function adjustPlayers(players: Player[]): void {
-  let count: number = players.length;
+function adjustPlayers(tournament: Tournament): void {
+  let count: number = tournament.players.length;
   // Calculate the next power of 2
   // If the count is less or equal than 4, set it to 4 (minimum for a tournament)
   const nextPowerOfTwo: number = count <= 4 ? 4 : Math.pow(2, Math.ceil(Math.log2(count)));
 
   let botCount: number = 1;
+  const pseudosTaken: string[] = Array.from(tournament.pseudoNames.values());
 
   while (count < nextPowerOfTwo) {
-    players.push({
-      uuid: uuidv4(),
+    const botUUID: string = uuidv4();
+    let botName: string;
+
+    do {
+      botName = `Bot ${botCount++}`;
+    } while (pseudosTaken.some((pseudo: string) => pseudo === botName))
+
+    tournament.players.push({
+      uuid: botUUID,
       isBot: true,
-      username: `Bot ${botCount++}`,
+      username: botName,
       socket: null,
       room: null,
       paddleSkinId: getRandomPaddleModelId(),
     });
+    tournament.pseudoNames.set(botUUID, botName);
     count++;
   }
 }
@@ -173,7 +182,7 @@ function close(tournament: Tournament): void {
   tournament.isClosed = true;
   tournament.playerCount = tournament.players.length;
   // Ensure the number of players is a power of 2 by adding bot players if necessary
-  adjustPlayers(tournament.players);
+  adjustPlayers(tournament);
 
   try {
     tournament.tree.generate(tournament.players);
