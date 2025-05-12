@@ -146,8 +146,8 @@ function adjustPlayers(tournament: Tournament): void {
   let count: number = tournament.players.length;
   // Calculate the next power of 2
   // If the count is less or equal than 4, set it to 4 (minimum for a tournament)
-  const nextPowerOfTwo: number = count <= 4 ? 4 : Math.pow(2, Math.ceil(Math.log2(count)));
-  //const nextPowerOfTwo: number = tournament.settings.maxPlayerCount;
+  //const nextPowerOfTwo: number = count <= 4 ? 4 : Math.pow(2, Math.ceil(Math.log2(count)));
+  const nextPowerOfTwo: number = tournament.settings.maxPlayerCount;
 
   let botCount: number = 1;
   const pseudosTaken: string[] = Array.from(tournament.pseudoNames.values());
