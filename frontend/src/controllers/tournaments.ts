@@ -371,10 +371,28 @@ function renderMatch(match: MatchNode): HTMLDivElement | null {
   player1Div.title = p1;
   player1Div.textContent = p1;
 
+  if (match.player1) {
+    player1Div.addEventListener("click", () => {
+      if (match.player1) {
+        // showPublicProfile(match.player1.uuid);
+        alert(`showPublicProfile of ${match.player1.uuid}`);
+      }
+    });
+  }
+
   const player2Div: HTMLDivElement = document.createElement("div");
   player2Div.className = p2Class;
   player2Div.title = p2;
   player2Div.textContent = p2;
+
+  if (match.player2) {
+    player2Div.addEventListener("click", () => {
+      if (match.player2) {
+        // showPublicProfile(match.player2.uuid);
+        alert(`showPublicProfile of ${match.player2.uuid}`);
+      }
+    });
+  }
 
   matchBox.appendChild(player1Div);
   matchBox.appendChild(player2Div);
