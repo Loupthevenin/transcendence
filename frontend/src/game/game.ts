@@ -363,7 +363,7 @@ function handlePlayerDragInput(pointerInfo: BABYLON.PointerInfo): void {
           scene.pointerX,
           scene.pointerY,
         );
-        if (pickInfo?.hit) {
+        if (pickInfo.hit) {
           paddleDraggingData.targetX = pickInfo.pickedPoint?.x ?? null;
         }
       }
@@ -749,6 +749,7 @@ export async function initGameEnvironment(): Promise<void> {
         const sceneMesh: BABYLON.Mesh = result.meshes[0] as BABYLON.Mesh; // Get the root of the model
         sceneMesh.position = new BABYLON.Vector3(0, 0, 0);
         sceneMesh.rotation = new BABYLON.Vector3(0, 0, 0);
+        //sceneMesh.isPickable = false;
       })
       .catch((error: any) => {
         console.error(
@@ -925,8 +926,12 @@ export async function initGameEnvironment(): Promise<void> {
 
       case GameMode.ONLINE:
         if (playerId === 1 || playerId === 2) {
-          if (paddle1Input !== 0) {
-            const isPlayer1: boolean = playerId === 1;
+          const isPlayer1: boolean = playerId === 1;
+          const paddleDraggingData: PaddleDraggingData = isPlayer1
+              ? paddle1DraggingData
+              : paddle2DraggingData;
+
+          if (paddle1Input !== 0 || paddleDraggingData.pointerId !== -1) {
             const pos: BABYLON.Vector2 = isPlayer1
               ? gameData.paddle1Position
               : gameData.paddle2Position;
@@ -934,7 +939,7 @@ export async function initGameEnvironment(): Promise<void> {
               pos,
               isPlayer1 ? paddle1Mesh : paddle2Mesh,
               isPlayer1 ? paddle1Input : ~paddle1Input, // If we are the 2e player inverse the input since the view is inverted
-              isPlayer1 ? paddle1DraggingData : paddle2DraggingData,
+              paddleDraggingData,
               deltaTime,
             );
 
