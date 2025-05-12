@@ -210,12 +210,10 @@ export function setupWebSocket(): WebSocketServer {
 
           if (isCreateMessage(data)) {
             console.log(`[Tournament - Create] : ${player.username}\n`, data);
-            const [tournament, err]: [Tournament | null, string | undefined] = createNewTournament(data.name, player, data.settings);
+            const [_, err]: [Tournament | null, string | undefined] = createNewTournament(data.name, player, data.settings);
             if (err) {
               error = err;
               errorType = ERROR_TYPE.TOURNAMENT_CREATION_FAILED;
-            } else if (tournament) {
-              // TODO: send the tournament uuid back to the player to show him the tournament joining page
             }
           } else if (isJoinMessage(data)) {
             console.log(`[Tournament - Join] : ${player.username} as ${data.username}\n`, data);
