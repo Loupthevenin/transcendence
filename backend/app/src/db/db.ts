@@ -5,8 +5,10 @@ import { v4 as uuidv4 } from "uuid";
 import { RoomType } from "../game/room";
 
 const db: Database.Database = new Database(DB_PATH);
-
+console.log("[DEBUG] SQLite path:", DB_PATH);
 db.exec("PRAGMA foreign_keys = ON;");
+
+// ensureDbIsCorrect();
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
@@ -42,13 +44,13 @@ db.exec(`
 db.exec(`
   CREATE TABLE IF NOT EXISTS chat_rooms (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user1_id INTEGER NOT NULL,
-    user2_id INTEGER NOT NULL,
+    user1_uuid TEXT NOT NULL,
+    user2_uuid TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(user1_id, user2_id),
-    FOREIGN KEY (user1_id) REFERENCES users(id),
-    FOREIGN KEY (user2_id) REFERENCES users(id)
+    UNIQUE(user1_uuid, user2_uuid),
+    FOREIGN KEY (user1_uuid) REFERENCES users(uuid),
+    FOREIGN KEY (user2_uuid) REFERENCES users(uuid)
   );
 `);
 
@@ -57,12 +59,12 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     room_id INTEGER NOT NULL,
-    sender_id INTEGER NOT NULL,
+    sender_uuid TEXT NOT NULL,
     content TEXT NOT NULL,
     type TEXT DEFAULT 'text',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (room_id) REFERENCES chat_rooms(id),
-    FOREIGN KEY (sender_id) REFERENCES users(id)
+    FOREIGN KEY (sender_uuid) REFERENCES users(uuid)
   );
 `);
 
@@ -70,12 +72,12 @@ db.exec(`
 db.exec(`
   CREATE TABLE IF NOT EXISTS blocked_users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    blocker_id INTEGER NOT NULL,
-    blocked_id INTEGER NOT NULL,
+    blocker_uuid TEXT NOT NULL,
+    blocked_uuid TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(blocker_id, blocked_id),
-    FOREIGN KEY (blocker_id) REFERENCES users(id),
-    FOREIGN KEY (blocked_id) REFERENCES users(id)
+    UNIQUE(blocker_uuid, blocked_uuid),
+    FOREIGN KEY (blocker_uuid) REFERENCES users(uuid),
+    FOREIGN KEY (blocked_uuid) REFERENCES users(uuid)
   );
 `);
 
@@ -125,3 +127,26 @@ export function saveMatchData(
     RoomType[mode],
   );
 }
+
+// type ColumnInfo = {
+//   cid: number;
+//   name: string;
+//   type: string;
+//   notnull: number;
+//   dflt_value: any;
+//   pk: number;
+// };
+
+// function ensureDbIsCorrect(): void {
+//   const columns = db.prepare(`PRAGMA table_info(users)`).all() as ColumnInfo[];
+
+//   const hasUuidColumn = columns.some((col) => col.name === "uuid");
+//   if (!hasUuidColumn) {
+//     console.error("[ERROR] ❌ La colonne 'uuid' est absente de la table 'users'.");
+//     console.error("[ACTION] Supprime le fichier ./db/database.sqlite et relance le backend.");
+//     console.table(columns);
+//     process.exit(1); // Stop le backend
+//   }
+
+//   console.log("[INFO] ✅ Schéma de la table 'users' détecté correctement avec 'uuid'.");
+// }

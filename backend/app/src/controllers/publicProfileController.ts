@@ -6,25 +6,25 @@ import UserPublicProfile from "../shared/userPublicProfile";
 import { getPlayerByUUID } from "../ws/setupWebSocket";
 import { Player } from "../types/player";
 
+
 type DbUserRow = {
-  id: number;
   uuid: string;
   name: string;
   avatar_url: string;
 };
 
 export async function getPublicProfile(
-  request: FastifyRequest<{ Params: { id: string } }>,
+  request: FastifyRequest<{ Params: { uuid: string } }>,
   reply: FastifyReply
 ) {
-  const id = parseInt(request.params.id, 10);
-  if (isNaN(id)) {
-    return reply.status(400).send({ error: "Invalid user ID" });
+  const { uuid } = request.params;
+  if (!uuid || typeof uuid !== "string") {
+    return reply.status(400).send({ error: "Invalid user UUID" });
   }
 
   const user = db
-    .prepare("SELECT id, uuid, name, avatar_url FROM users WHERE id = ?")
-    .get(id) as DbUserRow | undefined;
+    .prepare("SELECT uuid, name, avatar_url FROM users WHERE uuid = ?")
+    .get(uuid) as DbUserRow | undefined;
 
   if (!user) {
     return reply.status(404).send({ error: "User not found" });
@@ -33,7 +33,6 @@ export async function getPublicProfile(
   const player: Player | undefined = getPlayerByUUID(user.uuid);
 
   const publicProfile: UserPublicProfile = {
-    id: user.id,
     uuid: user.uuid,
     name: user.name,
     avatarUrl: user.avatar_url,
@@ -44,28 +43,28 @@ export async function getPublicProfile(
   return reply.send(publicProfile);
 }
 
-export async function getHistory( request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply): Promise<void> {
+export async function getHistory(
+  request: FastifyRequest<{ Params: { uuid: string } }>,
+  reply: FastifyReply
+): Promise<void> {
   const myUuid: string | undefined = request.user?.uuid;
   if (!myUuid) {
     return reply.status(401).send({ message: "Invalid Token" });
   }
 
-  const userId: number = parseInt(request.params.id, 10);
-  if (isNaN(userId)) {
-    return reply.status(400).send({ message: "Invalid user ID" });
+  const targetUuid = request.params.uuid;
+  if (!targetUuid || typeof targetUuid !== "string") {
+    return reply.status(400).send({ message: "Invalid user UUID" });
   }
 
-  type UserUuidRow = { uuid: string };
-  const user = db.prepare("SELECT uuid FROM users WHERE id = ?").get(userId) as UserUuidRow | undefined;
-  if (!user?.uuid) {
+  const userExists = db.prepare("SELECT 1 FROM users WHERE uuid = ?").get(targetUuid);
+  if (!userExists) {
     return reply.status(404).send({ message: "Utilisateur introuvable" });
   }
 
-  const targetUuid: string = user.uuid;
-
-  const matches: MatchHistoryRow[] = db.prepare(
-    `SELECT * FROM match_history WHERE player_a_uuid = ? OR player_b_uuid = ? ORDER BY date DESC`
-  ).all(targetUuid, targetUuid) as MatchHistoryRow[];
+  const matches: MatchHistoryRow[] = db
+    .prepare(`SELECT * FROM match_history WHERE player_a_uuid = ? OR player_b_uuid = ? ORDER BY date DESC`)
+    .all(targetUuid, targetUuid) as MatchHistoryRow[];
 
   const history: MatchHistory[] = matches.map((match: MatchHistoryRow) => {
     const isPlayerA: boolean = match.player_a_uuid === targetUuid;
@@ -78,11 +77,12 @@ export async function getHistory( request: FastifyRequest<{ Params: { id: string
       date: match.date,
       mode: match.mode,
       opponent: opponentName,
-      result: match.winner === "draw"
-        ? "draw"
-        : match.winner === (isPlayerA ? "A" : "B")
-        ? "win"
-        : "lose",
+      result:
+        match.winner === "draw"
+          ? "draw"
+          : match.winner === (isPlayerA ? "A" : "B")
+          ? "win"
+          : "lose",
       score: `${myScore} - ${opponentScore}`,
     } as MatchHistory;
   });
