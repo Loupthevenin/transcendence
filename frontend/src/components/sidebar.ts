@@ -1,6 +1,6 @@
 import { hasTokenStored } from "../router";
 
-interface SidebarItem {
+type SidebarItem = {
   label: string;
   route: string;
 }
@@ -54,15 +54,11 @@ export function Sidebar(): HTMLElement {
   sidebar.innerHTML = `
         <nav >
           <ul id="nav">
-			${items
-        .map(
-          (item: SidebarItem) => `
-				<li>
-					<a data-target="${item.route}" class="nav-link">${item.label}</a>
-				</li>
-				`,
-        )
-        .join("")}
+      ${items.map((item: SidebarItem) => `
+        <li>
+          <a data-target="${item.route}" class="nav-link">${item.label}</a>
+        </li>
+        `).join("")}
           </ul>
         </nav>
 `;

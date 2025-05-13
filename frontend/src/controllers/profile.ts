@@ -473,7 +473,10 @@ async function listener2FA(container: HTMLElement): Promise<void> {
       const qrCodeDataURL: any = data.qrCodeDataURL;
       if (qrCodeDataURL) {
         if (qrCodeContainer) {
-          qrCodeContainer.innerHTML = `<img src="${qrCodeDataURL}" alt="QR Code 2FA" />`;
+          const qrCodeImg: HTMLImageElement = document.createElement("img");
+          qrCodeImg.src = qrCodeDataURL;
+          qrCodeImg.alt = "QR Code 2FA";
+          qrCodeContainer.appendChild(qrCodeImg);
           button2FA.classList.add("hidden");
           buttonDisable2FA.classList.remove("hidden");
         }

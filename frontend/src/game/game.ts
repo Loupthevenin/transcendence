@@ -252,12 +252,20 @@ let paddle2Input: INPUT = 0;
 window.addEventListener("keydown", (event: KeyboardEvent) => {
   switch (event.code) {
     case "KeyW": // Move Paddle 1 (Player 1) Up
-      if (currentGameMode !== GameMode.MENU) {
+      if (
+        currentGameMode === GameMode.SINGLEPLAYER ||
+        currentGameMode === GameMode.LOCAL ||
+        currentGameMode === GameMode.ONLINE
+      ) {
         paddle1Input |= INPUT.UP;
       }
       break;
     case "KeyS": // Move Paddle 1 (Player 1) Down
-      if (currentGameMode !== GameMode.MENU) {
+      if (
+        currentGameMode === GameMode.SINGLEPLAYER ||
+        currentGameMode === GameMode.LOCAL ||
+        currentGameMode === GameMode.ONLINE
+      ) {
         paddle1Input |= INPUT.DOWN;
       }
       break;
@@ -565,6 +573,8 @@ function unregisterToGameMessages(): void {
 }
 
 function displayGameResult(gameResult: GameResultMessage): void {
+  if (!isGameResultMessage(gameResult)) return;
+
   const overlay: HTMLDivElement = document.createElement("div");
   overlay.id = "game-result-screen";
   overlay.className = `

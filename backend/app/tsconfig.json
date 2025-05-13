@@ -11,9 +11,6 @@
     "noUnusedLocals": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "paths": {
-      "@shared/*": ["./src/shared/*"]
-    },
     "types": ["node", "fastify", "./src/types/fastify"]
   },
   "include": ["src/**/*"],

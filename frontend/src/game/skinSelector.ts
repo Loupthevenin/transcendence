@@ -245,7 +245,7 @@ export function initSkinSelector(): void {
   });
 
   // Add event listener for mouse click
-  canvas.addEventListener('click', (event) => {
+  canvas.addEventListener('click', (event: MouseEvent) => {
     if (!canvas) return;
 
     // Get the bounding rectangle of the canvas
