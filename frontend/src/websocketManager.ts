@@ -8,6 +8,7 @@ import {
   isGameMessage,
   TournamentMessageData,
   isTournamentMessage,
+  isNotificationMessage,
 } from "@shared/messageType";
 import {
   handleGameReconnection,
@@ -16,7 +17,7 @@ import {
   OnlineGame,
 } from "./game/game";
 import { isLaunchMatchMessage } from "@shared/tournament/tournamentMessageTypes";
-import { showErrorToast } from "./components/showNotificationToast";
+import { showInfoToast, showSuccessToast, showErrorToast } from "./components/showNotificationToast";
 
 // Define a mapping between event types and their corresponding data types
 type MessageEventMap = {
@@ -82,6 +83,7 @@ export function isConnected(): boolean {
 export function sendMessage<K extends SendableMessageTypes>(msgEventType: K, data: MessageEventMap[K]): void {
   if (!isConnected()) {
     console.error("[WebSocket] Not connected. Cannot send message.");
+    showErrorToast("[WebSocket] Not connected. Cannot send message.");
     return;
   }
 
@@ -132,7 +134,7 @@ export function connectToServer(): void {
     // Handle incoming messages
     socket.onmessage = (event: MessageEvent) => {
       try {
-        const parsed: { type: string; data: any; [key: string]: any } = JSON.parse(event.data);
+        const parsed: { type: string; [key: string]: any } = JSON.parse(event.data);
 
         switch (parsed.type) {
           case "game":
@@ -144,7 +146,7 @@ export function connectToServer(): void {
               }
               notifySubscribers("game", parsed.data as GameMessageData);
             } else {
-              console.warn("[WebSocket] Invalid game message", parsed.data);
+              console.warn("[WebSocket] Invalid game message", parsed);
             }
             break;
 
@@ -152,7 +154,7 @@ export function connectToServer(): void {
             if (isChatMessage(parsed)) {
               notifySubscribers("chat", parsed.data);
             } else {
-              console.warn("[WebSocket] Invalid chat message", parsed.data);
+              console.warn("[WebSocket] Invalid chat message", parsed);
             }
             break;
 
@@ -165,7 +167,31 @@ export function connectToServer(): void {
               }
               notifySubscribers("tournament", parsed.data as TournamentMessageData);
             } else {
-              console.warn("[WebSocket] Invalid tournament message", parsed.data);
+              console.warn("[WebSocket] Invalid tournament message", parsed);
+            }
+            break;
+
+          case "notif":
+            if (isNotificationMessage(parsed)) {
+              switch (parsed.notifType) {
+                case "info":
+                  showInfoToast(parsed.msg);
+                  break;
+
+                case "success":
+                  showSuccessToast(parsed.msg);
+                  break;
+
+                case "error":
+                  showErrorToast(parsed.msg);
+                  break;
+
+                default:
+                  showErrorToast(`Got an unknow notification type '${parsed.notifType}' with message : ${parsed.msg}`);
+                  break;
+              }
+            } else {
+              console.warn("[WebSocket] Invalid notification message", parsed);
             }
             break;
 
@@ -195,7 +221,7 @@ export function connectToServer(): void {
                   break;
               }
             } else {
-              console.error("[WebSocket] Malformed error message:", parsed);
+              console.error("[WebSocket] Invalid error message:", parsed);
             }
             break;
 

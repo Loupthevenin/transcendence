@@ -51,6 +51,7 @@ import { PositionData, ScoreData } from "@shared/game/replayData";
 import enableCanvasExtension from "../utils/canvasExtensionEnabler";
 import { LaunchMatchMessage } from "@shared/tournament/tournamentMessageTypes";
 import { navigateTo } from "../router";
+import { showErrorToast } from "../components/showNotificationToast";
 
 enum GameMode {
   MENU, // Player is in the menu
@@ -1113,6 +1114,7 @@ export function OnlineGame(autoMatchmaking: boolean = true): void {
     console.error(
       "You are not connected to the server, cannot start an online game",
     );
+    showErrorToast("Vous n'êtes pas connecté au serveur, vous ne pouvez pas démarrer une partie en ligne");
     return;
   }
   LoadGameCanvasIfNeeded();
@@ -1142,6 +1144,7 @@ export function SpectatingMode(playerUUIDToSpectate: string): void {
     console.error(
       "You are not connected to the server, cannot spectate other game",
     );
+    showErrorToast("Vous n'êtes pas connecté au serveur, vous ne pouvez pas démarrer une partie en ligne");
     return;
   }
   LoadGameCanvasIfNeeded();

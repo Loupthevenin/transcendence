@@ -61,16 +61,13 @@ export class TournamentTree {
     if (!this.root) throw new Error("Tournament tree has not been generated yet.");
 
     return new Promise<void>(async (resolve) => {
-      let isFirstRound: boolean = true;
       let currentRoundNodes: MatchNode[] = this.getBottomMatches(); // Start with the first round
 
       while (currentRoundNodes.length > 0) {
-        if (!isFirstRound) {
-          // 10s of pause before the next round
-          await new Promise(res => setTimeout(res, 10_000));
-        }
+        // 10s of pause before the next round
+        await new Promise(res => setTimeout(res, 10_000));
+
         await this.playRound(currentRoundNodes); // Play all matches in the round
-        isFirstRound = false;
         currentRoundNodes = this.getNextRound(currentRoundNodes); // Move to the next round
         // this.printTree(); ////////////////////////////////////////
       }
