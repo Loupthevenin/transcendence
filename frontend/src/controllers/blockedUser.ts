@@ -12,27 +12,30 @@ export async function showBlockedUsersModal(): Promise<void> {
   const modal = document.createElement("div");
   modal.className =
     "bg-white p-6 rounded-lg text-black w-96 max-h-[80vh] overflow-y-auto flex flex-col gap-4";
-  modal.innerHTML = `
-      <h2 class="text-2xl font-bold mb-4 text-center">Utilisateurs bloqués</h2>
-      <div id="blocked-users-list" class="flex flex-col gap-4"></div>
-      <button id="close-blocked-users" class="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded">
-        Fermer
-      </button>
-    `;
 
+  const title = document.createElement("h2");
+  title.className = "text-2xl font-bold mb-4 text-center";
+  title.textContent = "Utilisateurs bloqués";
+
+  const listContainer = document.createElement("div");
+  listContainer.id = "blocked-users-list";
+  listContainer.className = "flex flex-col gap-4";
+
+  const closeBtn = document.createElement("button");
+  closeBtn.id = "close-blocked-users";
+  closeBtn.className = "w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded";
+  closeBtn.textContent = "Fermer";
+
+  modal.appendChild(title);
+  modal.appendChild(listContainer);
+  modal.appendChild(closeBtn);
   backdrop.appendChild(modal);
   document.body.appendChild(backdrop);
 
-  modal
-    .querySelector("#close-blocked-users")
-    ?.addEventListener("click", () => backdrop.remove());
+  closeBtn.addEventListener("click", () => backdrop.remove());
   backdrop.addEventListener("click", (e) => {
     if (e.target === backdrop) backdrop.remove();
   });
-
-  const listContainer = modal.querySelector(
-    "#blocked-users-list",
-  ) as HTMLDivElement;
 
   try {
     const token: string | null = localStorage.getItem("auth_token");
@@ -50,14 +53,16 @@ export async function showBlockedUsersModal(): Promise<void> {
     if (!res.ok) throw new Error("Failed to load blocked users");
 
     const blockedUsers = (await res.json()) as {
-      id: number;
+      uuid: string;
       name: string;
       avatar_url: string;
     }[];
 
     if (blockedUsers.length === 0) {
-      listContainer.innerHTML =
-        "<p class='text-center text-gray-500'>Aucun utilisateur bloqué.</p>";
+      const p = document.createElement("p");
+      p.className = "text-center text-gray-500";
+      p.textContent = "Aucun utilisateur bloqué.";
+      listContainer.appendChild(p);
       return;
     }
 
@@ -65,24 +70,28 @@ export async function showBlockedUsersModal(): Promise<void> {
       const userDiv = document.createElement("div");
       userDiv.className = "flex items-center justify-between";
 
-      const tempWrapper: HTMLDivElement = document.createElement("div");
-      tempWrapper.innerHTML = `
-          <div class="flex items-center gap-4">
-            <img src="${user.avatar_url ?? "https://upload.wikimedia.org/wikipedia/commons/2/2c/Default_pfp.svg"}" class="w-10 h-10 rounded-full object-cover" alt="Avatar">
-            <span class="font-semibold"></span>
-          </div>
-          <button class="unblock-btn bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded" data-user-id="${user.id}">
-            Débloquer
-          </button>
-        `;
+      const userInfo = document.createElement("div");
+      userInfo.className = "flex items-center gap-4";
 
-      const span = tempWrapper.querySelector("span");
-      if (span) span.textContent = user.name;
+      const avatar = document.createElement("img");
+      avatar.src = user.avatar_url ?? "https://upload.wikimedia.org/wikipedia/commons/2/2c/Default_pfp.svg";
+      avatar.className = "w-10 h-10 rounded-full object-cover";
+      avatar.alt = "Avatar";
 
-      while (tempWrapper.firstChild) {
-        userDiv.appendChild(tempWrapper.firstChild);
-      }
+      const name = document.createElement("span");
+      name.className = "font-semibold";
+      name.textContent = user.name;
 
+      userInfo.appendChild(avatar);
+      userInfo.appendChild(name);
+
+      const unblockBtn = document.createElement("button");
+      unblockBtn.className = "unblock-btn bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded";
+      unblockBtn.dataset.userUuid = user.uuid;
+      unblockBtn.textContent = "Débloquer";
+
+      userDiv.appendChild(userInfo);
+      userDiv.appendChild(unblockBtn);
       listContainer.appendChild(userDiv);
     }
 
@@ -90,12 +99,10 @@ export async function showBlockedUsersModal(): Promise<void> {
       .querySelectorAll<HTMLButtonElement>(".unblock-btn")
       .forEach((button) => {
         button.addEventListener("click", async () => {
-          const userId = button.getAttribute("data-user-id");
-          if (!userId) return;
+          const userUuid = button.getAttribute("data-user-uuid");
+          if (!userUuid) return;
 
-          const confirmed = confirm(
-            "Veux-tu vraiment débloquer cet utilisateur ?",
-          );
+          const confirmed = confirm("Veux-tu vraiment débloquer cet utilisateur ?");
           if (!confirmed) return;
 
           try {
@@ -111,22 +118,20 @@ export async function showBlockedUsersModal(): Promise<void> {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${token}`,
               },
-              body: JSON.stringify({ targetUserId: Number(userId) }),
+              body: JSON.stringify({ targetUserUuid: userUuid }),
             });
 
             if (!unblockRes.ok) throw new Error("Failed to unblock user");
 
             showSuccessToast("Utilisateur débloqué !");
-            button.parentElement?.remove();
-            emitBlockStatusChanged({
-              userId: Number(userId),
-              uuid: "unknown",
-              blocked: false,
-            });
+            button.parentElement?.parentElement?.remove();
+            emitBlockStatusChanged({ uuid: userUuid, blocked: false });
 
-            if (listContainer.children.length === 0) {
-              listContainer.innerHTML =
-                "<p class='text-center text-gray-500'>Aucun utilisateur bloqué.</p>";
+            if (!listContainer.children.length) {
+              const p = document.createElement("p");
+              p.className = "text-center text-gray-500";
+              p.textContent = "Aucun utilisateur bloqué.";
+              listContainer.appendChild(p);
             }
           } catch (error: any) {
             console.error("Error unblocking user", error);
@@ -137,10 +142,13 @@ export async function showBlockedUsersModal(): Promise<void> {
   } catch (error: any) {
     console.error("Error loading blocked users", error);
     showErrorToast("Erreur de chargement.");
-    listContainer.innerHTML =
-      "<p class='text-center text-red-500'>Erreur de chargement.</p>";
+    const p = document.createElement("p");
+    p.className = "text-center text-red-500";
+    p.textContent = "Erreur de chargement.";
+    listContainer.appendChild(p);
   }
 }
+
 
 export async function refreshBlockButtons(targetUuid: string) {
   const token: string | null = localStorage.getItem("auth_token");
@@ -166,7 +174,7 @@ export async function refreshBlockButtons(targetUuid: string) {
   }
 }
 
-export async function setupBlockFeature(container: HTMLElement, userId: number) {
+export async function setupBlockFeature(container: HTMLElement, userUuid: string) {
   const blockBtn = container.querySelector("#block-user-btn") as HTMLButtonElement;
   const form = container.querySelector("#chat-form") as HTMLFormElement;
   const input = form.querySelector("input") as HTMLInputElement;
@@ -205,7 +213,7 @@ export async function setupBlockFeature(container: HTMLElement, userId: number) 
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ targetUserId: userId }),
+        body: JSON.stringify({ targetUserUuid: userUuid }),
       });
 
       if (!res.ok) throw new Error("Erreur blocage/déblocage");
@@ -222,14 +230,14 @@ export async function setupBlockFeature(container: HTMLElement, userId: number) 
   try {
     const token = localStorage.getItem("auth_token");
     if (!token) throw new Error("No token");
-    const res = await fetch(`/api/block-user/is-blocked?targetUserId=${userId}`, {
+    const res = await fetch(`/api/block-user/is-blocked?targetUserUuid=${userUuid}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const { blocked } = await res.json();
     updateUI(blocked);
     blockBtn.onclick = () => toggleBlock(blocked);
     onBlockStatusChanged((event) => {
-      if (event.userId === userId) {
+      if (event.uuid === userUuid) {
         updateUI(event.blocked);
         blockBtn.onclick = () => toggleBlock(event.blocked);
       }
@@ -242,7 +250,6 @@ export async function setupBlockFeature(container: HTMLElement, userId: number) 
 
 
 export type BlockStatusEvent = {
-  userId: number;
   uuid: string;
   blocked: boolean;
 };

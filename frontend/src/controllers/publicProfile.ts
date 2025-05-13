@@ -8,222 +8,453 @@ import {
 } from "../components/showNotificationToast";
 import { SpectatingMode } from "../game/game";
 
-export async function showPublicProfile(userId: number): Promise<void> {
+export async function showPublicProfile(userUuid: string): Promise<void> {
   try {
-    const token: string | null = localStorage.getItem("auth_token");
-    if (!token) {
-      showErrorToast("Pas de token !");
-      throw new Error("No token");
-    }
+    const token = localStorage.getItem("auth_token");
+    if (!token) throw new Error("No token");
 
-    const res: Response = await fetch(`/api/public-profile/${userId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+    const res = await fetch(`/api/public-profile/${userUuid}`, {
+      headers: { Authorization: `Bearer ${token}` },
     });
-
     if (!res.ok) throw new Error("Failed to load public profile");
 
-    const profile: UserPublicProfile = (await res.json()) as UserPublicProfile;
+    const profile: UserPublicProfile = await res.json();
     openProfileModal(profile);
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error fetching public profile", error);
     showErrorToast("Impossible de charger le profil public");
   }
 }
 
-export async function openProfileModal(
-  profile: UserPublicProfile,
-): Promise<void> {
-  const backdrop: HTMLDivElement = document.createElement("div");
+// <<<<<<< HEAD
+
+// export async function openProfileModal(
+//   profile: UserPublicProfile,
+// ): Promise<void> {
+//   const backdrop: HTMLDivElement = document.createElement("div");
+// =======
+// export async function openProfileModal(profile: {
+//   uuid: string;
+//   name: string;
+//   avatar_url: string;
+// }): Promise<void> {
+//   const backdrop = document.createElement("div");
+// >>>>>>> 6168046 (WIP)
+//   backdrop.className =
+//     "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50";
+//   backdrop.id = "profile-backdrop";
+
+//   const modal: HTMLDivElement = document.createElement("div");
+//   modal.className =
+//     "relative bg-[#1e1b4b] p-6 rounded-2xl text-white w-3/4 h-[90vh] overflow-hidden flex flex-col items-center gap-4";
+
+// <<<<<<< HEAD
+//   <img src="${profile.avatarUrl ?? "https://upload.wikimedia.org/wikipedia/commons/2/2c/Default_pfp.svg"}" 
+//         class="w-24 h-24 rounded-full object-cover" alt="Avatar">
+//   <h2 id="profile-username" class="text-2xl font-bold"></h2>
+//   <p id="profile-id" class="text-white text-sm"></p>
+// =======
+//   const blockBtn = document.createElement("button");
+//   blockBtn.id = "block-user-btn";
+//   blockBtn.className =
+//     "absolute top-4 right-4 px-3 py-1 rounded text-sm text-white bg-red-600 hover:bg-red-700";
+//   blockBtn.textContent = "🚫";
+//   modal.appendChild(blockBtn);
+// >>>>>>> 6168046 (WIP)
+
+//   const avatar = document.createElement("img");
+//   avatar.src =
+//     profile.avatar_url ??
+//     "https://upload.wikimedia.org/wikipedia/commons/2/2c/Default_pfp.svg";
+//   avatar.className = "w-24 h-24 rounded-full object-cover";
+//   avatar.alt = "Avatar";
+//   modal.appendChild(avatar);
+
+//   const nameEl = document.createElement("h2");
+//   nameEl.id = "profile-username";
+//   nameEl.className = "text-2xl font-bold";
+//   nameEl.textContent = profile.name;
+//   modal.appendChild(nameEl);
+
+//   const uuidEl = document.createElement("p");
+//   uuidEl.id = "profile-id";
+//   uuidEl.className = "text-white text-sm";
+//   uuidEl.textContent = `User UUID : ${profile.uuid}`;
+//   modal.appendChild(uuidEl);
+
+//   modal.insertAdjacentHTML("beforeend", `
+//     <div class="bg-[#2e2c60] p-6 rounded-xl shadow-lg text-white">
+//       <h3 class="text-xl font-semibold text-indigo-300 mb-4">Statistiques</h3>
+//       <div class="flex items-center justify-between">
+//         <div class="flex space-x-6">
+//           <div>
+//             <p id="win-rate-header" class="text-sm text-purple-300 mb-1">Win Rate</p>
+//             <div id="win-rate-container" class="text-2xl font-bold text-green-400"></div>
+//           </div>
+//           <div>
+//             <p id="draw-rate-header" class="text-sm text-purple-300 mb-1">Draw Rate</p>
+//             <div id="draw-rate-container" class="text-2xl font-bold text-gray-400"></div>
+//           </div>
+//           <div>
+//             <p id="lose-rate-header" class="text-sm text-purple-300 mb-1">Lose Rate</p>
+//             <div id="lose-rate-container" class="text-2xl font-bold text-red-400"></div>
+//           </div>
+//         </div>
+//         <div class="flex-shrink-0 ml-6">
+//           <div id="pie-chart" class="pie-chart"></div>
+//         </div>
+//       </div>
+//     </div>
+//   `);
+
+//   modal.insertAdjacentHTML("beforeend", `
+//     <div id="history-section" class="w-full flex-1 overflow-y-auto bg-[#2e2c60] rounded-xl p-4 mt-4">
+//       <h3 class="text-lg font-semibold mb-2">Historique des matchs</h3>
+//       <ul id="match-history" class="flex flex-col gap-2"></ul>
+//     </div>
+//   `);
+
+// <<<<<<< HEAD
+//   <button id="close-profile-modal" class="absolute top-4 left-4 text-gray-400 hover:text-white text-xl">
+//   ✖
+//   </button>
+//   `;
+
+//   const profileUsernameElement: HTMLHeadingElement | null =
+//     modal.querySelector("#profile-username");
+//   if (profileUsernameElement) {
+//     profileUsernameElement.textContent = profile.name;
+//   }
+
+//   const profileIdElement: HTMLParagraphElement | null =
+//     modal.querySelector("#profile-id");
+//   if (profileIdElement) {
+//     profileIdElement.textContent = `User ID : ${profile.id}`;
+//   }
+// =======
+//   const closeBtn = document.createElement("button");
+//   closeBtn.id = "close-profile-modal";
+//   closeBtn.className =
+//     "absolute top-4 left-4 text-gray-400 hover:text-white text-xl";
+//   closeBtn.textContent = "✖";
+//   closeBtn.addEventListener("click", () => backdrop.remove());
+//   modal.appendChild(closeBtn);
+// >>>>>>> 6168046 (WIP)
+
+//   if (profile.isPlaying) {
+//     const spectateButton: HTMLButtonElement = document.createElement("button");
+//     spectateButton.id = "spectate";
+//     spectateButton.className = "bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm absolute top-16 right-4";
+//     spectateButton.textContent = "👀 Regarder en direct";
+//     modal.appendChild(spectateButton);
+//   }
+
+//   backdrop.appendChild(modal);
+//   document.body.appendChild(backdrop);
+// <<<<<<< HEAD
+
+//   modal
+//     .querySelector("#close-profile-modal")
+//     ?.addEventListener("click", () => backdrop.remove());
+//   backdrop.addEventListener("click", (e: MouseEvent) => {
+//     if (e.target === backdrop) backdrop.remove();
+//   });
+
+//   const blockButton: HTMLButtonElement = modal.querySelector(
+//     "#block-user-btn",
+//   ) as HTMLButtonElement;
+
+// =======
+//   backdrop.addEventListener("click", (e) => {
+//     if (e.target === backdrop) backdrop.remove();
+//   });
+
+// >>>>>>> 6168046 (WIP)
+//   const updateBlockButton = (isBlocked: boolean) => {
+//     blockBtn.textContent = isBlocked
+//       ? "✅ Débloquer cet utilisateur"
+//       : "🚫 Bloquer cet utilisateur";
+//     blockBtn.className = `${isBlocked ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"} text-white px-3 py-1 rounded text-sm absolute top-4 right-4`;
+//   };
+
+//   const toggleBlock = async (isBlocked: boolean) => {
+//     const confirmMsg: string = isBlocked
+//       ? `Veux-tu vraiment débloquer ${profile.name} ?`
+//       : `Veux-tu vraiment bloquer ${profile.name} ?`;
+//     if (!confirm(confirmMsg)) return;
+
+//     try {
+//       const token = localStorage.getItem("auth_token");
+//       if (!token) throw new Error("No token");
+
+//       const endpoint: string = isBlocked
+//         ? "/api/block-user/unblock"
+//         : "/api/block-user";
+// <<<<<<< HEAD
+
+//       const res: Response = await fetch(endpoint, {
+// =======
+//       const res = await fetch(endpoint, {
+// >>>>>>> 6168046 (WIP)
+//         method: "POST",
+//         headers: {
+//           "Content-Type": "application/json",
+//           Authorization: `Bearer ${token}`,
+//         },
+//         body: JSON.stringify({ targetUserUuid: profile.uuid }),
+//       });
+
+//       if (!res.ok) throw new Error("Erreur serveur");
+
+//       showSuccessToast(
+//         isBlocked
+//           ? `${profile.name} a été débloqué ✅`
+//           : `${profile.name} a été bloqué 🚫`
+//       );
+
+//       const newStatus = !isBlocked;
+//       updateBlockButton(newStatus);
+//       blockBtn.onclick = () => toggleBlock(!newStatus);
+//       emitBlockStatusChanged({ uuid: profile.uuid, blocked: newStatus });
+//     } catch (err) {
+//       console.error(err);
+//       showErrorToast("Erreur lors de l'action de blocage.");
+//     }
+//   };
+
+//   try {
+//     const token = localStorage.getItem("auth_token");
+//     if (!token) throw new Error("No token");
+
+// <<<<<<< HEAD
+//     const res: Response = await fetch(
+//       `/api/block-user/is-blocked?targetUserId=${profile.id}`,
+//       {
+//         headers: {
+//           Authorization: `Bearer ${token}`,
+//         },
+//       },
+// =======
+//     const res = await fetch(
+//       `/api/block-user/is-blocked?targetUserUuid=${profile.uuid}`,
+//       { headers: { Authorization: `Bearer ${token}` } }
+// >>>>>>> 6168046 (WIP)
+//     );
+//     const { blocked } = await res.json();
+//     updateBlockButton(blocked);
+// <<<<<<< HEAD
+//     blockButton.onclick = () => toggleBlock(blocked);
+//     listenerButtonSpectate(profile.uuid);
+//   } catch (error: any) {
+//     console.error("Erreur de vérification blocage:", error);
+//     showErrorToast("Erreur de vérification blocage");
+// =======
+//     blockBtn.onclick = () => toggleBlock(blocked);
+//   } catch (err) {
+//     console.error(err);
+//     showErrorToast("Erreur lors de la récupération du statut de blocage.");
+// >>>>>>> 6168046 (WIP)
+//     updateBlockButton(false);
+//     blockBtn.onclick = () => toggleBlock(false);
+//   }
+
+//   onBlockStatusChanged((event) => {
+//     if (event.uuid === profile.uuid) {
+//       updateBlockButton(event.blocked);
+//       blockBtn.onclick = () => toggleBlock(event.blocked);
+//     }
+//   });
+
+//   await loadHistory(profile.uuid);
+// }
+
+export async function openProfileModal(profile: UserPublicProfile): Promise<void> {
+  const backdrop = document.createElement("div");
   backdrop.className =
     "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50";
   backdrop.id = "profile-backdrop";
 
-  const modal: HTMLDivElement = document.createElement("div");
+  const modal = document.createElement("div");
   modal.className =
     "relative bg-[#1e1b4b] p-6 rounded-2xl text-white w-3/4 h-[90vh] overflow-hidden flex flex-col items-center gap-4";
-  modal.innerHTML = `
-  <button id="block-user-btn" class="absolute top-4 right-4 px-3 py-1 rounded text-sm text-white bg-red-600 hover:bg-red-700">
-  🚫
-  </button>
 
-  <img src="${profile.avatarUrl ?? "https://upload.wikimedia.org/wikipedia/commons/2/2c/Default_pfp.svg"}" 
-        class="w-24 h-24 rounded-full object-cover" alt="Avatar">
-  <h2 id="profile-username" class="text-2xl font-bold"></h2>
-  <p id="profile-id" class="text-white text-sm"></p>
+  const blockBtn = document.createElement("button");
+  blockBtn.id = "block-user-btn";
+  blockBtn.className =
+    "absolute top-4 right-4 px-3 py-1 rounded text-sm text-white bg-red-600 hover:bg-red-700";
+  blockBtn.textContent = "🚫";
+  modal.appendChild(blockBtn);
 
-  <div class="bg-[#2e2c60] p-6 rounded-xl shadow-lg text-white">
-    <h3 class="text-xl font-semibold text-indigo-300 mb-4">Statistiques</h3>
-    <div class="flex items-center justify-between">
-      <div class="flex space-x-6">
-        <div>
-          <p id="win-rate-header" class="text-sm text-purple-300 mb-1">Win Rate</p>
-          <div id="win-rate-container" class="text-2xl font-bold text-green-400"></div>
-        </div>
-        <div>
-          <p id="draw-rate-header" class="text-sm text-purple-300 mb-1">Draw Rate</p>
-          <div id="draw-rate-container" class="text-2xl font-bold text-gray-400"></div>
-        </div>
-        <div>
-          <p id="lose-rate-header" class="text-sm text-purple-300 mb-1">Lose Rate</p>
-          <div id="lose-rate-container" class="text-2xl font-bold text-red-400"></div>
-        </div>
-      </div>
-      <div class="flex-shrink-0 ml-6">
-        <div id="pie-chart" class="pie-chart"></div>
-      </div>
-    </div>
-  </div>
+  const avatar = document.createElement("img");
+  avatar.src =
+    profile.avatarUrl ??
+    "https://upload.wikimedia.org/wikipedia/commons/2/2c/Default_pfp.svg";
+  avatar.className = "w-24 h-24 rounded-full object-cover";
+  avatar.alt = "Avatar";
+  modal.appendChild(avatar);
 
-  <div id="history-section" class="w-full flex-1 overflow-y-auto bg-[#2e2c60] rounded-xl p-4 mt-4">
-    <h3 class="text-lg font-semibold mb-2">Historique des matchs</h3>
-    <ul id="match-history" class="flex flex-col gap-2"></ul>
-  </div>
+  const nameEl = document.createElement("h2");
+  nameEl.id = "profile-username";
+  nameEl.className = "text-2xl font-bold";
+  nameEl.textContent = profile.name;
+  modal.appendChild(nameEl);
 
-  <button id="close-profile-modal" class="absolute top-4 left-4 text-gray-400 hover:text-white text-xl">
-  ✖
-  </button>
-  `;
-
-  const profileUsernameElement: HTMLHeadingElement | null =
-    modal.querySelector("#profile-username");
-  if (profileUsernameElement) {
-    profileUsernameElement.textContent = profile.name;
-  }
-
-  const profileIdElement: HTMLParagraphElement | null =
-    modal.querySelector("#profile-id");
-  if (profileIdElement) {
-    profileIdElement.textContent = `User ID : ${profile.id}`;
-  }
+  const uuidEl = document.createElement("p");
+  uuidEl.id = "profile-id";
+  uuidEl.className = "text-white text-sm";
+  uuidEl.textContent = `User UUID : ${profile.uuid}`;
+  modal.appendChild(uuidEl);
 
   if (profile.isPlaying) {
-    const spectateButton: HTMLButtonElement = document.createElement("button");
+    const spectateButton = document.createElement("button");
     spectateButton.id = "spectate";
-    spectateButton.className = "bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm absolute top-16 right-4";
+    spectateButton.className =
+      "bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm absolute top-16 right-4";
     spectateButton.textContent = "👀 Regarder en direct";
     modal.appendChild(spectateButton);
   }
 
+  modal.insertAdjacentHTML("beforeend", `
+    <div class="bg-[#2e2c60] p-6 rounded-xl shadow-lg text-white">
+      <h3 class="text-xl font-semibold text-indigo-300 mb-4">Statistiques</h3>
+      <div class="flex items-center justify-between">
+        <div class="flex space-x-6">
+          <div>
+            <p id="win-rate-header" class="text-sm text-purple-300 mb-1">Win Rate</p>
+            <div id="win-rate-container" class="text-2xl font-bold text-green-400"></div>
+          </div>
+          <div>
+            <p id="draw-rate-header" class="text-sm text-purple-300 mb-1">Draw Rate</p>
+            <div id="draw-rate-container" class="text-2xl font-bold text-gray-400"></div>
+          </div>
+          <div>
+            <p id="lose-rate-header" class="text-sm text-purple-300 mb-1">Lose Rate</p>
+            <div id="lose-rate-container" class="text-2xl font-bold text-red-400"></div>
+          </div>
+        </div>
+        <div class="flex-shrink-0 ml-6">
+          <div id="pie-chart" class="pie-chart"></div>
+        </div>
+      </div>
+    </div>
+  `);
+
+  modal.insertAdjacentHTML("beforeend", `
+    <div id="history-section" class="w-full flex-1 overflow-y-auto bg-[#2e2c60] rounded-xl p-4 mt-4">
+      <h3 class="text-lg font-semibold mb-2">Historique des matchs</h3>
+      <ul id="match-history" class="flex flex-col gap-2"></ul>
+    </div>
+  `);
+
+  const closeBtn = document.createElement("button");
+  closeBtn.id = "close-profile-modal";
+  closeBtn.className =
+    "absolute top-4 left-4 text-gray-400 hover:text-white text-xl";
+  closeBtn.textContent = "✖";
+  closeBtn.addEventListener("click", () => backdrop.remove());
+  modal.appendChild(closeBtn);
+
   backdrop.appendChild(modal);
   document.body.appendChild(backdrop);
-
-  modal
-    .querySelector("#close-profile-modal")
-    ?.addEventListener("click", () => backdrop.remove());
-  backdrop.addEventListener("click", (e: MouseEvent) => {
+  backdrop.addEventListener("click", (e) => {
     if (e.target === backdrop) backdrop.remove();
   });
 
-  const blockButton: HTMLButtonElement = modal.querySelector(
-    "#block-user-btn",
-  ) as HTMLButtonElement;
-
   const updateBlockButton = (isBlocked: boolean) => {
-    blockButton.textContent = isBlocked
+    blockBtn.textContent = isBlocked
       ? "✅ Débloquer cet utilisateur"
-      : "🚫 Bloquer cet utilisateur";
-    blockButton.className = `${isBlocked ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"} text-white px-3 py-1 rounded text-sm absolute top-4 right-4`;
+      : "⛔ Bloquer cet utilisateur";
+    blockBtn.className = `${
+      isBlocked ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
+    } text-white px-3 py-1 rounded text-sm absolute top-4 right-4`;
   };
 
   const toggleBlock = async (isBlocked: boolean) => {
-    const confirmMsg: string = isBlocked
-      ? `Veux-tu vraiment débloquer ${profile.name} ?`
-      : `Veux-tu vraiment bloquer ${profile.name} ?`;
-    if (!confirm(confirmMsg)) return;
+    if (!confirm(
+      isBlocked
+        ? `Veux-tu vraiment débloquer ${profile.name} ?`
+        : `Veux-tu vraiment bloquer ${profile.name} ?`
+    )) return;
 
     try {
-      const token: string | null = localStorage.getItem("auth_token");
-      if (!token) {
-        showErrorToast("Pas de token !");
-        throw new Error("No token");
-      }
+      const token = localStorage.getItem("auth_token");
+      if (!token) throw new Error("No token");
 
-      const endpoint: string = isBlocked
-        ? "/api/block-user/unblock"
-        : "/api/block-user";
-
-      const res: Response = await fetch(endpoint, {
+      const endpoint = isBlocked ? "/api/block-user/unblock" : "/api/block-user";
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ targetUserId: profile.id }),
+        body: JSON.stringify({ targetUserUuid: profile.uuid }),
       });
 
-      if (!res.ok)
-        throw new Error(`Erreur ${isBlocked ? "déblocage" : "blocage"}`);
+      if (!res.ok) throw new Error("Erreur serveur");
 
       showSuccessToast(
         isBlocked
           ? `${profile.name} a été débloqué ✅`
-          : `${profile.name} a été bloqué 🚫`,
+          : `${profile.name} a été bloqué ⛔`
       );
+
       const newStatus = !isBlocked;
       updateBlockButton(newStatus);
-      blockButton.onclick = () => toggleBlock(!isBlocked);
-      emitBlockStatusChanged({
-        userId: profile.id,
-        uuid: profile.uuid,
-        blocked: newStatus,
-      });
-    } catch (error: any) {
-      console.error(
-        `Erreur lors du ${isBlocked ? "déblocage" : "blocage"}:`,
-        error,
-      );
-      showErrorToast(`Erreur lors du ${isBlocked ? "déblocage" : "blocage"}.`);
+      blockBtn.onclick = () => toggleBlock(!newStatus);
+      emitBlockStatusChanged({ uuid: profile.uuid, blocked: newStatus });
+    } catch (err) {
+      console.error(err);
+      showErrorToast("Erreur lors de l'action de blocage.");
     }
   };
 
   try {
-    const token: string | null = localStorage.getItem("auth_token");
-    if (!token) {
-      showErrorToast("Pas de token !");
-      throw new Error("No token");
-    }
+    const token = localStorage.getItem("auth_token");
+    if (!token) throw new Error("No token");
 
-    const res: Response = await fetch(
-      `/api/block-user/is-blocked?targetUserId=${profile.id}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
+    const res = await fetch(
+      `/api/block-user/is-blocked?targetUserUuid=${profile.uuid}`,
+      { headers: { Authorization: `Bearer ${token}` } }
     );
-
     const { blocked } = await res.json();
     updateBlockButton(blocked);
-    blockButton.onclick = () => toggleBlock(blocked);
-    listenerButtonSpectate(profile.uuid);
-  } catch (error: any) {
-    console.error("Erreur de vérification blocage:", error);
-    showErrorToast("Erreur de vérification blocage");
+    blockBtn.onclick = () => toggleBlock(blocked);
+  } catch (err) {
+    console.error(err);
+    showErrorToast("Erreur lors de la récupération du statut de blocage.");
     updateBlockButton(false);
-    blockButton.onclick = () => toggleBlock(false);
+    blockBtn.onclick = () => toggleBlock(false);
   }
 
   onBlockStatusChanged((event) => {
-    if (event.userId === profile.id || event.uuid === profile.uuid) {
+    if (event.uuid === profile.uuid) {
       updateBlockButton(event.blocked);
-      blockButton.onclick = () => toggleBlock(event.blocked);
+      blockBtn.onclick = () => toggleBlock(event.blocked);
     }
   });
+
+  if (profile.isPlaying) {
+    const spectateButton = document.createElement("button");
+    spectateButton.id = "spectate";
+    spectateButton.className = "bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm absolute top-16 right-4";
+    spectateButton.textContent = "👀 Regarder en direct";
+    modal.appendChild(spectateButton);
   
-  await loadHistory(profile.id);
+    listenerButtonSpectate(profile.uuid); 
+  }
+
+  await loadHistory(profile.uuid);
 }
 
 
-async function loadHistory(userId: number): Promise<void> {
+async function loadHistory(userUuid: string): Promise<void> {
   const token: string | null = localStorage.getItem("auth_token");
   if (!token) {
     showErrorToast("Pas de token !");
     return;
   }
   try {
-    const res: Response = await fetch(`/api/public-profile/history/${userId}`, {
+    const res: Response = await fetch(`/api/public-profile/history/${userUuid}`, {
       method: "GET",
       headers: {
         authorization: `Bearer ${token}`,
