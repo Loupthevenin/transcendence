@@ -17,8 +17,8 @@ export const paddleDefaultZPosition: number = areaWidth / 2 - 0.6;
 // Ball
 export const ballRadius: number = 0.1; // The default radius of the ball
 export const ballDefaultSpeed: number = 4; // The default speed of the ball
-export const ballMaxSpeed: number = 12; // The maximum possible speed of the ball
-export const ballSpeedFactor: number = 1.04; // Factor to increase ball speed
+export const ballMaxSpeed: number = 15; // The maximum possible speed of the ball
+export const ballSpeedFactor: number = 1.05; // Factor to increase ball speed
 export const ballMaximumDegreesShift: number = 10; // The maximum angle in degrees of velocity direction shifting when colliding with a paddle
 
 // Others
