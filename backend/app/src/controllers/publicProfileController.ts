@@ -38,7 +38,7 @@ export async function getPublicProfile(
     name: user.name,
     avatarUrl: user.avatar_url,
     isOnline: player !== undefined,
-    isPlaying: player?.room !== undefined,
+    isPlaying: !!(player?.room),
   };
 
   return reply.send(publicProfile);
