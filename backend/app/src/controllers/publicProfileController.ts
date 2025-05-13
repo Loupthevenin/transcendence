@@ -3,6 +3,8 @@ import db from "../db/db";
 import { MatchHistoryRow } from "../types/profileTypes";
 import { MatchHistory } from "../shared/match/matchHistory";
 import UserPublicProfile from "../shared/userPublicProfile";
+import { getPlayerByUUID } from "../ws/setupWebSocket";
+import { Player } from "../types/player";
 
 type DbUserRow = {
   id: number;
@@ -28,13 +30,15 @@ export async function getPublicProfile(
     return reply.status(404).send({ error: "User not found" });
   }
 
+  const player: Player | undefined = getPlayerByUUID(user.uuid);
+
   const publicProfile: UserPublicProfile = {
     id: user.id,
     uuid: user.uuid,
     name: user.name,
     avatarUrl: user.avatar_url,
-    isOnline: true,
-    isPlaying: true,
+    isOnline: player !== undefined,
+    isPlaying: player?.room !== undefined,
   };
 
   return reply.send(publicProfile);
