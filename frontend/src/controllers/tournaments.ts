@@ -5,6 +5,7 @@ import { TournamentSettings } from "@shared/tournament/tournamentSettings";
 import * as TournamentMessages from "@shared/tournament/tournamentMessageTypes";
 import { navigateTo } from "../router";
 import { showErrorToast } from "../components/showNotificationToast";
+import { showPublicProfile } from "./publicProfile";
 
 function createCardTournament(tournament: TournamentInfo): HTMLElement {
   const card: HTMLElement = document.createElement("div");
@@ -376,11 +377,10 @@ function renderMatch(match: MatchNode): HTMLDivElement | null {
   player1Div.title = p1;
   player1Div.textContent = p1;
 
-  if (match.player1) {
+  if (match.player1 && !match.player1.isBot) {
     player1Div.addEventListener("click", () => {
       if (match.player1) {
-        // showPublicProfile(match.player1.uuid);
-        alert(`showPublicProfile of ${match.player1.uuid}`);
+        showPublicProfile(match.player1.uuid);
       }
     });
   }
@@ -390,11 +390,10 @@ function renderMatch(match: MatchNode): HTMLDivElement | null {
   player2Div.title = p2;
   player2Div.textContent = p2;
 
-  if (match.player2) {
+  if (match.player2 && !match.player2.isBot) {
     player2Div.addEventListener("click", () => {
       if (match.player2) {
-        // showPublicProfile(match.player2.uuid);
-        alert(`showPublicProfile of ${match.player2.uuid}`);
+        showPublicProfile(match.player2.uuid);
       }
     });
   }
