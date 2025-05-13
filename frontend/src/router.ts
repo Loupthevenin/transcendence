@@ -10,7 +10,7 @@ import { ReplayView } from "./views/replay";
 import { initSideBarNavigation, isSidebarOpen, toggleSidebar } from "./controllers/navbar";
 import { handleGoogleCallback } from "./controllers/google";
 import { listenerButtonGameMode } from "./controllers/gameMode";
-import { createGameCanvas, initGameEnvironment, BackToMenu, LeaveOnlineGameIfNeeded } from "./game/game";
+import { createGameCanvas, initGameEnvironment, BackToMenu, LeaveGameIfNeeded } from "./game/game";
 import { createSkinSelectorCanvas, initSkinSelector} from "./game/skinSelector";
 import { ChatView} from "./views/chat";
 import { initOnlineGameSession } from "./controllers/InviteGame";
@@ -138,7 +138,7 @@ export async function navigateTo(path: string): Promise<void> {
 }
 
 export async function renderRoute(): Promise<void> {
-  LeaveOnlineGameIfNeeded();
+  LeaveGameIfNeeded();
 
   const path: string = location.pathname;
   const route: Route = routes[path];
