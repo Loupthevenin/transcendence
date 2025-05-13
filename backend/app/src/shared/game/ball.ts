@@ -140,7 +140,7 @@ export function updateBallPosition(gameData: GameData, gameStats: GameStats, del
       if (earliestCollision.isPaddle) {
         gameStats.ballExchangesCount++;
         shiftBallDirection(ballVel);
-        if (gameStats.ballExchangesCount % 4 === 0) {
+        if (gameStats.ballExchangesCount % 3 === 0) {
           scaleMagnitude(ballVel, GAME_CONSTANT.ballSpeedFactor, 0, GAME_CONSTANT.ballMaxSpeed);
         }
       }
