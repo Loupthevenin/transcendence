@@ -1,7 +1,10 @@
 import { GameResultMessage } from "../shared/game/gameMessageTypes";
 import { Room, RoomType, createNewRoom } from "../game/room";
 import { Player } from "../types/player";
-import { isLaunchMatchMessage, LaunchMatchMessage } from "../shared/tournament/tournamentMessageTypes";
+import {
+  isLaunchMatchMessage,
+  LaunchMatchMessage,
+} from "../shared/tournament/tournamentMessageTypes";
 import { isTournamentMessage, TournamentMessage } from "../shared/messageType";
 import { Tournament } from "../types/tournament";
 import { saveMatchData } from "../db/db";
@@ -14,7 +17,7 @@ export type MatchNode = {
   player: Player | null;
   left: MatchNode | null;
   right: MatchNode | null;
-}
+};
 
 export class TournamentTree {
   private tournament: Tournament;
@@ -26,13 +29,16 @@ export class TournamentTree {
 
   // Function to generate the tournament tree
   public generate(players: Player[]): void {
-    if (this.root) throw new Error("Tournament tree has already been generated.");
-    if (players.length < 4) throw new Error("Not enough players to generate a tournament tree.");
-    if ((players.length & (players.length - 1)) !== 0) throw new Error("Number of players must be a power of 2.");
+    if (this.root)
+      throw new Error("Tournament tree has already been generated.");
+    if (players.length < 4)
+      throw new Error("Not enough players to generate a tournament tree.");
+    if ((players.length & (players.length - 1)) !== 0)
+      throw new Error("Number of players must be a power of 2.");
 
     // Separate real players and bot players
-    const realPlayers: Player[] = players.filter(player => !player.isBot);
-    const botPlayers: Player[] = players.filter(player => player.isBot);
+    const realPlayers: Player[] = players.filter((player) => !player.isBot);
+    const botPlayers: Player[] = players.filter((player) => player.isBot);
 
     // Shuffle only the non-bot players
     realPlayers.sort(() => Math.random() - 0.5);
@@ -58,21 +64,24 @@ export class TournamentTree {
   }
 
   public playTournament(): Promise<void> {
-    if (!this.root) throw new Error("Tournament tree has not been generated yet.");
+    if (!this.root)
+      throw new Error("Tournament tree has not been generated yet.");
 
     return new Promise<void>(async (resolve) => {
       let currentRoundNodes: MatchNode[] = this.getBottomMatches(); // Start with the first round
 
       while (currentRoundNodes.length > 0) {
         // 10s of pause before the next round
-        await new Promise(res => setTimeout(res, 10_000));
+        await new Promise((res) => setTimeout(res, 10_000));
 
         await this.playRound(currentRoundNodes); // Play all matches in the round
         currentRoundNodes = this.getNextRound(currentRoundNodes); // Move to the next round
         // this.printTree(); ////////////////////////////////////////
       }
 
-      console.log(`[Tournament ${this.tournament.name}] Tournament finished! Winner: '${this.root?.player?.username}'`);
+      console.log(
+        `[Tournament ${this.tournament.name}] Tournament finished! Winner: '${this.root?.player?.username}'`,
+      );
       this.tournament.isEnded = true;
       resolve();
     });
@@ -80,7 +89,9 @@ export class TournamentTree {
 
   // Play all matches in the current round asynchronously
   private async playRound(nodes: MatchNode[]): Promise<void> {
-    await Promise.all(nodes.map((node: MatchNode) => this.playMatchAsync(node)));
+    await Promise.all(
+      nodes.map((node: MatchNode) => this.playMatchAsync(node)),
+    );
   }
 
   // Collect all the matches from the bottom of the tree (first round)
@@ -121,11 +132,17 @@ export class TournamentTree {
 
   // Find parent node of a match (needed for advancing rounds)
   private findParent(child: MatchNode): MatchNode | null {
-    function findParentRecursively(current: MatchNode | null, child: MatchNode): MatchNode | null {
+    function findParentRecursively(
+      current: MatchNode | null,
+      child: MatchNode,
+    ): MatchNode | null {
       if (!current || !current.left || !current.right) return null;
       if (current.left === child || current.right === child) return current;
 
-      return findParentRecursively(current.left, child) || findParentRecursively(current.right, child);
+      return (
+        findParentRecursively(current.left, child) ||
+        findParentRecursively(current.right, child)
+      );
     }
 
     return findParentRecursively(this.root, child);
@@ -148,9 +165,15 @@ export class TournamentTree {
       }
 
       const room: Room = createNewRoom(RoomType.Tournament);
-      const errorOccured: (error: any, winPriority?: 1 | 2) => void = (error: any, winPriority?: 1 | 2) => {
+      const errorOccured: (error: any, winPriority?: 1 | 2) => void = (
+        error: any,
+        winPriority?: 1 | 2,
+      ) => {
         // If the game cannot be started
-        console.error(`[Tournament ${this.tournament.name}] Error starting game in room '${room.getId()}':`, error);
+        console.error(
+          `[Tournament ${this.tournament.name}] Error starting game in room '${room.getId()}':`,
+          error,
+        );
         room.dispose();
 
         let winner: "A" | "B";
@@ -169,8 +192,8 @@ export class TournamentTree {
           0,
           0,
           winner,
-          RoomType.Tournament
-        )
+          RoomType.Tournament,
+        );
 
         const p1Name: string = this.tournament.pseudoNames.get(player1.uuid)!;
         const p2Name: string = this.tournament.pseudoNames.get(player2.uuid)!;
@@ -179,7 +202,7 @@ export class TournamentTree {
           p2Name,
           0,
           0,
-          winner === "A" ? p1Name : p2Name
+          winner === "A" ? p1Name : p2Name,
         );
 
         this.handleMatchEnded(node, winner);
@@ -187,11 +210,17 @@ export class TournamentTree {
       };
 
       if (!room.addPlayer(player1)) {
-        errorOccured(`Player 1 (${player1.username}) cannot be added to the room`, 2);
+        errorOccured(
+          `Player 1 (${player1.username}) cannot be added to the room`,
+          2,
+        );
         return;
       }
       if (!room.addPlayer(player2)) {
-        errorOccured(`Player 2 (${player2.username}) cannot be added to the room`, 1);
+        errorOccured(
+          `Player 2 (${player2.username}) cannot be added to the room`,
+          1,
+        );
         return;
       }
 
@@ -202,25 +231,30 @@ export class TournamentTree {
           this.tournament.pseudoNames.get(player2.uuid)!,
           gameResult.p1Score,
           gameResult.p2Score,
-          this.tournament.pseudoNames.get(gameResult.winnerUUID)!
+          this.tournament.pseudoNames.get(gameResult.winnerUUID)!,
         );
 
-        this.handleMatchEnded(node, gameResult.winner === node.right!.player!.username ? "B" : "A");
+        this.handleMatchEnded(
+          node,
+          gameResult.winner === node.right!.player!.username ? "B" : "A",
+        );
         resolve(); // Resolve once the match is over
       });
 
       const launchMatchMessage: string = JSON.stringify({
-          type: "tournament",
-          data: { type: "launchMatch" } as LaunchMatchMessage,
-        } as TournamentMessage
-      );
+        type: "tournament",
+        data: { type: "launchMatch" } as LaunchMatchMessage,
+      } as TournamentMessage);
 
       type MatchStartError = {
         msg: string;
         playerId: 1 | 2;
-      }
+      };
 
-      const waitForResponse: (player: Player, playerId: 1 | 2) => Promise<void> = (player: Player, playerId: 1 | 2): Promise<void> => {
+      const waitForResponse: (
+        player: Player,
+        playerId: 1 | 2,
+      ) => Promise<void> = (player: Player, playerId: 1 | 2): Promise<void> => {
         return new Promise((res, rej) => {
           // If its a bot resolve immediatly
           if (player.isBot) {
@@ -241,7 +275,7 @@ export class TournamentTree {
             player.socket?.removeListener("message", responseListener);
             rej({
               msg: `Timeout waiting for response from '${player.username}'`,
-              playerId
+              playerId,
             } as MatchStartError);
           }, 10_000); // 10s
 
@@ -254,10 +288,14 @@ export class TournamentTree {
         .then(() => room.startGame())
         .catch((error: any) => {
           // Check if the error is typeof MatchStartError
-          if (error && typeof error.msg === "string" && (error.playerId === 1 || error.playerId === 2)) {
+          if (
+            error &&
+            typeof error.msg === "string" &&
+            (error.playerId === 1 || error.playerId === 2)
+          ) {
             errorOccured(
               (error as MatchStartError).msg,
-              (error as MatchStartError).playerId === 1 ? 2 : 1
+              (error as MatchStartError).playerId === 1 ? 2 : 1,
             );
           } else {
             errorOccured(error);
@@ -274,7 +312,7 @@ export class TournamentTree {
     p2username: string,
     p1Score: number,
     p2Score: number,
-    winner: string // Winner's username
+    winner: string, // Winner's username
   ): Promise<void> {
     const provider: JsonRpcProvider = new JsonRpcProvider(
       "https://api.avax-test.network/ext/bc/C/rpc",
@@ -284,6 +322,10 @@ export class TournamentTree {
     const contract: Contract = new Contract(CONTRACT_KEY, abi, signer);
 
     try {
+      const nonce = await provider.getTransactionCount(
+        signer.address,
+        "pending",
+      );
       const tx = await contract.storeMatch(
         p1username,
         p2username,
@@ -291,6 +333,7 @@ export class TournamentTree {
         p2Score,
         winner,
         Math.floor(Date.now() / 1000),
+        { nonce },
       );
       await tx.wait();
       console.log("Match stored on blockchain", tx.hash);
@@ -301,8 +344,12 @@ export class TournamentTree {
 
   private handleMatchEnded(node: MatchNode, winner: "A" | "B"): void {
     if (node.player) throw new Error("This match has already been played.");
-    if (!node.left || !node.right) throw new Error("Cannot play a match for a node without two children.");
-    if (!node.left.player || !node.right.player) throw new Error("Cannot play a match for a node with children without player.");
+    if (!node.left || !node.right)
+      throw new Error("Cannot play a match for a node without two children.");
+    if (!node.left.player || !node.right.player)
+      throw new Error(
+        "Cannot play a match for a node with children without player.",
+      );
 
     // Advance the winner to the current node
     node.player = (winner === "A" ? node.left : node.right).player;
@@ -324,7 +371,10 @@ export class TournamentTree {
     if (!node) return;
 
     this.printNode(node.left, depth + 1);
-    console.log(" ".repeat(depth * 6) + (node.player ? node.player.username : "-----"));
+    console.log(
+      " ".repeat(depth * 6) + (node.player ? node.player.username : "-----"),
+    );
     this.printNode(node.right, depth + 1);
   }
 }
+
