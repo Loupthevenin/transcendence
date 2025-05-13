@@ -312,6 +312,8 @@ export async function openProfileModal(profile: UserPublicProfile): Promise<void
       "bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm absolute top-16 right-4";
     spectateButton.textContent = "👀 Regarder en direct";
     modal.appendChild(spectateButton);
+
+    listenerButtonSpectate(spectateButton, profile.uuid); 
   }
 
   modal.insertAdjacentHTML("beforeend", `
@@ -432,16 +434,6 @@ export async function openProfileModal(profile: UserPublicProfile): Promise<void
       blockBtn.onclick = () => toggleBlock(event.blocked);
     }
   });
-
-  if (profile.isPlaying) {
-    const spectateButton = document.createElement("button");
-    spectateButton.id = "spectate";
-    spectateButton.className = "bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm absolute top-16 right-4";
-    spectateButton.textContent = "👀 Regarder en direct";
-    modal.appendChild(spectateButton);
-  
-    listenerButtonSpectate(profile.uuid); 
-  }
 
   await loadHistory(profile.uuid);
 }
@@ -651,11 +643,7 @@ function listenerButtonReplay(): void {
   });
 }
 
-function listenerButtonSpectate(uuid: string): void {
-  const buttonSpectate: HTMLButtonElement | null = document.getElementById(
-    "spectate",
-  ) as HTMLButtonElement;
-  if (!buttonSpectate) return;
+function listenerButtonSpectate(buttonSpectate: HTMLButtonElement, uuid: string): void {
   buttonSpectate.addEventListener("click", () => {
     SpectatingMode(uuid);
   });
