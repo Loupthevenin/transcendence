@@ -1,10 +1,8 @@
 import { MatchHistory } from "@shared/match/matchHistory";
+import UserPublicProfile from "@shared/userPublicProfile";
 import { navigateTo } from "../router";
 import { refreshBlockButtons } from "../controllers/blockedUser";
-import {
-  showErrorToast,
-  showSuccessToast,
-} from "../components/showNotificationToast";
+import { showErrorToast, showSuccessToast } from "../components/showNotificationToast";
 
 export async function showPublicProfile(userId: number): Promise<void> {
   try {
@@ -14,7 +12,7 @@ export async function showPublicProfile(userId: number): Promise<void> {
       throw new Error("No token");
     }
 
-    const res = await fetch(`/api/public-profile/${userId}`, {
+    const res: Response = await fetch(`/api/public-profile/${userId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -22,12 +20,7 @@ export async function showPublicProfile(userId: number): Promise<void> {
 
     if (!res.ok) throw new Error("Failed to load public profile");
 
-    const profile = (await res.json()) as {
-      id: number;
-      uuid: string;
-      name: string;
-      avatar_url: string;
-    };
+    const profile: UserPublicProfile = (await res.json()) as UserPublicProfile;
     openProfileModal(profile);
   } catch (error: any) {
     console.error("Error fetching public profile", error);
@@ -35,18 +28,13 @@ export async function showPublicProfile(userId: number): Promise<void> {
   }
 }
 
-export async function openProfileModal(profile: {
-  id: number;
-  uuid: string;
-  name: string;
-  avatar_url: string;
-}): Promise<void> {
-  const backdrop = document.createElement("div");
+export async function openProfileModal(profile: UserPublicProfile): Promise<void> {
+  const backdrop: HTMLDivElement = document.createElement("div");
   backdrop.className =
     "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50";
   backdrop.id = "profile-backdrop";
 
-  const modal = document.createElement("div");
+  const modal: HTMLDivElement = document.createElement("div");
   modal.className =
     "relative bg-[#1e1b4b] p-6 rounded-2xl text-white w-3/4 h-[90vh] overflow-hidden flex flex-col items-center gap-4";
   modal.innerHTML = `
@@ -54,7 +42,7 @@ export async function openProfileModal(profile: {
   🚫
   </button>
 
-  <img src="${profile.avatar_url ?? "https://upload.wikimedia.org/wikipedia/commons/2/2c/Default_pfp.svg"}" 
+  <img src="${profile.avatarUrl ?? "https://upload.wikimedia.org/wikipedia/commons/2/2c/Default_pfp.svg"}" 
         class="w-24 h-24 rounded-full object-cover" alt="Avatar">
   <h2 id="profile-username" class="text-2xl font-bold"></h2>
   <p id="profile-id" class="text-white text-sm"></p>
@@ -108,11 +96,11 @@ export async function openProfileModal(profile: {
   modal
     .querySelector("#close-profile-modal")
     ?.addEventListener("click", () => backdrop.remove());
-  backdrop.addEventListener("click", (e) => {
+  backdrop.addEventListener("click", (e: MouseEvent) => {
     if (e.target === backdrop) backdrop.remove();
   });
 
-  const blockButton = modal.querySelector(
+  const blockButton: HTMLButtonElement = modal.querySelector(
     "#block-user-btn",
   ) as HTMLButtonElement;
 
@@ -124,7 +112,7 @@ export async function openProfileModal(profile: {
   };
 
   const toggleBlock = async (isBlocked: boolean) => {
-    const confirmMsg = isBlocked
+    const confirmMsg: string = isBlocked
       ? `Veux-tu vraiment débloquer ${profile.name} ?`
       : `Veux-tu vraiment bloquer ${profile.name} ?`;
     if (!confirm(confirmMsg)) return;
@@ -136,11 +124,11 @@ export async function openProfileModal(profile: {
         throw new Error("No token");
       }
 
-      const endpoint = isBlocked
+      const endpoint: string = isBlocked
         ? "/api/block-user/unblock"
         : "/api/block-user";
 
-      const res = await fetch(endpoint, {
+      const res: Response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -176,7 +164,7 @@ export async function openProfileModal(profile: {
       throw new Error("No token");
     }
 
-    const res = await fetch(
+    const res: Response = await fetch(
       `/api/block-user/is-blocked?targetUserId=${profile.id}`,
       {
         headers: {
