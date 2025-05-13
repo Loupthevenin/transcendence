@@ -507,7 +507,6 @@ export function handleGameMessages(data: GameMessageData): void {
 
   try {
     if (isGameStartedMessage(data)) {
-      console.log("[GAME] gameStarted message reçu", data);
       playerId = data.id; // Set the player ID based on the server response
       setPaddleSkin(playerId, localSkinId);
       updateCameraMode(camera);
@@ -548,7 +547,6 @@ export function handleGameMessages(data: GameMessageData): void {
       playerId = -1; // Reset player ID
       displayGameResult(data);
     } else if (isDisconnectionMessage(data)) {
-      console.log(`Player ${data.id} disconnected !`);
       playerId = -1; // Reset player ID
       displayGameError(data);
     }
@@ -653,6 +651,7 @@ function displayGameError(errorMessage: DisconnectionMessage): void {
   // TODO: display a screen with {error_type} and a 'Back to menu' button
   if (isDisconnectionMessage(errorMessage)) {
     // error_type : 'the opponent disconnected'
+    showErrorToast("L'adversaire a été déconnecté");
   } /*else if () {
     // other error types
   }*/
@@ -1025,7 +1024,6 @@ export async function initGameEnvironment(): Promise<void> {
       loadingScreen.remove(); // Delete the loading screen
     }
     loadingScreen = null;
-    console.log("All loaded, showing canvas"); /// debug
     if (canvas) {
       canvas.style.visibility = "visible"; // Show the game canvas
     }
