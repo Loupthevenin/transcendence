@@ -214,10 +214,15 @@ async function updateTournaments(): Promise<void> {
           const inputElement: HTMLInputElement | null =
             form.querySelector<HTMLInputElement>(".display-name-input");
           if (inputElement) {
+            const newName: string | null = inputElement.value.trim();
+            if (!newName) {
+              showErrorToast("Invalid name");
+              return;
+            }
             const tournamentJoinMessage: TournamentMessages.JoinMessage = {
               type: "join",
               uuid: tournament.uuid,
-              username: inputElement.value,
+              username: newName,
             };
             sendMessage("tournament", tournamentJoinMessage);
             loadTournaments();

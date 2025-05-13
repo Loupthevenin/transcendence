@@ -12,8 +12,9 @@ export function setupSignupHandlers(container: HTMLElement): void {
   signupForm.addEventListener("submit", async (e: SubmitEvent) => {
     e.preventDefault();
 
-    const name: string = (container.querySelector("#name") as HTMLInputElement)
-      .value;
+    const name: string | null = (
+      container.querySelector("#name") as HTMLInputElement
+    ).value.trim();
     const email: string = (
       container.querySelector("#email") as HTMLInputElement
     ).value;
@@ -29,6 +30,10 @@ export function setupSignupHandlers(container: HTMLElement): void {
       return;
     }
 
+    if (!name) {
+      showErrorToast("Invalid name");
+      return;
+    }
     try {
       const res: Response = await fetch("/api/signup", {
         method: "POST",
