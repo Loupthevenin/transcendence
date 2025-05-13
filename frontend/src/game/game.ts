@@ -500,7 +500,8 @@ export function handleTournamentGameLaunch(): void {
 }
 
 export function handleGameMessages(data: GameMessageData): void {
-  //console.log("Received:", data);
+  console.log("Received:", data);
+  console.warn("[DEBUG] Message reçu alors que gameMode = ", currentGameMode);
 
   // Avoid modifying data if not in an online mode
   if (currentGameMode !== GameMode.ONLINE && currentGameMode !== GameMode.SPECTATING) return;
@@ -544,6 +545,7 @@ export function handleGameMessages(data: GameMessageData): void {
 
       //lastUpdateTime = performance.now();
     } else if (isGameResultMessage(data)) {
+      console.log("dans gameresult");
       playerId = -1; // Reset player ID
       displayGameResult(data);
     } else if (isDisconnectionMessage(data)) {
@@ -623,6 +625,7 @@ function displayGameResult(gameResult: GameResultMessage): void {
 
   overlay.appendChild(content);
   document.body.appendChild(overlay);
+  console.log("[DEBUG] overlay ajouté au DOM");
 
   requestAnimationFrame(() => {
     content.classList.remove("opacity-0", "scale-90");

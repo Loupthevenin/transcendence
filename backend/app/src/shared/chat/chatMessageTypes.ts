@@ -83,7 +83,7 @@ export type StartGameRedirectMessage = {
   readonly type: "startGameRedirect";
   from: string;
   userId: string;
-  targetUserId: number;
+  // targetUserId: number;
 };
 
 export function isStartGameRedirectMessage(data: any): data is StartGameRedirectMessage {
@@ -91,7 +91,7 @@ export function isStartGameRedirectMessage(data: any): data is StartGameRedirect
     data &&
     data.type === "startGameRedirect" &&
     typeof data.from === "string" &&
-    typeof data.userId === "string" &&
-    typeof data.targetUserId === "number"
+    typeof data.userId === "string" 
+    // typeof data.targetUserId === "number"
   );
 }

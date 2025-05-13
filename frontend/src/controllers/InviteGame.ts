@@ -1,5 +1,5 @@
-import { sendMessage, subscribeTo } from "../websocketManager";
-import { OnlineGame, handleGameMessages } from "../game/game";
+import { sendMessage, subscribeTo, unsubscribeTo } from "../websocketManager";
+import { OnlineGame } from "../game/game";
 import { ReadyToPlayMessage } from "@shared/game/gameMessageTypes";
 import { GameMessageData } from "@shared/messageType";
 import { createGameCanvas, initGameEnvironment } from "../game/game";
@@ -8,6 +8,15 @@ import { hasSentReadyToPlay, setReadyToPlaySent } from "../utils/chatUtils";
 import { AcceptGameInviteMessage } from "@shared/chat/chatMessageTypes";
 
 let gameAlreadyStarted = false;
+let gameCallback: ((data: GameMessageData) => void) | null = null;
+
+export function setGameAlreadyStarted(value: boolean): void {
+  gameAlreadyStarted = value;
+}
+
+export function isGameAlreadyStarted(): boolean {
+  return gameAlreadyStarted;
+}
 
 export function openInviteToGameModal(fromName: string, userId: string): void {
   const backdrop = document.createElement("div");
@@ -75,29 +84,34 @@ export function initOnlineGameSession(opponentUuid: string): void {
     console.log("[GAME] Envoi message readyToPlay", readyMessage);
   }
 
-  subscribeTo("game", async (data: GameMessageData) => {
+  if (gameCallback) {
+    unsubscribeTo("game", gameCallback);
+    console.log("[WS] Unsubscribed previous game callback");
+  }
+
+   gameCallback = async (data: GameMessageData) =>{
     if (data.type === "gameStarted" && !gameAlreadyStarted) {
       gameAlreadyStarted = true;
       console.log("[GAME] gameStarted reçu, lancement du jeu...");
 
       await prepareGameAndStart(); 
       OnlineGame(false);           
-      handleGameMessages(data);  
     }
 
     if (data.type === "gameResult") {
       console.log("[GAME] Fin du match reçue, reset des états");
       gameAlreadyStarted = false;
-
-      const returnTo = localStorage.getItem("returnTo");
-      if (returnTo) {
-        localStorage.removeItem("returnTo");
-        navigateTo(returnTo);
-      } else {
-        navigateTo("/chat");
-      }
+        const returnTo = localStorage.getItem("returnTo");
+        if (returnTo) {
+          localStorage.removeItem("returnTo");
+          navigateTo(returnTo);
+        } else {
+          navigateTo("/chat");
+        }
     }
-  });
+  };
+  subscribeTo("game", gameCallback);
+  console.log("[WS] Subscribed new game callback");
 }
 
 
