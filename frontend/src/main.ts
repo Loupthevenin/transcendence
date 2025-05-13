@@ -1,3 +1,4 @@
+import { showInfoToast } from "./components/showNotificationToast";
 import { renderRoute, navigateTo } from "./router";
 
 // check token
@@ -22,6 +23,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.log(errorMsg);
       localStorage.removeItem("auth_token");
       navigateTo("/auth/login");
+      showInfoToast("Votre session a expiré, veuillez vous reconnecter");
     }
   } catch (error: any) {
     console.error("Erreur verification token : ", error);
@@ -37,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
       e.preventDefault();
       const targetPath: string | undefined = target.dataset.target;
       if (targetPath) {
-        navigateTo(`${targetPath}`);
+        navigateTo(targetPath);
       }
     }
   });
@@ -50,7 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
       e.preventDefault();
       const href: string | null = target.getAttribute("href");
       if (href) {
-        navigateTo(`${href}`);
+        navigateTo(href);
       }
     }
   });
