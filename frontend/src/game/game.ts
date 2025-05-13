@@ -597,7 +597,7 @@ function displayGameResult(gameResult: GameResultMessage): void {
       <div class="bg-[#2a255c] p-4 rounded-lg shadow-lg w-full max-w-md">
         <h3 class="text-2xl font-semibold text-indigo-300 mb-4">Statistiques</h3>
         <ul class="space-y-2 text-sm">
-          <li><span class="text-indigo-400 font-medium">game duration : </span>${Math.floor((gameResult.gameStats.gameEndTime - gameResult.gameStats.gameStartTime) / 1000)}</li>
+          <li><span class="text-indigo-400 font-medium">game duration : </span>${Math.floor(Math.max(gameResult.gameStats.gameEndTime - gameResult.gameStats.gameStartTime, 0) / 1000)}s</li>
           <li><span class="text-indigo-400 font-medium">ball exchanges count : </span>${gameResult.gameStats.ballExchangesCount}</li>
           <li><span class="text-indigo-400 font-medium">ball collisions count : </span>${gameResult.gameStats.ballCollisionsCount}</li>
           <li><span class="text-indigo-400 font-medium">player 1 distance travelled : </span>${Math.floor(gameResult.gameStats.paddle1DistanceTravelled * 10) / 10}m</li>
@@ -713,6 +713,8 @@ function gameLoop(deltaTime: number): void {
       gameData.p2Score >= GAME_CONSTANT.defaultScoreToWin
     ) {
       localGamePlaying = false;
+      gameStats.gameEndTime = Date.now();
+
       const gameResult: GameResultMessage = {
         type: "gameResult",
         p1Score: gameData.p1Score,
@@ -1069,7 +1071,9 @@ export function SinglePlayer(): void {
   hideSkinSelector();
   setPaddleSkin(1, getSelectedSkinId());
   setPaddleSkin(2, "");
+
   localGamePlaying = true;
+  gameStats.gameStartTime = Date.now();
 }
 
 // Launch the game in local 1v1 mode
@@ -1086,7 +1090,9 @@ export function LocalGame(): void {
   hideSkinSelector();
   setPaddleSkin(1, getSelectedSkinId());
   setPaddleSkin(2, getSelectedSkinId());
+
   localGamePlaying = true;
+  gameStats.gameStartTime = Date.now();
 }
 
 // Launch the game in online mode against a remote player
