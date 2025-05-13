@@ -162,11 +162,14 @@ export class Room {
 
   /**
    * @param index The index of the owner of the paddle.
+   * @param pos The new position of the paddle.
    */
   public setPaddlePosition(index: 1 | 2, pos: BABYLON.Vector2): void {
     if (index === 1) {
+      this.gameStats.paddle1DistanceTravelled += BABYLON.Vector2.Distance(this.gameData.paddle1Position, pos);
       this.gameData.paddle1Position = pos;
     } else if (index === 2) {
+      this.gameStats.paddle2DistanceTravelled += BABYLON.Vector2.Distance(this.gameData.paddle2Position, pos);
       this.gameData.paddle2Position = pos;
     }
   }

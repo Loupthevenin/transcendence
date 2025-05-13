@@ -597,11 +597,11 @@ function displayGameResult(gameResult: GameResultMessage): void {
       <div class="bg-[#2a255c] p-4 rounded-lg shadow-lg w-full max-w-md">
         <h3 class="text-2xl font-semibold text-indigo-300 mb-4">Statistiques</h3>
         <ul class="space-y-2 text-sm">
-          <li><span class="text-indigo-400 font-medium">game duration :</span> ${Math.floor((gameResult.gameStats.gameEndTime - gameResult.gameStats.gameStartTime) / 1000)}</li>
-          <li><span class="text-indigo-400 font-medium">ball exchanges count :</span> ${gameResult.gameStats.ballExchangesCount}</li>
-          <li><span class="text-indigo-400 font-medium">ball collisions count :</span> ${gameResult.gameStats.ballCollisionsCount}</li>
-          <li><span class="text-indigo-400 font-medium">player 1 distance travelled :</span> ${gameResult.gameStats.paddle1DistanceTravelled}</li>
-          <li><span class="text-indigo-400 font-medium">player 2 distance travelled :</span> ${gameResult.gameStats.paddle2DistanceTravelled}</li>
+          <li><span class="text-indigo-400 font-medium">game duration : </span>${Math.floor((gameResult.gameStats.gameEndTime - gameResult.gameStats.gameStartTime) / 1000)}</li>
+          <li><span class="text-indigo-400 font-medium">ball exchanges count : </span>${gameResult.gameStats.ballExchangesCount}</li>
+          <li><span class="text-indigo-400 font-medium">ball collisions count : </span>${gameResult.gameStats.ballCollisionsCount}</li>
+          <li><span class="text-indigo-400 font-medium">player 1 distance travelled : </span>${Math.floor(gameResult.gameStats.paddle1DistanceTravelled * 10) / 10}m</li>
+          <li><span class="text-indigo-400 font-medium">player 2 distance travelled : </span>${Math.floor(gameResult.gameStats.paddle2DistanceTravelled * 10) / 10}m</li>
         </ul>
       </div>
       <button id="back-to-menu" class="mt-4 bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-lg shadow-md transition">
@@ -619,6 +619,7 @@ function displayGameResult(gameResult: GameResultMessage): void {
     content.classList.remove("opacity-0", "scale-90");
     content.classList.add("opacity-100", "scale-100");
   });
+
   const backToMenu: HTMLButtonElement | null = document.getElementById(
     "back-to-menu",
   ) as HTMLButtonElement;
@@ -664,10 +665,17 @@ function updateAllPositions(): void {
   }
 }
 
+let localGamePlaying: boolean = false;
+let previousPaddle1Position: BABYLON.Vector2 = new BABYLON.Vector2(0, GAME_CONSTANT.paddleDefaultZPosition);
+let previousPaddle2Position: BABYLON.Vector2 = new BABYLON.Vector2(0, -GAME_CONSTANT.paddleDefaultZPosition);
+
 // Reset the game and all position
 function resetGame(): void {
   gameData = newGameData();
   gameStats = newGameStats();
+
+  previousPaddle1Position = new BABYLON.Vector2(0, GAME_CONSTANT.paddleDefaultZPosition);
+  previousPaddle2Position = new BABYLON.Vector2(0, -GAME_CONSTANT.paddleDefaultZPosition);
 
   updateAllPositions();
 
@@ -677,6 +685,13 @@ function resetGame(): void {
 
 // The function handling the local game loop
 function gameLoop(deltaTime: number): void {
+  if (!localGamePlaying && currentGameMode !== GameMode.MENU) return;
+
+  gameStats.paddle1DistanceTravelled += BABYLON.Vector2.Distance(gameData.paddle1Position, previousPaddle1Position);
+  previousPaddle1Position = gameData.paddle1Position.clone();
+  gameStats.paddle2DistanceTravelled += BABYLON.Vector2.Distance(gameData.paddle2Position, previousPaddle2Position);
+  previousPaddle2Position = gameData.paddle2Position.clone();
+
   const previousP1Score: number = gameData.p1Score;
   const previousP2Score: number = gameData.p2Score;
   updateBallPosition(gameData, gameStats, deltaTime, ballMesh);
@@ -688,22 +703,23 @@ function gameLoop(deltaTime: number): void {
     updateScoreText();
   }
 
+  // Show a game result only in SINGLEPLAYER or LOCAL mode
   if (
-    currentGameMode !== GameMode.MENU &&
-    currentGameMode !== GameMode.ONLINE &&
-    currentGameMode !== GameMode.SPECTATING
+    currentGameMode === GameMode.SINGLEPLAYER ||
+    currentGameMode === GameMode.LOCAL
   ) {
     if (
       gameData.p1Score >= GAME_CONSTANT.defaultScoreToWin ||
       gameData.p2Score >= GAME_CONSTANT.defaultScoreToWin
     ) {
+      localGamePlaying = false;
       const gameResult: GameResultMessage = {
         type: "gameResult",
         p1Score: gameData.p1Score,
         p2Score: gameData.p2Score,
         winnerUUID: "",
         winner: gameData.p1Score > gameData.p2Score ? "Player 1" : "Player 2",
-        gameStats: gameStats,
+        gameStats,
       };
       displayGameResult(gameResult);
     }
@@ -1053,6 +1069,7 @@ export function SinglePlayer(): void {
   hideSkinSelector();
   setPaddleSkin(1, getSelectedSkinId());
   setPaddleSkin(2, "");
+  localGamePlaying = true;
 }
 
 // Launch the game in local 1v1 mode
@@ -1069,6 +1086,7 @@ export function LocalGame(): void {
   hideSkinSelector();
   setPaddleSkin(1, getSelectedSkinId());
   setPaddleSkin(2, getSelectedSkinId());
+  localGamePlaying = true;
 }
 
 // Launch the game in online mode against a remote player
