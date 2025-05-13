@@ -75,6 +75,7 @@ function notifySubscribers<K extends keyof MessageEventMap>(msgEventType: K, dat
 let socket: WebSocket | null = null;
 let autoReconnectEnabled: boolean = true;
 let reconnectInterval: NodeJS.Timeout | null = null;
+let isReconnectAttempt: boolean = false;
 
 export function isConnected(): boolean {
   return socket !== null && socket.readyState === WebSocket.OPEN;
@@ -122,6 +123,7 @@ export function connectToServer(): void {
     // Handle connection open
     socket.onopen = () => {
       console.log(`[WebSocket] Connected to '${wsHost}'`);
+      isReconnectAttempt = false;
       notifySubscribers("onConnected", undefined);
 
       // Stop reconnection attempts once connected
@@ -141,6 +143,7 @@ export function connectToServer(): void {
             if (isGameMessage(parsed)) {
               if (isReconnectionMessage(parsed.data)) {
                 console.log("[WebSocket] Reconnection to game in progress...");
+                showInfoToast("Reconnexion a la partie ...");
                 OnlineGame(false);
                 handleGameReconnection(parsed.data);
               }
@@ -227,6 +230,7 @@ export function connectToServer(): void {
 
           default:
             console.warn("[WebSocket] Unknown message type:", parsed.type);
+            break;
         }
       } catch (error: any) {
         console.error("[WebSocket] An error occurred while parsing message:", error);
@@ -237,6 +241,21 @@ export function connectToServer(): void {
     socket.onclose = () => {
       socket = null;
       console.log("[WebSocket] connection closed.");
+
+      if (isReconnectAttempt) {
+        if (autoReconnectEnabled) {
+          showErrorToast("Tentative de reconnexion en cours ...");
+        } else {
+          showErrorToast("La tentative de reconnexion a échoué");
+        }
+      } else {
+        if (autoReconnectEnabled) {
+          showErrorToast("Vous avez été déconnecté, tentative de reconnexion en cours ...");
+        } else {
+          showErrorToast("Vous avez été déconnecté");
+        }
+      }
+
       notifySubscribers("onDisconnected", undefined);
 
       if (autoReconnectEnabled) {
@@ -268,6 +287,7 @@ function reconnect(): void {
   }
 
   reconnectInterval = setInterval(() => {
+    isReconnectAttempt = true;
     connectToServer(); // Try to reconnect every 5s
   }, 5000);
 }
