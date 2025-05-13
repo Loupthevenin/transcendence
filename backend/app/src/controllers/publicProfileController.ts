@@ -2,15 +2,11 @@ import { FastifyRequest, FastifyReply } from "fastify";
 import db from "../db/db";
 import { MatchHistoryRow } from "../types/profileTypes";
 import { MatchHistory } from "../shared/match/matchHistory";
-
-export type UserPublicProfile = {
-  id: number;
-  name: string;
-  avatarUrl: string;
-};
+import UserPublicProfile from "../shared/userPublicProfile";
 
 type DbUserRow = {
   id: number;
+  uuid: string;
   name: string;
   avatar_url: string;
 };
@@ -25,7 +21,7 @@ export async function getPublicProfile(
   }
 
   const user = db
-    .prepare("SELECT id, name, avatar_url FROM users WHERE id = ?")
+    .prepare("SELECT id, uuid, name, avatar_url FROM users WHERE id = ?")
     .get(id) as DbUserRow | undefined;
 
   if (!user) {
@@ -34,8 +30,11 @@ export async function getPublicProfile(
 
   const publicProfile: UserPublicProfile = {
     id: user.id,
+    uuid: user.uuid,
     name: user.name,
     avatarUrl: user.avatar_url,
+    isOnline: true,
+    isPlaying: true,
   };
 
   return reply.send(publicProfile);
@@ -47,7 +46,7 @@ export async function getHistory( request: FastifyRequest<{ Params: { id: string
     return reply.status(401).send({ message: "Invalid Token" });
   }
 
-  const userId = parseInt(request.params.id, 10);
+  const userId: number = parseInt(request.params.id, 10);
   if (isNaN(userId)) {
     return reply.status(400).send({ message: "Invalid user ID" });
   }
@@ -58,17 +57,17 @@ export async function getHistory( request: FastifyRequest<{ Params: { id: string
     return reply.status(404).send({ message: "Utilisateur introuvable" });
   }
 
-  const targetUuid = user.uuid;
+  const targetUuid: string = user.uuid;
 
   const matches: MatchHistoryRow[] = db.prepare(
     `SELECT * FROM match_history WHERE player_a_uuid = ? OR player_b_uuid = ? ORDER BY date DESC`
   ).all(targetUuid, targetUuid) as MatchHistoryRow[];
 
   const history: MatchHistory[] = matches.map((match: MatchHistoryRow) => {
-    const isPlayerA = match.player_a_uuid === targetUuid;
-    const myScore = isPlayerA ? match.score_a : match.score_b;
-    const opponentScore = isPlayerA ? match.score_b : match.score_a;
-    const opponentName = isPlayerA ? match.player_b_name : match.player_a_name;
+    const isPlayerA: boolean = match.player_a_uuid === targetUuid;
+    const myScore: number = isPlayerA ? match.score_a : match.score_b;
+    const opponentScore: number = isPlayerA ? match.score_b : match.score_a;
+    const opponentName: string = isPlayerA ? match.player_b_name : match.player_a_name;
 
     return {
       uuid: match.uuid,
@@ -81,7 +80,7 @@ export async function getHistory( request: FastifyRequest<{ Params: { id: string
         ? "win"
         : "lose",
       score: `${myScore} - ${opponentScore}`,
-    };
+    } as MatchHistory;
   });
 
   return reply.send(history);
