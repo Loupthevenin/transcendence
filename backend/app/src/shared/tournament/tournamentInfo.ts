@@ -11,7 +11,7 @@ export type TournamentInfo = {
 export type PlayerInfo = {
   uuid: string;
   username: string;
-  isBot?: boolean;
+  isBot: boolean;
 };
 
 export type MatchNode = {
