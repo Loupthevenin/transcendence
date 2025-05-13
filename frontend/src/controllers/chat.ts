@@ -26,7 +26,6 @@ const OTHER_MSG_BOX: string =
   "self-start bg-[#6d28d9] text-white px-4 py-2 rounded-xl max-w-xs mb-2 break-words";
 
 let currentMessageList: HTMLUListElement | null = null;
-let currentOtherUserId: number | null = null;
 let currentOtherUserUuid: string | null = null;
 let currentRoomId: number | null = null;
 let chatCallback: ((data: any) => void) | null = null;
@@ -71,9 +70,9 @@ function setupWebSocketEvents(): void {
 
   chatCallback = (data: any) => {
     if (isInviteToGameMessage(data))
-      return openInviteToGameModal(data.from, data.userId);
+      return openInviteToGameModal(data.from, data.userUuid);
     if (isStartGameRedirectMessage(data)) {
-      localStorage.setItem("opponentUuid", data.userId);
+      localStorage.setItem("opponentUuid", data.userUuid);
       localStorage.setItem("returnTo", window.location.pathname);
       navigateTo("/game");
       return;
@@ -200,7 +199,7 @@ function setupSearchInput(): void {
       if (!res.ok) throw new Error();
 
       const users = (await res.json()) as {
-        id: number;
+        uuid: string;
         name: string;
         avatar_url: string;
       }[];
@@ -224,7 +223,7 @@ function setupSearchInput(): void {
         li.addEventListener("click", async () => {
           resultsContainer.innerHTML = "";
           searchInput.value = "";
-          await handleNewChat(user.id);
+          await handleNewChat(user.uuid);
         });
 
         resultsContainer.appendChild(li);
@@ -237,7 +236,7 @@ function setupSearchInput(): void {
   });
 }
 
-function setupChatForm(container: HTMLElement, receiverEmail: string, otherUserId: number) {
+function setupChatForm(container: HTMLElement, receiverEmail: string) {
   const form = container.querySelector("#chat-form") as HTMLFormElement;
   const input = form.querySelector("input") as HTMLInputElement;
   const list = container.querySelector("#chat-messages") as HTMLUListElement;
@@ -314,7 +313,6 @@ async function renderChatList(): Promise<void> {
           room.otherUserName,
           room.otherUserEmail,
           room.otherUserAvatar,
-          room.otherUserId,
           room.otherUserUuid,
         );
       });
@@ -326,22 +324,20 @@ async function renderChatList(): Promise<void> {
   }
 }
 
-async function handleNewChat(receiverId: number): Promise<void> {
+async function handleNewChat(receiverUuid: string): Promise<void> {
   try {
     const {
       roomId,
       otherUserName,
       otherUserAvatar,
       otherUserEmail,
-      otherUserId,
       otherUserUuid,
-    } = await createOrGetChatRoom(receiverId);
+    } = await createOrGetChatRoom(receiverUuid);
     openChatWindow(
       roomId,
       otherUserName,
       otherUserEmail,
       otherUserAvatar,
-      otherUserId,
       otherUserUuid,
     );
     await renderChatList();
@@ -356,7 +352,6 @@ export async function openChatWindow(
   otherUserName: string,
   receiverEmail: string,
   avatar_url: string | null,
-  otherUserId: number,
   otherUserUuid: string,
 ): Promise<void> {
   const chatsContainer = document.getElementById("chats");
@@ -364,10 +359,9 @@ export async function openChatWindow(
 
   chatsContainer.innerHTML = "";
   currentRoomId = roomId;
-  currentOtherUserId = otherUserId;
   currentOtherUserUuid = otherUserUuid;
-  if(!currentOtherUserId || !currentOtherUserUuid)
-    console.log("prblm currentuser id/uuid");
+  if(!currentOtherUserUuid)
+    console.log("prblm currentuser uuid");
   const chatBox = createChatBox(otherUserName, avatar_url);
   chatsContainer.appendChild(chatBox);
 
@@ -378,9 +372,9 @@ export async function openChatWindow(
     ?.querySelector(".new-msg-badge")
     ?.remove();
 
-  setupChatMenu(chatBox, otherUserId, otherUserUuid);
-  await setupBlockFeature(chatBox, otherUserId);
-  await loadAndDisplayMessages(roomId, list, otherUserId);
-  setupChatForm(chatBox, receiverEmail, otherUserId);
+  setupChatMenu(chatBox, otherUserUuid);
+  await setupBlockFeature(chatBox, otherUserUuid);
+  await loadAndDisplayMessages(roomId, list, otherUserUuid);
+  setupChatForm(chatBox, receiverEmail);
 }
 

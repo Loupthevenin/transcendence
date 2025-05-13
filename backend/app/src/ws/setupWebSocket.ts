@@ -155,7 +155,7 @@ export function setupWebSocket(): WebSocketServer {
         if (isGameMessage(msgData)) {
           const data: GameMessageData = msgData.data;
           if (isReadyToPlayMessage(data)) {
-            const opponent: Player | undefined = getPlayerByUUID(data.opponentId);
+            const opponent: Player | undefined = getPlayerByUUID(data.opponentuuid);
             if (!opponent) {
               console.log("[GAME] Opponent not found or not connected");
               return;
@@ -309,14 +309,6 @@ setInterval(() => {
     }
   });
 }, 1000); // Run the interval every second
-
-// Get a player by is Primary Key in the Database
-export function getPlayerById(userId: number): Player | undefined {
-  const user: { uuid: string } | undefined = db
-    .prepare("SELECT uuid FROM users WHERE id = ?")
-    .get(userId) as { uuid: string } | undefined;
-  return user ? getPlayerByUUID(user.uuid) : undefined;
-}
 
 // Get a player by is UUID
 export function getPlayerByUUID(uuid: string): Player | undefined {

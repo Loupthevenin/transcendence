@@ -131,14 +131,14 @@ export function isLeaveGameMessage(data: any): data is LeaveGameMessage {
 
 export type ReadyToPlayMessage = {
   readonly type: "readyToPlay";
-  opponentId: string;
+  opponentuuid: string;
 };
 
 export function isReadyToPlayMessage(data: any): data is ReadyToPlayMessage {
   return (
     data &&
     data.type === "readyToPlay" &&
-    typeof data.opponentId === "string"
+    typeof data.opponentuuid === "string"
   );
 }
 
