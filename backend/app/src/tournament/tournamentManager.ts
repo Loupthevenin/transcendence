@@ -6,6 +6,7 @@ import { TournamentSettings } from "../shared/tournament/tournamentSettings";
 import { TournamentTree } from "./tournamentTree";
 import { getRandomPaddleModelId } from "../controllers/assetsController";
 import { ERROR_MSG } from "../shared/errorType";
+import { NotificationMessage } from "../shared/messageType";
 
 const tournaments: Map<string, Tournament> = new Map();
 
@@ -193,7 +194,19 @@ function close(tournament: Tournament): void {
     return;
   }
 
-  // TODO: Notify all players that the tournament is closed and will start
+  const notificationMessage: NotificationMessage = {
+    type: "notif",
+    notifType: "info",
+    msg: `Le tournoi ${tournament.name} va commencer`
+  };
+  const msg: string = JSON.stringify(notificationMessage);
+
+  tournament.players.forEach((player: Player) => {
+    if (player && !player.isBot && player.socket?.readyState === WebSocket.OPEN) {
+      player.socket?.send(msg);
+    }
+  });
+
   tournament.tree.playTournament();
 }
 

@@ -17,6 +17,21 @@ export function isErrorMessage(data: any): data is ErrorMessage {
   );
 }
 
+export type NotificationMessage = {
+  readonly type: "notif";
+  notifType: "info" | "success" | "error";
+  msg: string;
+};
+
+export function isNotificationMessage(data: any): data is NotificationMessage {
+  return (
+    data &&
+    data.type === "notif" &&
+    typeof data.notifType === "string" &&
+    typeof data.msg === "string"
+  );
+}
+
 export type GameMessageData =
   | GameMessages.SkinChangeMessage
   | GameMessages.PaddlePositionMessage
