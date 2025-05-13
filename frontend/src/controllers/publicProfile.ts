@@ -2,7 +2,11 @@ import { MatchHistory } from "@shared/match/matchHistory";
 import UserPublicProfile from "@shared/userPublicProfile";
 import { navigateTo } from "../router";
 import { refreshBlockButtons } from "../controllers/blockedUser";
-import { showErrorToast, showSuccessToast } from "../components/showNotificationToast";
+import {
+  showErrorToast,
+  showSuccessToast,
+} from "../components/showNotificationToast";
+import { SpectatingMode } from "../game/game";
 
 export async function showPublicProfile(userId: number): Promise<void> {
   try {
@@ -28,7 +32,9 @@ export async function showPublicProfile(userId: number): Promise<void> {
   }
 }
 
-export async function openProfileModal(profile: UserPublicProfile): Promise<void> {
+export async function openProfileModal(
+  profile: UserPublicProfile,
+): Promise<void> {
   const backdrop: HTMLDivElement = document.createElement("div");
   backdrop.className =
     "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50";
@@ -40,6 +46,9 @@ export async function openProfileModal(profile: UserPublicProfile): Promise<void
   modal.innerHTML = `
   <button id="block-user-btn" class="absolute top-4 right-4 px-3 py-1 rounded text-sm text-white bg-red-600 hover:bg-red-700">
   🚫
+  </button>
+  <button id="spectate" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm absolute top-16 right-4">
+	  👀 Regarder en direct
   </button>
 
   <img src="${profile.avatarUrl ?? "https://upload.wikimedia.org/wikipedia/commons/2/2c/Default_pfp.svg"}" 
@@ -80,12 +89,14 @@ export async function openProfileModal(profile: UserPublicProfile): Promise<void
   </button>
   `;
 
-  const profileUsernameElement: HTMLHeadingElement | null = modal.querySelector("#profile-username");
+  const profileUsernameElement: HTMLHeadingElement | null =
+    modal.querySelector("#profile-username");
   if (profileUsernameElement) {
     profileUsernameElement.textContent = profile.name;
   }
 
-  const profileIdElement: HTMLParagraphElement | null = modal.querySelector("#profile-id");
+  const profileIdElement: HTMLParagraphElement | null =
+    modal.querySelector("#profile-id");
   if (profileIdElement) {
     profileIdElement.textContent = `User ID : ${profile.id}`;
   }
@@ -176,6 +187,7 @@ export async function openProfileModal(profile: UserPublicProfile): Promise<void
     const { blocked } = await res.json();
     updateBlockButton(blocked);
     blockButton.onclick = () => toggleBlock(blocked);
+    listenerButtonSpectate(profile.uuid);
   } catch (error: any) {
     console.error("Erreur de vérification blocage:", error);
     showErrorToast("Erreur de vérification blocage");
@@ -387,5 +399,15 @@ function listenerButtonReplay(): void {
         navigateTo(`/replay?match_id=${uuid}`);
       });
     }
+  });
+}
+
+function listenerButtonSpectate(uuid: string): void {
+  const buttonSpectate: HTMLButtonElement | null = document.getElementById(
+    "spectate",
+  ) as HTMLButtonElement;
+  if (!buttonSpectate) return;
+  buttonSpectate.addEventListener("click", () => {
+    SpectatingMode(uuid);
   });
 }
