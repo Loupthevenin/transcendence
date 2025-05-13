@@ -1,26 +1,24 @@
 import { navigateTo } from "../router";
-import { sendMessage, subscribeTo } from "../websocketManager";
+import { sendMessage, subscribeTo, unsubscribeTo } from "../websocketManager";
 import { getUserInfoFromToken } from "../utils/getUserInfoFromToken";
 import {
   isNewMsgReceivedMessage,
   isInviteToGameMessage,
-  NewMsgSendMessage,
   isStartGameRedirectMessage,
 } from "@shared/chat/chatMessageTypes";
 import { openInviteToGameModal } from "../controllers/InviteGame";
-import { showBlockedUsersModal } from "../controllers/blockedUser";
-import { showPublicProfile } from "../controllers/publicProfile";
+import { showBlockedUsersModal, setupBlockFeature } from "../controllers/blockedUser";
 import {
   loadChatList as fetchChatList,
   createOrGetChatRoom,
-  loadChatRoomMessages,
+  setupChatMenu,
+  loadAndDisplayMessages
 } from "../controllers/chatService";
 import { setReadyToPlaySent } from "../utils/chatUtils";
 import {
   showErrorToast,
-  showInfoToast,
-  showSuccessToast,
 } from "../components/showNotificationToast";
+import { createChatBox } from "../views/chat";
 
 const SELF_MSG_BOX: string =
   "self-end bg-[#6366f1] text-white px-4 py-2 rounded-xl max-w-xs mb-2 break-words";
@@ -31,6 +29,8 @@ let currentMessageList: HTMLUListElement | null = null;
 let currentOtherUserId: number | null = null;
 let currentOtherUserUuid: string | null = null;
 let currentRoomId: number | null = null;
+let chatCallback: ((data: any) => void) | null = null;
+
 
 export function setupChat(container: HTMLElement): void {
   const chatApp = container.querySelector("#chat-app");
@@ -64,7 +64,12 @@ export function setupChat(container: HTMLElement): void {
 }
 
 function setupWebSocketEvents(): void {
-  subscribeTo("chat", (data) => {
+  if (chatCallback) {
+    unsubscribeTo("chat", chatCallback);
+    console.log("[WS] Unsubscribed previous chat callback");
+  }
+
+  chatCallback = (data: any) => {
     if (isInviteToGameMessage(data))
       return openInviteToGameModal(data.from, data.userId);
     if (isStartGameRedirectMessage(data)) {
@@ -75,6 +80,7 @@ function setupWebSocketEvents(): void {
     }
     if (isNewMsgReceivedMessage(data)) {
       if (data.roomId === currentRoomId && currentMessageList) {
+        console.log(`newmsg : ${data.msg}`);
         const li = document.createElement("li");
         li.className = OTHER_MSG_BOX;
         li.textContent = data.msg;
@@ -94,14 +100,21 @@ function setupWebSocketEvents(): void {
         chatItem.appendChild(badge);
       }
     }
-  });
+  };
+  subscribeTo("chat", chatCallback);
+  // console.log("[WS] Subscribed new chat callback");
 }
 
 function setupSidebarMenu(): void {
   const sidebarMenuBtn = document.getElementById("menu-sidebar");
-  if (!sidebarMenuBtn) return;
+  const placeholder = document.getElementById("sidebar-menu-placeholder");
+
+  console.log(`${sidebarMenuBtn}`);
+
+  if (!sidebarMenuBtn || !placeholder) return;
 
   sidebarMenuBtn.addEventListener("click", () => {
+
     const existing = document.getElementById("sidebar-options-menu");
     if (existing) return existing.remove();
 
@@ -109,9 +122,11 @@ function setupSidebarMenu(): void {
     menu.id = "sidebar-options-menu";
     menu.className =
       "absolute right-6 mt-2 w-48 bg-white text-black rounded shadow-lg z-50";
-    menu.innerHTML = `<button id="sidebar-manage-blocked-btn" class="w-full text-left px-4 py-2 hover:bg-gray-200">🚫 Gérer mes blocages</button>`;
+    menu.innerHTML = 
+      `<button id="sidebar-manage-blocked-btn" class="w-full text-left px-4 py-2 hover:bg-gray-200">🚫 Gérer mes blocages</button>`
+    ;
 
-    document.body.appendChild(menu);
+    placeholder.appendChild(menu);
 
     document
       .getElementById("sidebar-manage-blocked-btn")
@@ -222,6 +237,36 @@ function setupSearchInput(): void {
   });
 }
 
+function setupChatForm(container: HTMLElement, receiverEmail: string, otherUserId: number) {
+  const form = container.querySelector("#chat-form") as HTMLFormElement;
+  const input = form.querySelector("input") as HTMLInputElement;
+  const list = container.querySelector("#chat-messages") as HTMLUListElement;
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const msg = input.value.trim();
+    if (!msg) return;
+
+    const user = getUserInfoFromToken();
+    if (!user) return showErrorToast("Utilisateur non authentifié");
+
+    sendMessage("chat", {
+      type: "newMessageSend",
+      senderEmail: user.email,
+      senderName: user.name,
+      receiverEmail,
+      msg,
+    });
+
+    const li = document.createElement("li");
+    li.className = SELF_MSG_BOX;
+    li.textContent = msg;
+    list.appendChild(li);
+    list.scrollTop = list.scrollHeight;
+    input.value = "";
+  });
+}
+
 async function renderChatList(): Promise<void> {
   const list = document.getElementById("chat-list");
   if (!list) return;
@@ -252,7 +297,10 @@ async function renderChatList(): Promise<void> {
 
       const dateSpan: HTMLSpanElement = document.createElement("span");
       dateSpan.className = "text-xs text-gray-400";
-      dateSpan.textContent = new Date(room.lastMessageAt).toLocaleString();
+
+      dateSpan.textContent = room.lastMessageAt
+      ? new Date(room.lastMessageAt).toLocaleString()
+      : "Pas encore de message";
 
       userInfoDiv.appendChild(nameSpan);
       userInfoDiv.appendChild(dateSpan);
@@ -296,6 +344,7 @@ async function handleNewChat(receiverId: number): Promise<void> {
       otherUserId,
       otherUserUuid,
     );
+    await renderChatList();
   } catch (error: any) {
     console.error("Failed to create or join chatroom", error);
     showErrorToast("Impossible d'ouvrir une conversation");
@@ -317,219 +366,21 @@ export async function openChatWindow(
   currentRoomId = roomId;
   currentOtherUserId = otherUserId;
   currentOtherUserUuid = otherUserUuid;
-
-  const chatBox: HTMLDivElement = document.createElement("div");
-  chatBox.className =
-    "flex flex-col flex-1 h-full min-h-0 bg-[#1e1b4b] rounded-2xl m-4 p-4 shadow-lg";
-
-  const tempWrapper: HTMLDivElement = document.createElement("div");
-  tempWrapper.innerHTML = `
-  <div class="flex items-center justify-between mb-4">
-      <div class="flex items-center gap-3">
-        <img id="chat-avatar" class="w-10 h-10 rounded-full object-cover cursor-pointer" src="${avatar_url ?? "https://upload.wikimedia.org/wikipedia/commons/2/2c/Default_pfp.svg"}" alt="Avatar">
-        <h2 id="chat-username" class="text-lg font-semibold"></h2>
-      </div>
-      <div class="relative">
-        <button id="chat-menu-btn" class="text-xl">⋮</button>
-        <div id="chat-menu-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-[#1e1b4b] text-white rounded shadow-lg z-50">
-          <button id="view-profile-btn" class="w-full text-left px-4 py-2 hover:bg-gray-200">👤 Voir le profil</button>
-          <button id="block-user-btn" class="w-full text-left px-4 py-2 hover:bg-gray-200">Chargement...</button>
-        <button id="invite-to-game-btn" class="w-full text-left px-4 py-2 hover:bg-gray-200">🎮 Inviter à un match</button>
-        </div>
-      </div>
-    </div>
-    <ul id="chat-messages" class="flex flex-col flex-grow overflow-y-auto bg-[#2e2c60] rounded-xl p-4 mb-4 text-white"></ul>
-  <form id="chat-form" class="flex gap-2">
-    <input type="text" class="flex-1 border border-gray-300 rounded-xl p-2 focus:outline-none focus:ring-2 focus:ring-indigo-400" placeholder="Message..." />
-    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700">Send</button>
-  </form>
-  `;
-
-  const usernameElement =
-    tempWrapper.querySelector<HTMLHeadingElement>("#chat-username");
-  if (usernameElement) usernameElement.textContent = otherUserName;
-
-  while (tempWrapper.firstChild) {
-    chatBox.appendChild(tempWrapper.firstChild);
-  }
-
+  if(!currentOtherUserId || !currentOtherUserUuid)
+    console.log("prblm currentuser id/uuid");
+  const chatBox = createChatBox(otherUserName, avatar_url);
   chatsContainer.appendChild(chatBox);
+
   const list = chatBox.querySelector("#chat-messages") as HTMLUListElement;
   currentMessageList = list;
 
-  const chatItem = document.querySelector(`li[data-room-id='${roomId}']`);
-  chatItem?.querySelector(".new-msg-badge")?.remove();
+  document.querySelector(`li[data-room-id='${roomId}']`)
+    ?.querySelector(".new-msg-badge")
+    ?.remove();
 
-  chatBox.querySelector("#chat-avatar")?.addEventListener("click", () => {
-    if (currentOtherUserId !== null) showPublicProfile(currentOtherUserId);
-  });
-
-  const menuBtn = chatBox.querySelector("#chat-menu-btn") as HTMLButtonElement;
-  const dropdown = chatBox.querySelector(
-    "#chat-menu-dropdown",
-  ) as HTMLDivElement;
-
-  menuBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    dropdown.classList.toggle("hidden");
-  });
-  document.addEventListener("click", () => dropdown.classList.add("hidden"));
-
-  chatBox.querySelector("#view-profile-btn")?.addEventListener("click", () => {
-    if (currentOtherUserId !== null) showPublicProfile(currentOtherUserId);
-  });
-
-  const inviteBtn = chatBox.querySelector(
-    "#invite-to-game-btn",
-  ) as HTMLButtonElement;
-  inviteBtn.addEventListener("click", async () => {
-    try {
-      const token: string | null = localStorage.getItem("auth_token");
-      if (!token) {
-        showErrorToast("Pas de token !");
-        throw new Error("No token");
-      }
-
-      const res = await fetch("/api/invite-to-game", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ targetUserUuid: currentOtherUserUuid }),
-      });
-
-      console.log(">> Envoi invitation à :", currentOtherUserUuid);
-      if (!res.ok) {
-        const text = await res.text();
-        if (res.status === 404 && text.includes("not connected")) {
-          showInfoToast("L'utilisateur n'est pas en ligne.");
-        } else {
-          throw new Error("Erreur d'invitation");
-        }
-      } else {
-        showSuccessToast("Invitation envoyée 🎮");
-      }
-    } catch (error: any) {
-      console.error("Erreur d'envoi d'invitation:", error);
-      showErrorToast("Erreur lors de l'envoi de l'invitation");
-    }
-  });
-
-  const blockBtn = chatBox.querySelector(
-    "#block-user-btn",
-  ) as HTMLButtonElement;
-
-  const updateBlockButton = (isBlocked: boolean) => {
-    blockBtn.textContent = isBlocked
-      ? "✅ Débloquer cet utilisateur"
-      : "🚫 Bloquer cet utilisateur";
-    blockBtn.className = `w-full text-left px-4 py-2 hover:bg-gray-200 ${isBlocked ? "text-green-500" : "text-red-500"}`;
-  };
-
-  const toggleBlock = async (isBlocked: boolean) => {
-    const confirmMsg = isBlocked
-      ? "Veux-tu vraiment débloquer cet utilisateur ?"
-      : "Veux-tu vraiment le bloquer ?";
-    if (!confirm(confirmMsg)) return;
-
-    try {
-      const token: string | null = localStorage.getItem("auth_token");
-      if (!token) {
-        showErrorToast("Pas de token !");
-        throw new Error("No token");
-      }
-
-      const endpoint = isBlocked
-        ? "/api/block-user/unblock"
-        : "/api/block-user";
-
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ targetUserId: currentOtherUserId }),
-      });
-
-      if (!response.ok) throw new Error("Erreur blocage/déblocage");
-      showSuccessToast(
-        isBlocked ? "Utilisateur débloqué ✅" : "Utilisateur bloqué 🚫",
-      );
-
-      updateBlockButton(!isBlocked);
-      blockBtn.onclick = () => toggleBlock(!isBlocked);
-    } catch (error: any) {
-      console.error("Erreur blocage:", error);
-      showErrorToast("Erreur lors de l'action de blocage/déblocage");
-    }
-  };
-
-  try {
-    const token: string | null = localStorage.getItem("auth_token");
-    if (!token) {
-      showErrorToast("Pas de token !");
-      throw new Error("No token");
-    }
-
-    const res = await fetch(
-      `/api/block-user/is-blocked?targetUserId=${currentOtherUserId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    );
-
-    const { blocked } = await res.json();
-    updateBlockButton(blocked);
-    blockBtn.onclick = () => toggleBlock(blocked);
-  } catch (error: any) {
-    updateBlockButton(false);
-    blockBtn.onclick = () => toggleBlock(false);
-  }
-
-  try {
-    const messages = await loadChatRoomMessages(roomId);
-    messages.forEach((msg) => {
-      const li = document.createElement("li");
-      li.textContent = msg.content;
-      li.className =
-        msg.sender_id === currentOtherUserId ? OTHER_MSG_BOX : SELF_MSG_BOX;
-      list.appendChild(li);
-    });
-    list.scrollTop = list.scrollHeight;
-  } catch (error: any) {
-    console.error("Erreur chargement messages", error);
-  }
-
-  const form = chatBox.querySelector("#chat-form") as HTMLFormElement;
-  const input = form.querySelector("input") as HTMLInputElement;
-
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const msg = input.value.trim();
-    if (!msg) return;
-
-    const user = getUserInfoFromToken();
-    if (!user) return showErrorToast("Utilisateur non authentifié");
-
-    const newMessage: NewMsgSendMessage = {
-      type: "newMessageSend",
-      senderEmail: user.email,
-      senderName: user.name,
-      receiverEmail,
-      msg,
-    };
-
-    sendMessage("chat", newMessage);
-
-    const li = document.createElement("li");
-    li.className = SELF_MSG_BOX;
-    li.textContent = msg;
-    list.appendChild(li);
-    list.scrollTop = list.scrollHeight;
-    input.value = "";
-  });
+  setupChatMenu(chatBox, otherUserId, otherUserUuid);
+  await setupBlockFeature(chatBox, otherUserId);
+  await loadAndDisplayMessages(roomId, list, otherUserId);
+  setupChatForm(chatBox, receiverEmail, otherUserId);
 }
+

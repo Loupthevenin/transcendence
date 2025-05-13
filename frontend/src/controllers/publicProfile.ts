@@ -1,7 +1,7 @@
 import { MatchHistory } from "@shared/match/matchHistory";
 import UserPublicProfile from "@shared/userPublicProfile";
 import { navigateTo } from "../router";
-import { refreshBlockButtons } from "../controllers/blockedUser";
+import { emitBlockStatusChanged, onBlockStatusChanged } from "../controllers/blockedUser";
 import {
   showErrorToast,
   showSuccessToast,
@@ -161,9 +161,14 @@ export async function openProfileModal(
           ? `${profile.name} a été débloqué ✅`
           : `${profile.name} a été bloqué 🚫`,
       );
-      updateBlockButton(!isBlocked);
+      const newStatus = !isBlocked;
+      updateBlockButton(newStatus);
       blockButton.onclick = () => toggleBlock(!isBlocked);
-      refreshBlockButtons(profile.uuid);
+      emitBlockStatusChanged({
+        userId: profile.id,
+        uuid: profile.uuid,
+        blocked: newStatus,
+      });
     } catch (error: any) {
       console.error(
         `Erreur lors du ${isBlocked ? "déblocage" : "blocage"}:`,
@@ -200,8 +205,16 @@ export async function openProfileModal(
     blockButton.onclick = () => toggleBlock(false);
   }
 
+  onBlockStatusChanged((event) => {
+    if (event.userId === profile.id || event.uuid === profile.uuid) {
+      updateBlockButton(event.blocked);
+      blockButton.onclick = () => toggleBlock(event.blocked);
+    }
+  });
+  
   await loadHistory(profile.id);
 }
+
 
 async function loadHistory(userId: number): Promise<void> {
   const token: string | null = localStorage.getItem("auth_token");
