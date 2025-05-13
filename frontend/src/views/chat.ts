@@ -9,10 +9,8 @@ export function ChatView(): HTMLElement {
         <div class="flex justify-between items-center mb-4">
           <h2 class="text-lg font-semibold">Messages</h2>
           <div class="relative">
-            <button id="chat-list-menu-btn" class="text-white text-xl" aria-label="Menu">⋮</button>
-            <div id="chat-list-menu-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white text-black rounded shadow-lg z-50" role="menu">
-              <button id="chat-list-blocked-btn" role="menuitem" class="w-full text-left px-4 py-2 hover:bg-gray-200">🚫 Gérer les blocages</button>
-            </div>
+             <button id="menu-sidebar" class="text-white text-xl" aria-label="Menu">⋮</button>
+              <div id="sidebar-menu-placeholder"></div>
           </div>
         </div>
         <input
@@ -41,4 +39,35 @@ export function ChatView(): HTMLElement {
   `;
 
   return container;
+}
+
+export function createChatBox(userName: string, avatar_url: string | null): HTMLDivElement {
+  const box = document.createElement("div");
+  box.className = "flex flex-col flex-1 h-full min-h-0 bg-[#1e1b4b] rounded-2xl m-4 p-4 shadow-lg";
+
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = `
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center gap-3">
+        <img id="chat-avatar" class="w-10 h-10 rounded-full object-cover cursor-pointer" src="${avatar_url ?? "https://upload.wikimedia.org/wikipedia/commons/2/2c/Default_pfp.svg"}" alt="Avatar">
+        <h2 id="chat-username" class="text-lg font-semibold">${userName}</h2>
+      </div>
+      <div class="relative">
+        <button id="chat-menu-btn" class="text-xl">⋮</button>
+        <div id="chat-menu-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-[#1e1b4b] text-white rounded shadow-lg z-50">
+          <button id="view-profile-btn" class="w-full text-left px-4 py-2 hover:bg-gray-200">👤 Voir le profil</button>
+          <button id="block-user-btn" class="w-full text-left px-4 py-2 hover:bg-gray-200">Chargement...</button>
+          <button id="invite-to-game-btn" class="w-full text-left px-4 py-2 hover:bg-gray-200">🎮 Inviter à un match</button>
+        </div>
+      </div>
+    </div>
+    <ul id="chat-messages" class="flex flex-col flex-grow overflow-y-auto bg-[#2e2c60] rounded-xl p-4 mb-4 text-white"></ul>
+    <form id="chat-form" class="flex gap-2">
+      <input type="text" class="flex-1 border border-gray-300 rounded-xl p-2 focus:outline-none focus:ring-2 focus:ring-indigo-400" placeholder="Message..." />
+      <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700">Send</button>
+    </form>
+  `;
+
+  while (wrapper.firstChild) box.appendChild(wrapper.firstChild);
+  return box;
 }

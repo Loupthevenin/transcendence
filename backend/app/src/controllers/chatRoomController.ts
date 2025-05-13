@@ -185,18 +185,40 @@ export async function sendMessage( request: FastifyRequest<{ Body: SendMessageBo
     return reply.status(401).send({ error: "Invalid Token" });
   }
 
-  const user = db.prepare(`
+  const sender = db.prepare(`
     SELECT id FROM users WHERE email = ?
   `).get(userEmail) as { id: number } | undefined;
 
-  if (!user) {
-    return reply.status(404).send({ error: "User not found" });
+  if (!sender) {
+    return reply.status(404).send({ error: "Sender not found" });
+  }
+
+  const room = db.prepare(`
+    SELECT user1_id, user2_id FROM chat_rooms WHERE id = ?
+  `).get(roomId) as { user1_id: number; user2_id: number } | undefined;
+
+  if (!room) {
+    return reply.status(404).send({ error: "Chat room not found" });
+  }
+
+  const receiverId = room.user1_id === sender.id ? room.user2_id : room.user1_id;
+
+  const block = db.prepare(`
+    SELECT id FROM blocked_users
+    WHERE (blocker_id = ? AND blocked_id = ?)
+       OR (blocker_id = ? AND blocked_id = ?)
+  `).get(sender.id, receiverId, receiverId, sender.id);
+
+  if (block) {
+    return reply.status(403).send({
+      error: "Message blocked due to user block relationship"
+    });
   }
 
   db.prepare(`
     INSERT INTO messages (room_id, sender_id, content)
     VALUES (?, ?, ?)
-  `).run(roomId, user.id, content);
+  `).run(roomId, sender.id, content);
 
   db.prepare(`
     UPDATE chat_rooms
