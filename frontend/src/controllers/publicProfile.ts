@@ -47,9 +47,6 @@ export async function openProfileModal(
   <button id="block-user-btn" class="absolute top-4 right-4 px-3 py-1 rounded text-sm text-white bg-red-600 hover:bg-red-700">
   🚫
   </button>
-  <button id="spectate" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm absolute top-16 right-4">
-	  👀 Regarder en direct
-  </button>
 
   <img src="${profile.avatarUrl ?? "https://upload.wikimedia.org/wikipedia/commons/2/2c/Default_pfp.svg"}" 
         class="w-24 h-24 rounded-full object-cover" alt="Avatar">
@@ -99,6 +96,14 @@ export async function openProfileModal(
     modal.querySelector("#profile-id");
   if (profileIdElement) {
     profileIdElement.textContent = `User ID : ${profile.id}`;
+  }
+
+  if (profile.isPlaying) {
+    const spectateButton: HTMLButtonElement = document.createElement("button");
+    spectateButton.id = "spectate";
+    spectateButton.className = "bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm absolute top-16 right-4";
+    spectateButton.textContent = "👀 Regarder en direct";
+    modal.appendChild(spectateButton);
   }
 
   backdrop.appendChild(modal);
