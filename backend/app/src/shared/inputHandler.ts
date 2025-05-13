@@ -12,7 +12,6 @@ export type PaddleDraggingData = {
   targetX: number | null;
 };
 
-
 // Function to handle player input and update paddle position
 export function handlePlayerInput(
   paddlePosition: BABYLON.Vector2,
@@ -29,7 +28,7 @@ export function handlePlayerInput(
   if (draggingData.pointerId !== -1) {
     if (draggingData.targetX !== null) {
       const distanceToTarget: number = draggingData.targetX - paddlePosition.x;
-      deltaX = Math.min(Math.max(distanceToTarget, -1), 1);
+      deltaX = Math.min(Math.max(distanceToTarget * 3, -1), 1);
     }
   } else {
     deltaX = (keyInput & INPUT.UP ? 1 : 0) - (keyInput & INPUT.DOWN ? 1 : 0);
