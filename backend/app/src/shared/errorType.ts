@@ -22,6 +22,7 @@ export const ERROR_MSG = {
   TOURNAMENT_CLOSED: "The tournament is closed",
   PLAYER_NOT_IN_TOURNAMENT: "Player is not in the tournament",
   PLAYER_ALREADY_IN_TOURNAMENT: "Player is already in the tournament",
+  USERNAME_ALREADY_IN_USE: "The username is already used by someone else",
   NOT_OWNER_OF_TOURNAMENT: "You are not the owner of this tournament",
   NOT_ENOUGHT_PLAYER_TO_CLOSE_TOURNAMENT: "Not enough players to close the tournament",
   INVALID_TOURNAMENT_NAME: "Invalid tournament name",
