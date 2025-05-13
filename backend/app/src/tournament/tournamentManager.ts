@@ -103,11 +103,18 @@ export function addPlayerToTournament(
     return ERROR_MSG.TOURNAMENT_FULL;
 
   // Player is already in the tournament
-  if (tournament.players.find((p: Player) => p.uuid === player.uuid))
+  if (tournament.players.some((p: Player) => p.uuid === player.uuid))
     return ERROR_MSG.PLAYER_ALREADY_IN_TOURNAMENT;
 
+  // If username is undefined then set it to player.username
+  username ??= player.username;
+
+  // Username is already taken by another player
+  if (Array.from(tournament.pseudoNames.values()).some((name: string) => name === username))
+    return ERROR_MSG.USERNAME_ALREADY_IN_USE;
+
   tournament.players.push(player);
-  tournament.pseudoNames.set(player.uuid, username ?? player.username);
+  tournament.pseudoNames.set(player.uuid, username);
   tournament.playerCount++;
 
   if (tournament.playerCount >= tournament.settings.maxPlayerCount) {
