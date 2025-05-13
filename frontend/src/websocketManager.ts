@@ -201,7 +201,7 @@ export function connectToServer(): void {
                 case ERROR_TYPE.CONNECTION_REFUSED:
                   if (parsed.msg === ERROR_MSG.TOKEN_MISSING_OR_INVALID) {
                     localStorage.removeItem("auth_token");
-                    console.error("[WebSocket] Invalid token: auth_token removed", parsed.msg);
+                    console.error("[WebSocket] Invalid token:", parsed.msg);
                   }
                   console.error("[WebSocket] Connection refused:", parsed.msg);
                   autoReconnectEnabled = false;
