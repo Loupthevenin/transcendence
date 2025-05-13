@@ -688,9 +688,9 @@ function gameLoop(deltaTime: number): void {
   if (!localGamePlaying && currentGameMode !== GameMode.MENU) return;
 
   gameStats.paddle1DistanceTravelled += BABYLON.Vector2.Distance(gameData.paddle1Position, previousPaddle1Position);
-  previousPaddle1Position = gameData.paddle1Position.clone();
+  previousPaddle1Position = new BABYLON.Vector2(gameData.paddle1Position.x, gameData.paddle1Position.y);
   gameStats.paddle2DistanceTravelled += BABYLON.Vector2.Distance(gameData.paddle2Position, previousPaddle2Position);
-  previousPaddle2Position = gameData.paddle2Position.clone();
+  previousPaddle2Position = new BABYLON.Vector2(gameData.paddle2Position.x, gameData.paddle2Position.y);
 
   const previousP1Score: number = gameData.p1Score;
   const previousP2Score: number = gameData.p2Score;
@@ -1029,7 +1029,10 @@ export function LoadGameCanvasIfNeeded(): void {
 }
 
 // Send a leave message to server if needed, and set 'currentGameMode' to MENU
-export function LeaveOnlineGameIfNeeded(): void {
+export function LeaveGameIfNeeded(): void {
+  localGamePlaying = false;
+  deleteGameResult();
+
   if (currentGameMode === GameMode.ONLINE || currentGameMode === GameMode.SPECTATING) {
     // Tell the server we quit the game
     const LeaveGameMessage: LeaveGameMessage = {
@@ -1042,8 +1045,7 @@ export function LeaveOnlineGameIfNeeded(): void {
 
 // Quit the game and go back to the menu
 export function BackToMenu(): void {
-  LeaveOnlineGameIfNeeded();
-  deleteGameResult();
+  LeaveGameIfNeeded();
 
   currentGameMode = GameMode.MENU;
   updateCameraMode(camera);
@@ -1059,7 +1061,7 @@ export function BackToMenu(): void {
 
 // Launch the game in single player against an AI opponent
 export function SinglePlayer(): void {
-  deleteGameResult();
+  LeaveGameIfNeeded();
 
   currentGameMode = GameMode.SINGLEPLAYER;
   updateCameraMode(camera);
@@ -1078,7 +1080,7 @@ export function SinglePlayer(): void {
 
 // Launch the game in local 1v1 mode
 export function LocalGame(): void {
-  deleteGameResult();
+  LeaveGameIfNeeded();
 
   currentGameMode = GameMode.LOCAL;
   updateCameraMode(camera);
@@ -1105,6 +1107,7 @@ export function OnlineGame(autoMatchmaking: boolean = true): void {
   }
   LoadGameCanvasIfNeeded();
   deleteGameResult();
+  localGamePlaying = false;
 
   currentGameMode = GameMode.ONLINE;
   updateCameraMode(camera);
@@ -1133,6 +1136,7 @@ export function SpectatingMode(playerUUIDToSpectate: string): void {
   }
   LoadGameCanvasIfNeeded();
   deleteGameResult();
+  localGamePlaying = false;
 
   currentGameMode = GameMode.SPECTATING;
   updateCameraMode(camera);
@@ -1155,6 +1159,7 @@ export function SpectatingMode(playerUUIDToSpectate: string): void {
 // Setup the game to replay mode
 export function ReplayMode(p1Skin: string, p2Skin: string): void {
   deleteGameResult();
+  localGamePlaying = false;
 
   currentGameMode = GameMode.REPLAY;
   updateCameraMode(camera);
