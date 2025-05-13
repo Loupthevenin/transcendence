@@ -52,7 +52,7 @@ export function isNewMsgSendMessage(data: any): data is NewMsgSendMessage {
 export type InviteToGameMessage = {
   readonly type: "inviteToGame";
   from: string;
-  userId: string;
+  userUuid: string;
 };
 
 export function isInviteToGameMessage(data: any): data is InviteToGameMessage {
@@ -60,14 +60,14 @@ export function isInviteToGameMessage(data: any): data is InviteToGameMessage {
     data &&
     data.type === "inviteToGame" &&
     typeof data.from === "string" &&
-    typeof data.userId === "string"
+    typeof data.userUuid === "string"
   );
 }
 
 export type AcceptGameInviteMessage = {
   readonly type: "gameInviteAccepted";
   from: string;
-  userId: string;
+  userUuid: string;
 };
 
 export function isAcceptGameInviteMessage(data: any): data is AcceptGameInviteMessage {
@@ -75,15 +75,14 @@ export function isAcceptGameInviteMessage(data: any): data is AcceptGameInviteMe
     data &&
     data.type === "gameInviteAccepted" &&
     typeof data.from === "string" &&
-    typeof data.userId === "string"
+    typeof data.userUuid === "string"
   );
 }
 
 export type StartGameRedirectMessage = {
   readonly type: "startGameRedirect";
   from: string;
-  userId: string;
-  // targetUserId: number;
+  userUuid: string;
 };
 
 export function isStartGameRedirectMessage(data: any): data is StartGameRedirectMessage {
@@ -91,7 +90,6 @@ export function isStartGameRedirectMessage(data: any): data is StartGameRedirect
     data &&
     data.type === "startGameRedirect" &&
     typeof data.from === "string" &&
-    typeof data.userId === "string" 
-    // typeof data.targetUserId === "number"
+    typeof data.userUuid === "string" 
   );
 }

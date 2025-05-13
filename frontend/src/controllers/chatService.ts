@@ -13,7 +13,6 @@ const OTHER_MSG_BOX: string =
 
 export type ChatRoom = {
   roomId: number;
-  otherUserId: number;
   otherUserName: string;
   otherUserAvatar: string | null;
   lastMessageAt: string;
@@ -23,17 +22,16 @@ export type ChatRoom = {
 
 export type ChatMessage = {
   id: number;
-  sender_id: number;
+  sender_uuid: string;
   content: string;
   created_at: string;
 };
 
-export async function createOrGetChatRoom(receiverId: number): Promise<{
+export async function createOrGetChatRoom(receiverUuid: string): Promise<{
   roomId: number;
   otherUserName: string;
   otherUserAvatar: string | null;
   otherUserEmail: string;
-  otherUserId: number;
   otherUserUuid: string;
 }> {
   const token: string | null = localStorage.getItem("auth_token");
@@ -48,7 +46,7 @@ export async function createOrGetChatRoom(receiverId: number): Promise<{
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ receiverId }),
+    body: JSON.stringify({ receiverUuid }),
   });
 
   if (!res.ok) {
@@ -98,9 +96,9 @@ export async function loadChatRoomMessages(roomId: number): Promise<ChatMessage[
   return await res.json();
 }
 
-export function setupChatMenu(container: HTMLElement, userId: number, userUuid: string) {
+export function setupChatMenu(container: HTMLElement, userUuid: string) {
   container.querySelector("#chat-avatar")?.addEventListener("click", () => {
-    if (userId !== null) showPublicProfile(userId);
+    if (userUuid != null) showPublicProfile(userUuid);
   });
 
   const dropdown = container.querySelector("#chat-menu-dropdown") as HTMLElement;
@@ -111,7 +109,7 @@ export function setupChatMenu(container: HTMLElement, userId: number, userUuid: 
   document.addEventListener("click", () => dropdown.classList.add("hidden"));
 
   container.querySelector("#view-profile-btn")?.addEventListener("click", () => {
-    if (userId !== null) showPublicProfile(userId);
+    if (userUuid !== null) showPublicProfile(userUuid);
   });
 
   const inviteBtn = container.querySelector("#invite-to-game-btn") as HTMLButtonElement;
@@ -147,14 +145,14 @@ export function setupChatMenu(container: HTMLElement, userId: number, userUuid: 
 export async function loadAndDisplayMessages(
   roomId: number,
   list: HTMLUListElement,
-  otherUserId: number
+  otherUserUuid: string
 ) {
   try {
     const messages = await loadChatRoomMessages(roomId);
     for (const msg of messages) {
       const li = document.createElement("li");
       li.textContent = msg.content;
-      li.className = msg.sender_id === otherUserId ? OTHER_MSG_BOX : SELF_MSG_BOX;
+      li.className = msg.sender_uuid === otherUserUuid ? OTHER_MSG_BOX : SELF_MSG_BOX;
       list.appendChild(li);
     }
     list.scrollTop = list.scrollHeight;

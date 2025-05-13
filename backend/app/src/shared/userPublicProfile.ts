@@ -1,5 +1,4 @@
 type UserPublicProfile = {
-  id: number;
   uuid: string;
   name: string;
   avatarUrl: string;

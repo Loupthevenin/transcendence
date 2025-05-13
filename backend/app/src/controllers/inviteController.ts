@@ -27,7 +27,7 @@ export async function invite( request: FastifyRequest<{ Body: InviteToGameBody }
         data: {
           type: "inviteToGame",
           from: request.user.name,
-          userId: request.user.uuid,
+          userUuid: request.user.uuid,
           targetUserId: userRow.uuid,
         } as InviteToGameMessage,
       })
