@@ -20,6 +20,7 @@ import {
 import { setReadyToPlaySent } from "../utils/chatUtils";
 import { showErrorToast } from "../components/showNotificationToast";
 import { createChatBox } from "../views/chat";
+import ChatRoom from "@shared/chat/chatRoom";
 
 const SELF_MSG_BOX: string =
   "self-end bg-[#6366f1] text-white px-4 py-2 rounded-xl max-w-xs mb-2 break-words";
@@ -262,7 +263,7 @@ async function renderChatList(): Promise<void> {
   if (!list) return;
 
   try {
-    const chatrooms = await fetchChatList();
+    const chatrooms: ChatRoom[] = await fetchChatList();
     list.innerHTML = "";
 
     for (const room of chatrooms) {
