@@ -7,9 +7,9 @@ import {
   isNewMsgSendMessage,
   NewMsgReceivedMessage,
   InviteToGameMessage,
-  // StartGameRedirectMessage
+  StartGameRedirectMessage
 } from "../shared/chat/chatMessageTypes";
-import { ChatMessageData } from "../shared/messageType";
+import { ChatMessage, ChatMessageData } from "../shared/messageType";
 import { isBlocked } from "../utils/blocked";
 import { getPlayerByUUID } from "./setupWebSocket";
 
@@ -58,8 +58,8 @@ export function handleChatAndInviteMessages(
           type: "startGameRedirect",
           from: receiver.username,
           userId: receiver.uuid
-        }
-      }));
+        } as StartGameRedirectMessage
+      } as ChatMessage));
     }
     if (receiver.socket?.readyState === WebSocket.OPEN) {
       receiver.socket.send(JSON.stringify({
@@ -68,8 +68,8 @@ export function handleChatAndInviteMessages(
           type: "startGameRedirect",
           from: inviter.username,
           userId: inviter.uuid
-        }
-      }));
+        } as StartGameRedirectMessage
+      } as ChatMessage));
     }
     return true;
   }

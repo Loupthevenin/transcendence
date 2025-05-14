@@ -34,21 +34,6 @@ export function isNewMsgSendMessage(data: any): data is NewMsgSendMessage {
   );
 }
 
-// export type RegisterUserMessage = {
-//   readonly type: "registerUsername";
-//   email: string;
-//   name: string;
-// };
-
-// export function isRegisterUserMessage(data: any): data is RegisterUserMessage {
-//   return (
-//     data &&
-//     data.type === "registerUsername" &&
-//     typeof data.email === "string" &&
-//     typeof data.name === "string"
-//   );
-// }
-
 export type InviteToGameMessage = {
   readonly type: "inviteToGame";
   from: string;
@@ -83,7 +68,6 @@ export type StartGameRedirectMessage = {
   readonly type: "startGameRedirect";
   from: string;
   userId: string;
-  // targetUserId: number;
 };
 
 export function isStartGameRedirectMessage(data: any): data is StartGameRedirectMessage {
@@ -92,6 +76,5 @@ export function isStartGameRedirectMessage(data: any): data is StartGameRedirect
     data.type === "startGameRedirect" &&
     typeof data.from === "string" &&
     typeof data.userId === "string" 
-    // typeof data.targetUserId === "number" 
   );
 }
