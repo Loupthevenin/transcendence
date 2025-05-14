@@ -26,7 +26,6 @@ const OTHER_MSG_BOX: string =
   "self-start bg-[#6d28d9] text-white px-4 py-2 rounded-xl max-w-xs mb-2 break-words";
 
 let currentMessageList: HTMLUListElement | null = null;
-let currentOtherUserUuid: string | null = null;
 let currentRoomId: number | null = null;
 let chatCallback: ((data: any) => void) | null = null;
 
@@ -34,7 +33,6 @@ let chatCallback: ((data: any) => void) | null = null;
 export function setupChat(container: HTMLElement): void {
   const chatApp = container.querySelector("#chat-app");
   const notConnected = container.querySelector("#not-connected-screen");
-  console.log("chatApp =", chatApp, "notConnected =", notConnected);
 
   const searchInput = container.querySelector("#user-search-input");
 
@@ -65,21 +63,19 @@ export function setupChat(container: HTMLElement): void {
 function setupWebSocketEvents(): void {
   if (chatCallback) {
     unsubscribeTo("chat", chatCallback);
-    console.log("[WS] Unsubscribed previous chat callback");
   }
 
   chatCallback = (data: any) => {
     if (isInviteToGameMessage(data))
       return openInviteToGameModal(data.from, data.userUuid);
     if (isStartGameRedirectMessage(data)) {
-      localStorage.setItem("opponentUuid", data.userUuid);
+      localStorage.setItem("opponentUuid", data.userId);
       localStorage.setItem("returnTo", window.location.pathname);
       navigateTo("/game");
       return;
     }
     if (isNewMsgReceivedMessage(data)) {
       if (data.roomId === currentRoomId && currentMessageList) {
-        console.log(`newmsg : ${data.msg}`);
         const li = document.createElement("li");
         li.className = OTHER_MSG_BOX;
         li.textContent = data.msg;
@@ -108,7 +104,6 @@ function setupSidebarMenu(): void {
   const sidebarMenuBtn = document.getElementById("menu-sidebar");
   const placeholder = document.getElementById("sidebar-menu-placeholder");
 
-  console.log(`${sidebarMenuBtn}`);
 
   if (!sidebarMenuBtn || !placeholder) return;
 
@@ -359,9 +354,6 @@ export async function openChatWindow(
 
   chatsContainer.innerHTML = "";
   currentRoomId = roomId;
-  currentOtherUserUuid = otherUserUuid;
-  if(!currentOtherUserUuid)
-    console.log("prblm currentuser uuid");
   const chatBox = createChatBox(otherUserName, avatar_url);
   chatsContainer.appendChild(chatBox);
 

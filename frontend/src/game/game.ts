@@ -18,7 +18,6 @@ import {
   SkinChangeMessage,
   isSkinChangeMessage,
   PaddlePositionMessage,
-  isGameStartedMessage,
   isGameDataMessage,
   GameResultMessage,
   isGameResultMessage,
@@ -53,7 +52,7 @@ import { LaunchMatchMessage } from "@shared/tournament/tournamentMessageTypes";
 import { navigateTo } from "../router";
 import { showErrorToast } from "../components/showNotificationToast";
 
-enum GameMode {
+export enum GameMode {
   MENU, // Player is in the menu
   SINGLEPLAYER, // Singleplayer mode
   LOCAL, // Local multiplayer mode
@@ -500,14 +499,12 @@ export function handleTournamentGameLaunch(): void {
 }
 
 export function handleGameMessages(data: GameMessageData): void {
-  console.log("Received:", data);
-  console.warn("[DEBUG] Message reçu alors que gameMode = ", currentGameMode);
 
   // Avoid modifying data if not in an online mode
-  if (currentGameMode !== GameMode.ONLINE && currentGameMode !== GameMode.SPECTATING) return;
+  // if (currentGameMode !== GameMode.ONLINE && currentGameMode !== GameMode.SPECTATING) return;
 
   try {
-    if (isGameStartedMessage(data)) {
+    if (data.type === "gameStarted") {
       playerId = data.id; // Set the player ID based on the server response
       setPaddleSkin(playerId, localSkinId);
       updateCameraMode(camera);
@@ -524,7 +521,7 @@ export function handleGameMessages(data: GameMessageData): void {
       }
     } else if (isGameDataMessage(data)) {
       // Update game data with the received data
-      gameData.ball.position = data.data.ball.position;
+          gameData.ball.position = data.data.ball.position;
       if (playerId !== 1) {
         gameData.paddle1Position = data.data.paddle1Position;
       }
@@ -545,7 +542,6 @@ export function handleGameMessages(data: GameMessageData): void {
 
       //lastUpdateTime = performance.now();
     } else if (isGameResultMessage(data)) {
-      console.log("dans gameresult");
       playerId = -1; // Reset player ID
       displayGameResult(data);
     } else if (isDisconnectionMessage(data)) {
@@ -559,7 +555,8 @@ export function handleGameMessages(data: GameMessageData): void {
 
 let isRegisteredToGameMessages: boolean = false;
 
-function registerToGameMessages(): void {
+export function registerToGameMessages(): void {
+  // unsubscribeTo("game", handleGameMessages);
   if (!isRegisteredToGameMessages) {
     subscribeTo("game", handleGameMessages);
     isRegisteredToGameMessages = true;
@@ -625,7 +622,7 @@ function displayGameResult(gameResult: GameResultMessage): void {
 
   overlay.appendChild(content);
   document.body.appendChild(overlay);
-  console.log("[DEBUG] overlay ajouté au DOM");
+  // console.log("[DEBUG] overlay ajouté au DOM");
 
   requestAnimationFrame(() => {
     content.classList.remove("opacity-0", "scale-90");
@@ -802,6 +799,7 @@ export async function initGameEnvironment(): Promise<void> {
       .finally(() =>
         loadingHandler.setLoaded(environmentSceneLoadingStateIndex),
       );
+      // markGameReady();
     //}).finally(() => setTimeout(() => loadingHandler.setLoaded(environmentSceneLoadingStateIndex), 5000)); // Delay of 5s for testing purposes
   } catch (error: any) {
     console.error("An error occurred while loading model 'scene.glb' :", error);
@@ -1109,6 +1107,7 @@ export function LocalGame(): void {
   gameStats.gameStartTime = Date.now();
 }
 
+
 // Launch the game in online mode against a remote player
 export function OnlineGame(autoMatchmaking: boolean = true): void {
   if (!isConnected()) {
@@ -1118,7 +1117,7 @@ export function OnlineGame(autoMatchmaking: boolean = true): void {
     showErrorToast("Vous n'êtes pas connecté au serveur, vous ne pouvez pas démarrer une partie en ligne");
     return;
   }
-  LoadGameCanvasIfNeeded();
+  // LoadGameCanvasIfNeeded();
   deleteGameResult();
   localGamePlaying = false;
 
@@ -1129,7 +1128,7 @@ export function OnlineGame(autoMatchmaking: boolean = true): void {
   resetGame();
 
   hideSkinSelector();
-  localSkinId = getSelectedSkinId();
+  localSkinId = getSelectedSkinId() || "1";
   setPaddleSkin(1, localSkinId);
 
   registerToGameMessages();
@@ -1215,6 +1214,7 @@ export function SetReplayGameData(
     }
   }
 }
+
 
 //////// DEBUG ONLY
 
