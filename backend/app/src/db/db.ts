@@ -2,7 +2,7 @@ import Database, { Statement } from "better-sqlite3";
 import { DB_PATH, NODE_ENV } from "../config";
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
-import { RoomType } from "../game/room";
+import { RoomType } from "../match/room";
 
 const db: Database.Database = new Database(DB_PATH);
 // console.log("[DEBUG] SQLite path:", DB_PATH);

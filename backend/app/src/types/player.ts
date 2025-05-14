@@ -1,5 +1,5 @@
 import { WebSocket } from "ws";
-import { Room } from "../game/room";
+import { Room } from "../match/room";
 
 export type Player = {
   readonly uuid: string;

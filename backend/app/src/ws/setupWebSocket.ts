@@ -2,7 +2,7 @@ import WebSocket, { WebSocketServer } from "ws";
 import { IncomingMessage } from "http";
 import jwt from "jsonwebtoken";
 import { Player, DisconnectedPlayer } from "../types/player";
-import { addPlayerToMatchmaking, Room } from "../game/room";
+import { addPlayerToMatchmaking, Room } from "../match/room";
 import {
   isSkinChangeMessage,
   isPaddlePositionMessage,
@@ -25,7 +25,7 @@ import {
   TournamentMessageData,
 } from "../shared/messageType";
 import ERROR_TYPE, { ERROR_MSG } from "../shared/errorType";
-import { RoomType, createNewRoom } from "../game/room";
+import { RoomType, createNewRoom } from "../match/room";
 // import { isInviteToGameMessage, isAcceptGameInviteMessage } from "../shared/chat/chatMessageTypes";
 import { JWT_SECRET } from "../config";
 import { UserPayload } from "../types/UserPayload";
