@@ -5,6 +5,7 @@ type ChatRoom = {
   lastMessageAt: string;
   otherUserEmail: string;
   otherUserUuid: string;
+  otherIsOnline: boolean;
 };
 
 export default ChatRoom;

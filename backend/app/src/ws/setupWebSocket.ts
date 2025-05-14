@@ -310,8 +310,8 @@ setInterval(() => {
 }, 1000); // Run the interval every second
 
 // Get a player by is UUID
-export function getPlayerByUUID(uuid: string): Player | undefined {
-  return players.get(uuid);
+export function getPlayerByUUID(uuid: string | undefined): Player | undefined {
+  return uuid ? players.get(uuid) : undefined;
 }
 
 // Update player username
