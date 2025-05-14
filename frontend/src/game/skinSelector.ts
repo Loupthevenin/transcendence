@@ -295,5 +295,5 @@ export function hideSkinSelector(): void {
 }
 
 export function getSelectedSkinId(): string {
-  return skinIds[currentIndex] ?? "";
+  return skinIds[currentIndex] ?? "0";
 }

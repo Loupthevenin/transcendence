@@ -1,10 +1,11 @@
 import { sendMessage, subscribeTo } from "../websocketManager";
 import { OnlineGame, handleGameMessages } from "../game/game";
-import { ReadyToPlayMessage } from "@shared/game/gameMessageTypes";
+import { isGameResultMessage, isGameStartedMessage, ReadyToPlayMessage } from "@shared/game/gameMessageTypes";
 import { GameMessageData } from "@shared/messageType";
 import { createGameCanvas, initGameEnvironment } from "../game/game";
 import { navigateTo } from "../router";
 import { hasSentReadyToPlay, setReadyToPlaySent } from "../utils/chatUtils";
+import { AcceptGameInviteMessage } from "@shared/chat/chatMessageTypes";
 
 let gameAlreadyStarted = false;
 
@@ -52,7 +53,7 @@ export function openInviteToGameModal(fromName: string, userId: string): void {
       type: "gameInviteAccepted",
       from: fromName,
       userId,
-    });
+    } as AcceptGameInviteMessage);
     localStorage.setItem("opponentUuid", userId);
     localStorage.setItem("returnTo", window.location.pathname);
     navigateTo("/game");
@@ -72,20 +73,20 @@ export function initOnlineGameSession(opponentUuid: string): void {
     setReadyToPlaySent(true);
     const readyMessage: ReadyToPlayMessage = {
       type: "readyToPlay",
-      opponentId: opponentUuid,
+      opponentUuid,
     };
     sendMessage("game", readyMessage);
     // console.log("[GAME] Envoi message readyToPlay", readyMessage);
   }
   subscribeTo("game", async (data: GameMessageData) => {
-    if (data.type === "gameStarted" && !gameAlreadyStarted) {
+    if (isGameStartedMessage(data) && !gameAlreadyStarted) {
       gameAlreadyStarted = true;
       // console.log("[GAME] gameStarted reçu, lancement du jeu...");
       await prepareGameAndStart(); 
       OnlineGame(false);  
       handleGameMessages(data);  
     }
-    if (data.type === "gameResult") {
+    if (isGameResultMessage(data)) {
       // console.log("[GAME] Fin du match reçue, reset des états");
       gameAlreadyStarted = false;
 

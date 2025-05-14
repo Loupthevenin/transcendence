@@ -155,7 +155,7 @@ export function setupWebSocket(): WebSocketServer {
         if (isGameMessage(msgData)) {
           const data: GameMessageData = msgData.data;
           if (isReadyToPlayMessage(data)) {
-            const opponent: Player | undefined = getPlayerByUUID(data.opponentId);
+            const opponent: Player | undefined = getPlayerByUUID(data.opponentUuid);
             if (!opponent) {
               console.log("[GAME] Opponent not found or not connected");
               return;

@@ -47,20 +47,10 @@ export type GameStartedMessage = {
   id: 1 | 2; // The player's index in the room to know which paddle to control
 }
 
-// export function isGameStartedMessage(data: any): data is GameStartedMessage {
-//   return (
-//     data &&
-//     data.type === "gameStarted" &&
-//     (data.id === 1 || data.id === 2)
-//   );
-// }
-
 export function isGameStartedMessage(data: any): data is GameStartedMessage {
   return (
-    typeof data === "object" &&
-    data !== null &&
+    data &&
     data.type === "gameStarted" &&
-    typeof data.id === "number" &&
     (data.id === 1 || data.id === 2)
   );
 }
@@ -141,14 +131,14 @@ export function isLeaveGameMessage(data: any): data is LeaveGameMessage {
 
 export type ReadyToPlayMessage = {
   readonly type: "readyToPlay";
-  opponentId: string;
+  opponentUuid: string;
 };
 
 export function isReadyToPlayMessage(data: any): data is ReadyToPlayMessage {
   return (
     data &&
     data.type === "readyToPlay" &&
-    typeof data.opponentId === "string"
+    typeof data.opponentUuid === "string"
   );
 }
 

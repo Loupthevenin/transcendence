@@ -27,6 +27,7 @@ import {
   ReconnectionMessage,
   LeaveGameMessage,
   SpectatingRequestMessage,
+  isGameStartedMessage,
 } from "@shared/game/gameMessageTypes";
 import {
   showSkinSelector,
@@ -504,7 +505,7 @@ export function handleGameMessages(data: GameMessageData): void {
   // if (currentGameMode !== GameMode.ONLINE && currentGameMode !== GameMode.SPECTATING) return;
 
   try {
-    if (data.type === "gameStarted") {
+    if (isGameStartedMessage(data)) {
       playerId = data.id; // Set the player ID based on the server response
       setPaddleSkin(playerId, localSkinId);
       updateCameraMode(camera);
@@ -521,7 +522,7 @@ export function handleGameMessages(data: GameMessageData): void {
       }
     } else if (isGameDataMessage(data)) {
       // Update game data with the received data
-          gameData.ball.position = data.data.ball.position;
+      gameData.ball.position = data.data.ball.position;
       if (playerId !== 1) {
         gameData.paddle1Position = data.data.paddle1Position;
       }
@@ -556,7 +557,6 @@ export function handleGameMessages(data: GameMessageData): void {
 let isRegisteredToGameMessages: boolean = false;
 
 export function registerToGameMessages(): void {
-  // unsubscribeTo("game", handleGameMessages);
   if (!isRegisteredToGameMessages) {
     subscribeTo("game", handleGameMessages);
     isRegisteredToGameMessages = true;
@@ -622,7 +622,6 @@ function displayGameResult(gameResult: GameResultMessage): void {
 
   overlay.appendChild(content);
   document.body.appendChild(overlay);
-  // console.log("[DEBUG] overlay ajouté au DOM");
 
   requestAnimationFrame(() => {
     content.classList.remove("opacity-0", "scale-90");
@@ -799,7 +798,6 @@ export async function initGameEnvironment(): Promise<void> {
       .finally(() =>
         loadingHandler.setLoaded(environmentSceneLoadingStateIndex),
       );
-      // markGameReady();
     //}).finally(() => setTimeout(() => loadingHandler.setLoaded(environmentSceneLoadingStateIndex), 5000)); // Delay of 5s for testing purposes
   } catch (error: any) {
     console.error("An error occurred while loading model 'scene.glb' :", error);
@@ -1117,7 +1115,7 @@ export function OnlineGame(autoMatchmaking: boolean = true): void {
     showErrorToast("Vous n'êtes pas connecté au serveur, vous ne pouvez pas démarrer une partie en ligne");
     return;
   }
-  // LoadGameCanvasIfNeeded();
+  LoadGameCanvasIfNeeded();
   deleteGameResult();
   localGamePlaying = false;
 
@@ -1128,7 +1126,7 @@ export function OnlineGame(autoMatchmaking: boolean = true): void {
   resetGame();
 
   hideSkinSelector();
-  localSkinId = getSelectedSkinId() || "1";
+  localSkinId = getSelectedSkinId();
   setPaddleSkin(1, localSkinId);
 
   registerToGameMessages();
