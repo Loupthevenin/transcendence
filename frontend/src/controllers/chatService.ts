@@ -6,7 +6,7 @@ import {
 } from "../components/showNotificationToast";
 import ChatRoom from "@shared/chat/chatRoom";
 import ChatMessage from "@shared/chat/chatMessage";
-// import { onBlockStatusChanged } from "../controllers/blockedUser";
+import { getHiddenRoomIds } from "../utils/chatUtils";
 
 const SELF_MSG_BOX: string =
   "self-end bg-[#6366f1] text-white px-4 py-2 rounded-xl max-w-xs mb-2 break-words";
@@ -53,7 +53,9 @@ export async function loadChatList(): Promise<ChatRoom[]> {
     throw new Error("Failed to load chatrooms");
   }
 
-  return await res.json();
+  const chatRooms = await res.json();
+  const hiddenRoomIds = getHiddenRoomIds();
+  return chatRooms.filter((room: ChatRoom) => !hiddenRoomIds.includes(room.roomId));
 }
 
 export async function loadChatRoomMessages(roomId: number): Promise<ChatMessage[]> {
