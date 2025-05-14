@@ -1,7 +1,10 @@
 import { MatchHistory } from "@shared/match/matchHistory";
 import UserPublicProfile from "@shared/userPublicProfile";
 import { navigateTo } from "../router";
-import { emitBlockStatusChanged, onBlockStatusChanged } from "../controllers/blockedUser";
+import {
+  emitBlockStatusChanged,
+  onBlockStatusChanged,
+} from "../controllers/blockedUser";
 import {
   showErrorToast,
   showSuccessToast,
@@ -49,7 +52,7 @@ export async function showPublicProfile(userUuid: string): Promise<void> {
 //     "relative bg-[#1e1b4b] p-6 rounded-2xl text-white w-3/4 h-[90vh] overflow-hidden flex flex-col items-center gap-4";
 
 // <<<<<<< HEAD
-//   <img src="${profile.avatarUrl ?? "https://upload.wikimedia.org/wikipedia/commons/2/2c/Default_pfp.svg"}" 
+//   <img src="${profile.avatarUrl ?? "https://upload.wikimedia.org/wikipedia/commons/2/2c/Default_pfp.svg"}"
 //         class="w-24 h-24 rounded-full object-cover" alt="Avatar">
 //   <h2 id="profile-username" class="text-2xl font-bold"></h2>
 //   <p id="profile-id" class="text-white text-sm"></p>
@@ -268,7 +271,9 @@ export async function showPublicProfile(userUuid: string): Promise<void> {
 //   await loadHistory(profile.uuid);
 // }
 
-export async function openProfileModal(profile: UserPublicProfile): Promise<void> {
+export async function openProfileModal(
+  profile: UserPublicProfile,
+): Promise<void> {
   const backdrop = document.createElement("div");
   backdrop.className =
     "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50";
@@ -285,13 +290,29 @@ export async function openProfileModal(profile: UserPublicProfile): Promise<void
   blockBtn.textContent = "🚫";
   modal.appendChild(blockBtn);
 
+  const avatarContainer: HTMLDivElement = document.createElement("div");
+  avatarContainer.className = "relative";
+
   const avatar = document.createElement("img");
   avatar.src =
     profile.avatarUrl ??
     "https://upload.wikimedia.org/wikipedia/commons/2/2c/Default_pfp.svg";
   avatar.className = "w-24 h-24 rounded-full object-cover";
   avatar.alt = "Avatar";
-  modal.appendChild(avatar);
+  avatar.referrerPolicy = "no-referrer";
+  avatar.onerror = () => {
+    avatar.src = "/api/textures/avatar-default.svg";
+  };
+
+  const statusIndicator: HTMLDivElement = document.createElement("div");
+  statusIndicator.className = "w-3 h-3 rounded-full absolute top-0 right-0";
+  const isOnline: boolean = profile.isOnline;
+  statusIndicator.style.backgroundColor = isOnline ? "green" : "red";
+
+  avatarContainer.appendChild(avatar);
+  avatarContainer.appendChild(statusIndicator);
+
+  modal.appendChild(avatarContainer);
 
   const nameEl = document.createElement("h2");
   nameEl.id = "profile-username";
@@ -313,10 +334,12 @@ export async function openProfileModal(profile: UserPublicProfile): Promise<void
     spectateButton.textContent = "👀 Regarder en direct";
     modal.appendChild(spectateButton);
 
-    listenerButtonSpectate(spectateButton, profile.uuid); 
+    listenerButtonSpectate(spectateButton, profile.uuid);
   }
 
-  modal.insertAdjacentHTML("beforeend", `
+  modal.insertAdjacentHTML(
+    "beforeend",
+    `
     <div class="bg-[#2e2c60] p-6 rounded-xl shadow-lg text-white">
       <h3 class="text-xl font-semibold text-indigo-300 mb-4">Statistiques</h3>
       <div class="flex items-center justify-between">
@@ -339,14 +362,18 @@ export async function openProfileModal(profile: UserPublicProfile): Promise<void
         </div>
       </div>
     </div>
-  `);
+  `,
+  );
 
-  modal.insertAdjacentHTML("beforeend", `
+  modal.insertAdjacentHTML(
+    "beforeend",
+    `
     <div id="history-section" class="w-full flex-1 overflow-y-auto bg-[#2e2c60] rounded-xl p-4 mt-4">
       <h3 class="text-lg font-semibold mb-2">Historique des matchs</h3>
       <ul id="match-history" class="flex flex-col gap-2"></ul>
     </div>
-  `);
+  `,
+  );
 
   const closeBtn = document.createElement("button");
   closeBtn.id = "close-profile-modal";
@@ -367,22 +394,29 @@ export async function openProfileModal(profile: UserPublicProfile): Promise<void
       ? "✅ Débloquer cet utilisateur"
       : "⛔ Bloquer cet utilisateur";
     blockBtn.className = `${
-      isBlocked ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
+      isBlocked
+        ? "bg-green-600 hover:bg-green-700"
+        : "bg-red-600 hover:bg-red-700"
     } text-white px-3 py-1 rounded text-sm absolute top-4 right-4`;
   };
 
   const toggleBlock = async (isBlocked: boolean) => {
-    if (!confirm(
-      isBlocked
-        ? `Veux-tu vraiment débloquer ${profile.name} ?`
-        : `Veux-tu vraiment bloquer ${profile.name} ?`
-    )) return;
+    if (
+      !confirm(
+        isBlocked
+          ? `Veux-tu vraiment débloquer ${profile.name} ?`
+          : `Veux-tu vraiment bloquer ${profile.name} ?`,
+      )
+    )
+      return;
 
     try {
       const token = localStorage.getItem("auth_token");
       if (!token) throw new Error("No token");
 
-      const endpoint = isBlocked ? "/api/block-user/unblock" : "/api/block-user";
+      const endpoint = isBlocked
+        ? "/api/block-user/unblock"
+        : "/api/block-user";
       const res = await fetch(endpoint, {
         method: "POST",
         headers: {
@@ -397,7 +431,7 @@ export async function openProfileModal(profile: UserPublicProfile): Promise<void
       showSuccessToast(
         isBlocked
           ? `${profile.name} a été débloqué ✅`
-          : `${profile.name} a été bloqué ⛔`
+          : `${profile.name} a été bloqué ⛔`,
       );
 
       const newStatus = !isBlocked;
@@ -416,7 +450,7 @@ export async function openProfileModal(profile: UserPublicProfile): Promise<void
 
     const res = await fetch(
       `/api/block-user/is-blocked?targetUserUuid=${profile.uuid}`,
-      { headers: { Authorization: `Bearer ${token}` } }
+      { headers: { Authorization: `Bearer ${token}` } },
     );
     const { blocked } = await res.json();
     updateBlockButton(blocked);
@@ -438,7 +472,6 @@ export async function openProfileModal(profile: UserPublicProfile): Promise<void
   await loadHistory(profile.uuid);
 }
 
-
 async function loadHistory(userUuid: string): Promise<void> {
   const token: string | null = localStorage.getItem("auth_token");
   if (!token) {
@@ -446,12 +479,15 @@ async function loadHistory(userUuid: string): Promise<void> {
     return;
   }
   try {
-    const res: Response = await fetch(`/api/public-profile/history/${userUuid}`, {
-      method: "GET",
-      headers: {
-        authorization: `Bearer ${token}`,
+    const res: Response = await fetch(
+      `/api/public-profile/history/${userUuid}`,
+      {
+        method: "GET",
+        headers: {
+          authorization: `Bearer ${token}`,
+        },
       },
-    });
+    );
 
     const rawData: any = await res.json();
     if (!res.ok) {
@@ -643,7 +679,10 @@ function listenerButtonReplay(): void {
   });
 }
 
-function listenerButtonSpectate(buttonSpectate: HTMLButtonElement, uuid: string): void {
+function listenerButtonSpectate(
+  buttonSpectate: HTMLButtonElement,
+  uuid: string,
+): void {
   buttonSpectate.addEventListener("click", () => {
     SpectatingMode(uuid);
   });

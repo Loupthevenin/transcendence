@@ -7,17 +7,18 @@ import {
   isStartGameRedirectMessage,
 } from "@shared/chat/chatMessageTypes";
 import { openInviteToGameModal } from "../controllers/InviteGame";
-import { showBlockedUsersModal, setupBlockFeature } from "../controllers/blockedUser";
+import {
+  showBlockedUsersModal,
+  setupBlockFeature,
+} from "../controllers/blockedUser";
 import {
   loadChatList as fetchChatList,
   createOrGetChatRoom,
   setupChatMenu,
-  loadAndDisplayMessages
+  loadAndDisplayMessages,
 } from "../controllers/chatService";
 import { setReadyToPlaySent } from "../utils/chatUtils";
-import {
-  showErrorToast,
-} from "../components/showNotificationToast";
+import { showErrorToast } from "../components/showNotificationToast";
 import { createChatBox } from "../views/chat";
 
 const SELF_MSG_BOX: string =
@@ -28,7 +29,6 @@ const OTHER_MSG_BOX: string =
 let currentMessageList: HTMLUListElement | null = null;
 let currentRoomId: number | null = null;
 let chatCallback: ((data: any) => void) | null = null;
-
 
 export function setupChat(container: HTMLElement): void {
   const chatApp = container.querySelector("#chat-app");
@@ -104,11 +104,9 @@ function setupSidebarMenu(): void {
   const sidebarMenuBtn = document.getElementById("menu-sidebar");
   const placeholder = document.getElementById("sidebar-menu-placeholder");
 
-
   if (!sidebarMenuBtn || !placeholder) return;
 
   sidebarMenuBtn.addEventListener("click", () => {
-
     const existing = document.getElementById("sidebar-options-menu");
     if (existing) return existing.remove();
 
@@ -116,9 +114,7 @@ function setupSidebarMenu(): void {
     menu.id = "sidebar-options-menu";
     menu.className =
       "absolute right-6 mt-2 w-48 bg-white text-black rounded shadow-lg z-50";
-    menu.innerHTML = 
-      `<button id="sidebar-manage-blocked-btn" class="w-full text-left px-4 py-2 hover:bg-gray-200">🚫 Gérer mes blocages</button>`
-    ;
+    menu.innerHTML = `<button id="sidebar-manage-blocked-btn" class="w-full text-left px-4 py-2 hover:bg-gray-200">🚫 Gérer mes blocages</button>`;
 
     placeholder.appendChild(menu);
 
@@ -272,8 +268,11 @@ async function renderChatList(): Promise<void> {
     for (const room of chatrooms) {
       const li = document.createElement("li");
       li.className =
-        "flex items-center gap-4 p-2 rounded-lg hover:bg-[#2a255c] cursor-pointer transition";
+        "flex items-center gap-4 p-2 rounded-lg hover:bg-[#2a255c] cursor-pointer transition relative";
       li.dataset.roomId = room.roomId.toString();
+
+      const avatarContainer: HTMLDivElement = document.createElement("div");
+      avatarContainer.className = "relative";
 
       const img = document.createElement("img");
       img.src =
@@ -281,6 +280,19 @@ async function renderChatList(): Promise<void> {
         "https://upload.wikimedia.org/wikipedia/commons/2/2c/Default_pfp.svg";
       img.className = "w-10 h-10 rounded-full object-cover";
       img.alt = "Avatar";
+      img.referrerPolicy = "no-referrer";
+      img.onerror = () => {
+        img.src = "/api/textures/avatar-default.svg";
+      };
+
+      const statusIndicator: HTMLDivElement = document.createElement("div");
+      statusIndicator.className = "w-3 h-3 rounded-full absolute top-0 right-0";
+      // TODO: mettre online;
+      const isOnline: boolean = true;
+      statusIndicator.style.backgroundColor = isOnline ? "green" : "red";
+
+      avatarContainer.appendChild(img);
+      avatarContainer.appendChild(statusIndicator);
 
       const userInfoDiv: HTMLDivElement = document.createElement("div");
       userInfoDiv.className = "flex flex-col";
@@ -293,14 +305,25 @@ async function renderChatList(): Promise<void> {
       dateSpan.className = "text-xs text-gray-400";
 
       dateSpan.textContent = room.lastMessageAt
-      ? new Date(room.lastMessageAt).toLocaleString()
-      : "Pas encore de message";
+        ? new Date(room.lastMessageAt).toLocaleString()
+        : "Pas encore de message";
 
       userInfoDiv.appendChild(nameSpan);
       userInfoDiv.appendChild(dateSpan);
 
-      li.appendChild(img);
+      const deleteButton: HTMLButtonElement = document.createElement("button");
+      deleteButton.className = "text-xl text-red-600 absolute right-4";
+      deleteButton.textContent = "❌";
+      // deleteButton.addEventListener("click", (e) => {
+      //   e.stopPropagation();
+      // TODO: delete conv
+      // });
+
+      li.appendChild(avatarContainer);
       li.appendChild(userInfoDiv);
+      li.appendChild(deleteButton);
+
+      img.parentElement?.appendChild(statusIndicator);
 
       li.addEventListener("click", () => {
         openChatWindow(
@@ -360,7 +383,8 @@ export async function openChatWindow(
   const list = chatBox.querySelector("#chat-messages") as HTMLUListElement;
   currentMessageList = list;
 
-  document.querySelector(`li[data-room-id='${roomId}']`)
+  document
+    .querySelector(`li[data-room-id='${roomId}']`)
     ?.querySelector(".new-msg-badge")
     ?.remove();
 
@@ -369,4 +393,3 @@ export async function openChatWindow(
   await loadAndDisplayMessages(roomId, list, otherUserUuid);
   setupChatForm(chatBox, receiverEmail);
 }
-
