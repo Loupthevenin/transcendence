@@ -288,9 +288,7 @@ async function renderChatList(): Promise<void> {
 
       const statusIndicator: HTMLDivElement = document.createElement("div");
       statusIndicator.className = "w-3 h-3 rounded-full absolute top-0 right-0";
-      // TODO: mettre online;
-      const isOnline: boolean = true;
-      statusIndicator.style.backgroundColor = isOnline ? "green" : "red";
+      statusIndicator.style.backgroundColor = room.otherIsOnline ? "green" : "red";
 
       avatarContainer.appendChild(img);
       avatarContainer.appendChild(statusIndicator);

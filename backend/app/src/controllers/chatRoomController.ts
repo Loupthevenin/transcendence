@@ -2,6 +2,7 @@ import { FastifyRequest, FastifyReply } from "fastify";
 import db from "../db/db";
 import ChatRoom from "../shared/chat/chatRoom";
 import ChatMessage from "../shared/chat/chatMessage";
+import { getPlayerByUUID } from "../ws/setupWebSocket";
 
 type CreateChatroomBody = {
   receiverUuid: string;
@@ -59,13 +60,17 @@ export async function createOrGetChatRoom(
 
   if (!otherUser) return reply.status(404).send({ error: "Other user not found" });
 
-  return reply.send({
+  const chatRoom: ChatRoom = {
     roomId,
     otherUserUuid,
     otherUserName: otherUser.name,
     otherUserAvatar: otherUser.avatar_url,
     otherUserEmail: otherUser.email,
-  } as ChatRoom);
+    lastMessageAt: "",
+    otherIsOnline: getPlayerByUUID(otherUser?.uuid) !== undefined,
+  }
+
+  return reply.send(chatRoom);
 }
 
 export async function getUserChatRooms(request: FastifyRequest, reply: FastifyReply) {
@@ -89,7 +94,7 @@ export async function getUserChatRooms(request: FastifyRequest, reply: FastifyRe
     updated_at: string;
   }[];
 
-  const enrichedChatRooms = rawChatRooms.map(room => {
+  const enrichedChatRooms: ChatRoom[] = rawChatRooms.map(room => {
     const otherUserUuid = room.user1_uuid === userUuid ? room.user2_uuid : room.user1_uuid;
 
     const otherUser = db.prepare(`
@@ -98,14 +103,16 @@ export async function getUserChatRooms(request: FastifyRequest, reply: FastifyRe
       WHERE uuid = ?
     `).get(otherUserUuid) as { uuid: string; name: string; avatar_url: string; email: string } | undefined;
 
-    return {
+    const chatRoom: ChatRoom = {
       roomId: room.id,
-      otherUserUuid: otherUser?.uuid ?? null,
+      otherUserUuid: otherUser?.uuid ?? "",
       otherUserName: otherUser?.name ?? "Unknown",
       otherUserAvatar: otherUser?.avatar_url ?? null,
-      otherUserEmail: otherUser?.email ?? null,
+      otherUserEmail: otherUser?.email ?? "",
       lastMessageAt: room.updated_at,
-    } as ChatRoom;
+      otherIsOnline: getPlayerByUUID(otherUser?.uuid) !== undefined,
+    }
+    return chatRoom;
   });
 
   return reply.send(enrichedChatRooms);
