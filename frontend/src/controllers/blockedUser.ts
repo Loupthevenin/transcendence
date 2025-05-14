@@ -11,7 +11,8 @@ export async function showBlockedUsersModal(): Promise<void> {
 
   const modal = document.createElement("div");
   modal.className =
-    "bg-white p-6 rounded-lg text-black w-96 max-h-[80vh] overflow-y-auto flex flex-col gap-4";
+    "bg-[#1e1b4b] text-white p-6 rounded-lg w-96 max-h-[80vh] overflow-y-auto flex flex-col gap-4";
+
 
   const title = document.createElement("h2");
   title.className = "text-2xl font-bold mb-4 text-center";

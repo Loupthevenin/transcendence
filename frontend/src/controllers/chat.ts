@@ -17,7 +17,7 @@ import {
   setupChatMenu,
   loadAndDisplayMessages,
 } from "../controllers/chatService";
-import { setReadyToPlaySent } from "../utils/chatUtils";
+import { setReadyToPlaySent, addHiddenRoomId, removeHiddenRoomId } from "../utils/chatUtils";
 import { showErrorToast } from "../components/showNotificationToast";
 import { createChatBox } from "../views/chat";
 import ChatRoom from "@shared/chat/chatRoom";
@@ -88,12 +88,10 @@ function setupWebSocketEvents(): void {
       const chatItem = document.querySelector(
         `li[data-room-id='${data.roomId}']`,
       );
-      if (chatItem && !chatItem.querySelector(".new-msg-badge")) {
-        const badge = document.createElement("span");
-        badge.className =
-          "new-msg-badge bg-red-600 text-white text-xs px-2 py-1 rounded-full ml-auto";
-        badge.textContent = "Nouveau";
-        chatItem.appendChild(badge);
+      const dot = chatItem?.querySelector(".new-msg-dot") as HTMLDivElement;
+
+      if (dot && dot.classList.contains("hidden")) {
+        dot.classList.remove("hidden");
       }
     }
   };
@@ -114,7 +112,7 @@ function setupSidebarMenu(): void {
     const menu = document.createElement("div");
     menu.id = "sidebar-options-menu";
     menu.className =
-      "absolute right-6 mt-2 w-48 bg-white text-black rounded shadow-lg z-50";
+      "absolute right-6 mt-2 w-48 bg-[#2e2c60] text-white rounded shadow-lg z-50";
     menu.innerHTML = `<button id="sidebar-manage-blocked-btn" class="w-full text-left px-4 py-2 hover:bg-gray-200">🚫 Gérer mes blocages</button>`;
 
     placeholder.appendChild(menu);
@@ -269,7 +267,7 @@ async function renderChatList(): Promise<void> {
     for (const room of chatrooms) {
       const li = document.createElement("li");
       li.className =
-        "flex items-center gap-4 p-2 rounded-lg hover:bg-[#2a255c] cursor-pointer transition relative";
+        "relative flex items-center gap-4 p-2 rounded-lg hover:bg-[#2a255c] cursor-pointer transition";
       li.dataset.roomId = room.roomId.toString();
 
       const avatarContainer: HTMLDivElement = document.createElement("div");
@@ -311,12 +309,23 @@ async function renderChatList(): Promise<void> {
       userInfoDiv.appendChild(dateSpan);
 
       const deleteButton: HTMLButtonElement = document.createElement("button");
-      deleteButton.className = "text-xl text-red-600 absolute right-4";
-      deleteButton.textContent = "❌";
-      // deleteButton.addEventListener("click", (e) => {
-      //   e.stopPropagation();
-      // TODO: delete conv
-      // });
+      deleteButton.className = "absolute top-4 right-4 text-gray-400 hover:text-white text-xl";
+      deleteButton.textContent = "✖";
+      deleteButton.addEventListener("click", (e) => {
+        e.stopPropagation();
+        addHiddenRoomId(room.roomId);
+        li.remove(); 
+        if (currentRoomId === room.roomId) {
+          const chatContainer = document.getElementById("chats");
+          if (chatContainer) chatContainer.innerHTML = "";
+          currentRoomId = null;
+        }
+      });
+
+      const newMessageDot = document.createElement("div");
+      newMessageDot.className =
+        "new-msg-dot hidden w-2 h-2 bg-red-500 rounded-full absolute top-2 right-2 z-10";
+      li.appendChild(newMessageDot);
 
       li.appendChild(avatarContainer);
       li.appendChild(userInfoDiv);
@@ -374,6 +383,8 @@ export async function openChatWindow(
   const chatsContainer = document.getElementById("chats");
   if (!chatsContainer) return;
 
+  removeHiddenRoomId(roomId);
+
   chatsContainer.innerHTML = "";
   currentRoomId = roomId;
   const chatBox = createChatBox(otherUserName, avatar_url);
@@ -384,8 +395,8 @@ export async function openChatWindow(
 
   document
     .querySelector(`li[data-room-id='${roomId}']`)
-    ?.querySelector(".new-msg-badge")
-    ?.remove();
+    ?.querySelector(".new-msg-dot")
+    ?.classList.add("hidden");
 
   setupChatMenu(chatBox, otherUserUuid);
   await setupBlockFeature(chatBox, otherUserUuid);
