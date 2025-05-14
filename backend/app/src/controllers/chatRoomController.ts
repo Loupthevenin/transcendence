@@ -1,5 +1,7 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import db from "../db/db";
+import ChatRoom from "../shared/chat/chatRoom";
+import ChatMessage from "../shared/chat/chatMessage";
 
 type CreateChatroomBody = {
   receiverUuid: string;
@@ -63,7 +65,7 @@ export async function createOrGetChatRoom(
     otherUserName: otherUser.name,
     otherUserAvatar: otherUser.avatar_url,
     otherUserEmail: otherUser.email,
-  });
+  } as ChatRoom);
 }
 
 export async function getUserChatRooms(request: FastifyRequest, reply: FastifyReply) {
@@ -103,7 +105,7 @@ export async function getUserChatRooms(request: FastifyRequest, reply: FastifyRe
       otherUserAvatar: otherUser?.avatar_url ?? null,
       otherUserEmail: otherUser?.email ?? null,
       lastMessageAt: room.updated_at,
-    };
+    } as ChatRoom;
   });
 
   return reply.send(enrichedChatRooms);
@@ -136,12 +138,7 @@ export async function getChatRoomMessages(
     FROM messages
     WHERE room_id = ?
     ORDER BY created_at ASC
-  `).all(numericRoomId) as {
-    id: number;
-    sender_uuid: string;
-    content: string;
-    created_at: string;
-  }[];
+  `).all(numericRoomId) as ChatMessage[];
 
   return reply.send(messages);
 }
