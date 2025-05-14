@@ -1,10 +1,9 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import db from "../db/db";
-import { MatchHistoryRow } from "../types/profileTypes";
-import { MatchHistory } from "../shared/match/matchHistory";
 import UserPublicProfile from "../shared/userPublicProfile";
 import { getPlayerByUUID } from "../ws/setupWebSocket";
 import { Player } from "../types/player";
+import { getMatchHistory } from "../match/getMatchHistory";
 
 
 type DbUserRow = {
@@ -62,30 +61,5 @@ export async function getHistory(
     return reply.status(404).send({ message: "Utilisateur introuvable" });
   }
 
-  const matches: MatchHistoryRow[] = db
-    .prepare(`SELECT * FROM match_history WHERE player_a_uuid = ? OR player_b_uuid = ? ORDER BY date DESC`)
-    .all(targetUuid, targetUuid) as MatchHistoryRow[];
-
-  const history: MatchHistory[] = matches.map((match: MatchHistoryRow) => {
-    const isPlayerA: boolean = match.player_a_uuid === targetUuid;
-    const myScore: number = isPlayerA ? match.score_a : match.score_b;
-    const opponentScore: number = isPlayerA ? match.score_b : match.score_a;
-    const opponentName: string = isPlayerA ? match.player_b_name : match.player_a_name;
-
-    return {
-      uuid: match.uuid,
-      date: match.date,
-      mode: match.mode,
-      opponent: opponentName,
-      result:
-        match.winner === "draw"
-          ? "draw"
-          : match.winner === (isPlayerA ? "A" : "B")
-          ? "win"
-          : "lose",
-      score: `${myScore} - ${opponentScore}`,
-    } as MatchHistory;
-  });
-
-  return reply.send(history);
+  return reply.send(getMatchHistory(targetUuid));
 }

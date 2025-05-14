@@ -1,5 +1,5 @@
 import { GameResultMessage } from "../shared/game/gameMessageTypes";
-import { Room, RoomType, createNewRoom } from "../game/room";
+import { Room, RoomType, createNewRoom } from "../match/room";
 import { Player } from "../types/player";
 import {
   isLaunchMatchMessage,
