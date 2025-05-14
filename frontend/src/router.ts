@@ -14,6 +14,7 @@ import { createGameCanvas, initGameEnvironment, BackToMenu, LeaveGameIfNeeded } 
 import { createSkinSelectorCanvas, initSkinSelector} from "./game/skinSelector";
 import { ChatView} from "./views/chat";
 import { initOnlineGameSession } from "./controllers/InviteGame";
+// import { sendMessage} from "./websocketManager";
 
 
 type RouteHandler = () => HTMLElement;
@@ -85,7 +86,7 @@ const routes: Record<string, Route> = {
     },
   },
   "/game": {
-    view: () => MainLayout(createGameCanvas()),
+  view: () => MainLayout(createGameCanvas()),
     setup: async (root: HTMLElement) => {
       const opponentUuid: string | null = localStorage.getItem("opponentUuid");
       if (opponentUuid) {

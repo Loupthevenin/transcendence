@@ -5,10 +5,9 @@ import { v4 as uuidv4 } from "uuid";
 import { RoomType } from "../game/room";
 
 const db: Database.Database = new Database(DB_PATH);
-console.log("[DEBUG] SQLite path:", DB_PATH);
+// console.log("[DEBUG] SQLite path:", DB_PATH);
 db.exec("PRAGMA foreign_keys = ON;");
 
-// ensureDbIsCorrect();
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
@@ -127,26 +126,3 @@ export function saveMatchData(
     RoomType[mode],
   );
 }
-
-// type ColumnInfo = {
-//   cid: number;
-//   name: string;
-//   type: string;
-//   notnull: number;
-//   dflt_value: any;
-//   pk: number;
-// };
-
-// function ensureDbIsCorrect(): void {
-//   const columns = db.prepare(`PRAGMA table_info(users)`).all() as ColumnInfo[];
-
-//   const hasUuidColumn = columns.some((col) => col.name === "uuid");
-//   if (!hasUuidColumn) {
-//     console.error("[ERROR] ❌ La colonne 'uuid' est absente de la table 'users'.");
-//     console.error("[ACTION] Supprime le fichier ./db/database.sqlite et relance le backend.");
-//     console.table(columns);
-//     process.exit(1); // Stop le backend
-//   }
-
-//   console.log("[INFO] ✅ Schéma de la table 'users' détecté correctement avec 'uuid'.");
-// }

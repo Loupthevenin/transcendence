@@ -155,7 +155,7 @@ export function setupWebSocket(): WebSocketServer {
         if (isGameMessage(msgData)) {
           const data: GameMessageData = msgData.data;
           if (isReadyToPlayMessage(data)) {
-            const opponent: Player | undefined = getPlayerByUUID(data.opponentuuid);
+            const opponent: Player | undefined = getPlayerByUUID(data.opponentId);
             if (!opponent) {
               console.log("[GAME] Opponent not found or not connected");
               return;
@@ -172,7 +172,6 @@ export function setupWebSocket(): WebSocketServer {
             const room: Room = createNewRoom(RoomType.FriendlyMatch);
             room.addPlayer(player);
             room.addPlayer(opponent);
-            console.log(`[DEBUG] Appel à startGame() pour ${player.username} vs ${opponent.username}`);
             room.startGame().catch((error: any) => {
               console.error("Erreur au démarrage du jeu :", error);
               room.dispose();

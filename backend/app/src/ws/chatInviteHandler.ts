@@ -7,7 +7,7 @@ import {
   isNewMsgSendMessage,
   NewMsgReceivedMessage,
   InviteToGameMessage,
-  StartGameRedirectMessage
+  // StartGameRedirectMessage
 } from "../shared/chat/chatMessageTypes";
 import { ChatMessageData } from "../shared/messageType";
 import { isBlocked } from "../utils/blocked";
@@ -44,40 +44,38 @@ export function handleChatAndInviteMessages(
     console.log(`[INVITEGAME] ${msgData.data.from} a accepté l'invitation.`);
 
     const receiver = player;
-    const inviter = getPlayerByUUID(msgData.data.userUuid);
+    const inviter = getPlayerByUUID(msgData.data.userId);
 
     if (!inviter) {
       console.error("[INVITEGAME] Inviteur introuvable !");
       return true;
     }
 
-    const redirect: StartGameRedirectMessage = {
-      type: "startGameRedirect",
-      from: receiver.username,
-      userUuid: receiver.uuid,
-    };
-
     if (inviter.socket?.readyState === WebSocket.OPEN) {
-      inviter.socket.send(JSON.stringify({ type: "chat", data: redirect }));
+      inviter.socket.send(JSON.stringify({
+        type: "chat",
+        data: {
+          type: "startGameRedirect",
+          from: receiver.username,
+          userId: receiver.uuid
+        }
+      }));
     }
-
-    // if (receiver.socket?.readyState === WebSocket.OPEN) {
-    //   receiver.socket.send(JSON.stringify({
-    //     type: "chat",
-    //     data: {
-    //       ...redirect,
-    //       from: inviter.username,
-    //       userId: inviter.uuid,
-    //     }
-    //   }));
-    // }
-
+    if (receiver.socket?.readyState === WebSocket.OPEN) {
+      receiver.socket.send(JSON.stringify({
+        type: "chat",
+        data: {
+          type: "startGameRedirect",
+          from: inviter.username,
+          userId: inviter.uuid
+        }
+      }));
+    }
     return true;
   }
 
   if (msgData.type === "chat") {
     const data: ChatMessageData = msgData.data;
-
     if (isNewMsgSendMessage(data)) {
       const { receiverEmail, msg } = data;
       const senderUuid = player.uuid;
