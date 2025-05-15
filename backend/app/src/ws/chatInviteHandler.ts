@@ -9,7 +9,7 @@ import {
   InviteToGameMessage,
   StartGameRedirectMessage
 } from "../shared/chat/chatMessageTypes";
-import { ChatMessage, ChatMessageData } from "../shared/messageType";
+import { ChatMessage, ChatMessageData, NotificationMessage } from "../shared/messageType";
 import { isBlocked } from "../utils/blocked";
 import { getPlayerByUUID } from "./setupWebSocket";
 
@@ -20,8 +20,26 @@ export function handleChatAndInviteMessages(
   if (isInviteToGameMessage(msgData.data)) {
     const data = msgData.data;
 
-    const receiverPlayer = getPlayerByUUID(data.userUuid);
+    const receiverPlayer: Player | undefined = getPlayerByUUID(data.userUuid);
     if (!receiverPlayer) {
+      const msg: NotificationMessage = {
+        type: "notif",
+        notifType: "error",
+        msg: "Le joueur est hors ligne"
+      };
+      player.socket?.send(JSON.stringify(msg));
+      console.log(`[INVITEGAME ERROR] ${player.username} a tenté d'inviter ${data.userUuid}, mais il n'est pas connecté.`);
+      return true;
+    }
+
+    console.log(`player room = ${receiverPlayer.room}`);
+    if (receiverPlayer.room) {
+      const msg: NotificationMessage = {
+        type: "notif",
+        notifType: "error",
+        msg: "Le joueur est deja dans un match"
+      };
+      player.socket?.send(JSON.stringify(msg));
       console.log(`[INVITEGAME ERROR] ${player.username} a tenté d'inviter ${data.userUuid}, mais il n'est pas connecté.`);
       return true;
     }

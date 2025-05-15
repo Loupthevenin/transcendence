@@ -71,9 +71,9 @@ function setupWebSocketEvents(): void {
     if (isInviteToGameMessage(data))
       return openInviteToGameModal(data.from, data.userUuid);
     if (isStartGameRedirectMessage(data)) {
-      localStorage.setItem("opponentUuid", data.userId);
-      localStorage.setItem("returnTo", window.location.pathname);
-      navigateTo("/game");
+      sessionStorage.setItem("opponentUuid", data.userId);
+      sessionStorage.setItem("returnTo", window.location.pathname);
+      navigateTo("/");
       return;
     }
     if (isNewMsgReceivedMessage(data)) {

@@ -747,8 +747,8 @@ export async function initGameEnvironment(): Promise<void> {
   if (engine) {
     engine.dispose(); // Dispose of the previous engine if it exists
   }
-
   engine = new BABYLON.Engine(canvas, true); // Initialize the Babylon.js engine
+  loadingHandler.clear();
 
   scene = new BABYLON.Scene(engine); // Create a new scene
   scene.clearColor = new BABYLON.Color4(0.53, 0.8, 0.92, 1);

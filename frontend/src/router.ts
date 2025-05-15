@@ -84,15 +84,16 @@ const routes: Record<string, Route> = {
       mod.setupChat(root);
     },
   },
-  "/game": {
-  view: () => MainLayout(createGameCanvas()),
-    setup: async (root: HTMLElement) => {
-      const opponentUuid: string | null = localStorage.getItem("opponentUuid");
-      if (opponentUuid) {
-        initOnlineGameSession(opponentUuid);
-      }
-    },
-  },
+  // "/game": {
+  // view: () => MainLayout(createGameCanvas()),
+  //   setup: async (root: HTMLElement) => {
+  //     initSideBarNavigation();
+  //     const opponentUuid: string | null = sessionStorage.getItem("opponentUuid");
+  //     if (opponentUuid) {
+  //       initOnlineGameSession(opponentUuid);
+  //     }
+  //   },
+  // },
   "/callback": {
     view: () => {
       const div: HTMLDivElement = document.createElement("div");
@@ -105,6 +106,10 @@ const routes: Record<string, Route> = {
   "/": {
     view: () => MainLayout(createGameCanvas(), ModeLayout()),
     setup: (root: HTMLElement) => {
+       const opponentUuid: string | null = sessionStorage.getItem("opponentUuid");
+      if (opponentUuid) {
+        initOnlineGameSession(opponentUuid);
+      }
       initSideBarNavigation();
       initGameEnvironment();
 

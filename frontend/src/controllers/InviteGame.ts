@@ -54,9 +54,9 @@ export function openInviteToGameModal(fromName: string, userId: string): void {
       from: fromName,
       userId,
     } as AcceptGameInviteMessage);
-    localStorage.setItem("opponentUuid", userId);
-    localStorage.setItem("returnTo", window.location.pathname);
-    navigateTo("/game");
+    sessionStorage.setItem("opponentUuid", userId);
+    sessionStorage.setItem("returnTo", window.location.pathname);
+    navigateTo("/");
     backdrop.remove();
   });
   declineButton.addEventListener("click", () => {
@@ -90,9 +90,9 @@ export function initOnlineGameSession(opponentUuid: string): void {
       // console.log("[GAME] Fin du match reçue, reset des états");
       gameAlreadyStarted = false;
 
-      const returnTo = localStorage.getItem("returnTo");
+      const returnTo = sessionStorage.getItem("returnTo");
       if (returnTo) {
-        localStorage.removeItem("returnTo");
+        sessionStorage.removeItem("returnTo");
         navigateTo(returnTo);
       } else {
         navigateTo("/chat");

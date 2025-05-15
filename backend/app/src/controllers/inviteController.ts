@@ -19,6 +19,7 @@ export async function invite( request: FastifyRequest<{ Body: InviteToGameBody }
 
   const receiver = getPlayerByUUID(userRow.uuid);
   if (!receiver) return reply.status(404).send("User not connected");
+  if (receiver.room) return reply.status(404).send("User in game");
 
   if (receiver.socket?.readyState === WebSocket.OPEN) {
     receiver.socket.send(
