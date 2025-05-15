@@ -78,7 +78,7 @@ re: fclean all
 reset-db:
 	@docker compose exec backend sh -c "rm -f /var/db/database.sqlite"
 
-.PHONY: all compile-blockchain build up down start stop restart test logs ps status clean fclean re
+.PHONY: all compile-blockchain deploy-blockchain build up down start stop restart test logs ps status clean fclean re reset-db
 
 # delete all cache : docker system prune -a
 
