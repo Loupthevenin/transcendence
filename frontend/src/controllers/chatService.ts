@@ -113,7 +113,9 @@ export function setupChatMenu(container: HTMLElement, userUuid: string): void {
         const text: string = await res.text();
         if (res.status === 404 && text.includes("not connected")) {
           showInfoToast("L'utilisateur n'est pas en ligne.");
-        } else throw new Error("Erreur d'invitation");
+        } else if (res.status === 404 && text.includes("User in game")) {
+          showInfoToast("L'utilisateur est deja dans une partie.");
+        } else  throw new Error("Erreur d'invitation");
       } else {
         showSuccessToast("Invitation envoyée 🎮");
       }
