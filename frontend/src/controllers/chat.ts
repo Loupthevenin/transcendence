@@ -21,6 +21,7 @@ import { setReadyToPlaySent, addHiddenRoomId, removeHiddenRoomId } from "../util
 import { showErrorToast } from "../components/showNotificationToast";
 import { createChatBox } from "../views/chat";
 import ChatRoom from "@shared/chat/chatRoom";
+import { showPublicProfile } from "./publicProfile";
 
 const SELF_MSG_BOX: string =
   "self-end bg-[#6366f1] text-white px-4 py-2 rounded-xl max-w-xs mb-2 break-words";
@@ -283,6 +284,7 @@ async function renderChatList(): Promise<void> {
       img.onerror = () => {
         img.src = "/api/textures/avatar-default.svg";
       };
+      img.addEventListener("click", () => showPublicProfile(room.otherUserUuid));
 
       const statusIndicator: HTMLDivElement = document.createElement("div");
       statusIndicator.className = "w-3 h-3 rounded-full absolute top-0 right-0";
