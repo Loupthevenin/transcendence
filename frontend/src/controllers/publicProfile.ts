@@ -12,6 +12,8 @@ import {
 import { SpectatingMode } from "../game/game";
 
 export async function showPublicProfile(userUuid: string): Promise<void> {
+  if (!userUuid) return;
+
   try {
     const token = localStorage.getItem("auth_token");
     if (!token) throw new Error("No token");
@@ -64,8 +66,7 @@ export async function openProfileModal(
 
   const statusIndicator: HTMLDivElement = document.createElement("div");
   statusIndicator.className = "w-3 h-3 rounded-full absolute top-0 right-0";
-  const isOnline: boolean = profile.isOnline;
-  statusIndicator.style.backgroundColor = isOnline ? "green" : "red";
+  statusIndicator.style.backgroundColor = profile.isOnline ? "green" : "red";
 
   avatarContainer.appendChild(avatar);
   avatarContainer.appendChild(statusIndicator);
